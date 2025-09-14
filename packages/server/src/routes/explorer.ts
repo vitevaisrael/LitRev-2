@@ -43,6 +43,153 @@ export async function explorerRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // POST /api/v1/job-status/:jobId/retry
+  fastify.post('/job-status/:jobId/retry', async (request, reply) => {
+    try {
+      const { jobId } = request.params as { jobId: string };
+      
+      const jobStatus = await prisma.jobStatus.findUnique({
+        where: { jobId }
+      });
+
+      if (!jobStatus) {
+        return sendError(reply, 'NOT_FOUND', 'Job not found', 404);
+      }
+
+      if (jobStatus.status !== 'failed') {
+        return sendError(reply, 'INVALID_STATE', 'Job is not in failed state', 400);
+      }
+
+      // Reset job status to pending and restart simulation
+      await prisma.jobStatus.update({
+        where: { jobId },
+        data: {
+          status: 'pending',
+          progress: { step: 'initializing', count: 0, total: 4 },
+          error: null,
+          updatedAt: new Date()
+        }
+      });
+
+      // Restart the simulation process
+      const simulateProgress = async () => {
+        const steps = [
+          { step: 'planning', count: 1, total: 4 },
+          { step: 'browsing', count: 2, total: 4 },
+          { step: 'drafting', count: 3, total: 4 },
+          { step: 'finalizing', count: 4, total: 4 }
+        ];
+
+        for (const step of steps) {
+          await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5s delay
+          
+          await prisma.jobStatus.update({
+            where: { jobId },
+            data: {
+              status: 'running',
+              progress: step,
+              updatedAt: new Date()
+            }
+          });
+        }
+
+        // Create ExplorerRun with canned data (same as original)
+        const runId = randomUUID();
+        const explorerRun = await prisma.explorerRun.create({
+          data: {
+            runId,
+            projectId: jobStatus.projectId,
+            prompt: 'Generate systematic review outline',
+            model: 'gpt-4',
+            output: {
+              outline: [
+                'Introduction and Background',
+                'Methods and Search Strategy',
+                'Results and Analysis',
+                'Discussion and Conclusions'
+              ],
+              narrative: [
+                {
+                  section: 'Introduction',
+                  text: 'This systematic review examines the effectiveness of treatment interventions for the specified condition. The review follows PRISMA guidelines and includes comprehensive analysis of available evidence.',
+                  refs: [{ doi: '10.1000/example1' }]
+                },
+                {
+                  section: 'Methods',
+                  text: 'A comprehensive search strategy was developed using multiple databases including PubMed, Embase, and Cochrane Library. Studies were screened according to predefined inclusion and exclusion criteria.',
+                  refs: [{ doi: '10.1000/example2' }]
+                }
+              ],
+              refs: [
+                {
+                  title: 'Effectiveness of Treatment A in Clinical Practice',
+                  journal: 'New England Journal of Medicine',
+                  year: 2023,
+                  doi: '10.1000/example1',
+                  pmid: '12345678'
+                },
+                {
+                  title: 'Systematic Review Methodology Best Practices',
+                  journal: 'Cochrane Database of Systematic Reviews',
+                  year: 2022,
+                  doi: '10.1000/example2',
+                  pmid: '87654321'
+                },
+                {
+                  title: 'Meta-analysis of Treatment Outcomes',
+                  journal: 'The Lancet',
+                  year: 2023,
+                  doi: '10.1000/example3',
+                  pmid: '11223344'
+                },
+                {
+                  title: 'Clinical Guidelines for Treatment Selection',
+                  journal: 'JAMA',
+                  year: 2022,
+                  doi: '10.1000/example4',
+                  pmid: '44332211'
+                },
+                {
+                  title: 'Patient-Reported Outcomes in Treatment Studies',
+                  journal: 'BMJ',
+                  year: 2023,
+                  doi: '10.1000/example5',
+                  pmid: '55667788'
+                }
+              ]
+            }
+          }
+        });
+
+        // Mark job as completed with runId
+        await prisma.jobStatus.update({
+          where: { jobId },
+          data: {
+            status: 'completed',
+            progress: { step: 'completed', count: 4, total: 4, runId },
+            updatedAt: new Date()
+          }
+        });
+      };
+
+      // Start simulation in background
+      simulateProgress().catch(async (error) => {
+        await prisma.jobStatus.update({
+          where: { jobId },
+          data: {
+            status: 'failed',
+            error: error.message,
+            updatedAt: new Date()
+          }
+        });
+      });
+
+      return sendSuccess(reply, { message: 'Job retry initiated' });
+    } catch (error) {
+      return sendError(reply, 'JOB_RETRY_ERROR', 'Failed to retry job', 500);
+    }
+  });
+
   // POST /api/v1/projects/:id/explorer/run
   fastify.post('/projects/:id/explorer/run', {
     preHandler: async (request, reply) => {

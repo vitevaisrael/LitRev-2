@@ -10,6 +10,7 @@ export interface ApiError {
   error: {
     code: string;
     message: string;
+    requestId?: string;
   };
 }
 
@@ -20,9 +21,9 @@ export function sendSuccess<T>(reply: FastifyReply, data: T, statusCode = 200) {
   } as ApiResponse<T>);
 }
 
-export function sendError(reply: FastifyReply, code: string, message: string, statusCode = 400) {
+export function sendError(reply: FastifyReply, code: string, message: string, statusCode = 400, requestId?: string) {
   return reply.status(statusCode).send({
     ok: false,
-    error: { code, message }
+    error: { code, message, requestId }
   } as ApiError);
 }

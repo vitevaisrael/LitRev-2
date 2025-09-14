@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ThreePane } from '../components/layout/ThreePane';
@@ -14,7 +14,10 @@ import { ExportCenter } from '../components/exports/ExportCenter';
 import { PrismaWidget } from '../components/shared/PrismaWidget';
 import { AuditLog } from '../components/shared/AuditLog';
 import { HelpOverlay } from '../components/shared/HelpOverlay';
+import { EmptyState } from '../components/shared/EmptyState';
+import { QuickTour } from '../components/shared/QuickTour';
 import { useKeyboard } from '../hooks/useKeyboard';
+import { useToast } from '../hooks/useToast';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryKeys';
 
@@ -26,7 +29,17 @@ export function Project() {
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [batchMode, setBatchMode] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const queryClient = useQueryClient();
+  const { showError, showSuccess } = useToast();
+
+  // Show tour on first visit
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('scientist-tour-completed');
+    if (!hasVisited) {
+      setShowTour(true);
+    }
+  }, []);
 
   // Fetch PRISMA data
   const { data: prismaData } = useQuery({
@@ -46,6 +59,15 @@ export function Project() {
         return false;
       }
       return 2000; // Poll every 2 seconds
+    },
+    onError: (error: any) => {
+      const requestId = error?.response?.data?.error?.requestId;
+      showError(
+        error?.response?.data?.error?.message || 'Failed to fetch job status',
+        requestId,
+        () => retryJobMutation.mutate(currentJobId!),
+        'Retry Job'
+      );
     }
   });
 
@@ -72,11 +94,14 @@ export function Project() {
         setSelectedCandidate(null);
       }
       
-      // Show success toast (you can add a toast library later)
-      console.log('Decision recorded successfully');
+      showSuccess('Decision recorded successfully');
     },
-    onError: (error) => {
-      console.error('Failed to record decision:', error);
+    onError: (error: any) => {
+      const requestId = error?.response?.data?.error?.requestId;
+      showError(
+        error?.response?.data?.error?.message || 'Failed to record decision',
+        requestId
+      );
     }
   });
 
@@ -85,11 +110,30 @@ export function Project() {
     mutationFn: (data: any) => api.post(`/projects/${id}/explorer/run`, data),
     onSuccess: (response) => {
       const jobId = (response.data as any).jobId;
-      console.log('Explorer run started:', jobId);
+      showSuccess('Explorer run started successfully');
       setCurrentJobId(jobId);
     },
-    onError: (error) => {
-      console.error('Failed to start explorer run:', error);
+    onError: (error: any) => {
+      const requestId = error?.response?.data?.error?.requestId;
+      showError(
+        error?.response?.data?.error?.message || 'Failed to start explorer run',
+        requestId
+      );
+    }
+  });
+
+  // Job retry mutation
+  const retryJobMutation = useMutation({
+    mutationFn: (jobId: string) => api.post(`/job-status/${jobId}/retry`),
+    onSuccess: () => {
+      showSuccess('Job retry initiated');
+    },
+    onError: (error: any) => {
+      const requestId = error?.response?.data?.error?.requestId;
+      showError(
+        error?.response?.data?.error?.message || 'Failed to retry job',
+        requestId
+      );
     }
   });
 
@@ -206,12 +250,32 @@ export function Project() {
             }}
           />
         ) : (
-          <div className="p-6 text-center text-gray-500">
-            Select a candidate to screen
-          </div>
+          <EmptyState
+            icon="📋"
+            title="No Candidate Selected"
+            description="Select a candidate from the list to start screening. Use the batch mode toggle for faster screening workflow."
+            action={{
+              label: "View Keyboard Shortcuts",
+              onClick: () => setShowHelp(true)
+            }}
+          />
         );
       case 'ledger':
-        return <ClaimDetail claim={mockClaim} onAddSupport={() => {}} />;
+        return (
+          <EmptyState
+            icon="📊"
+            title="Evidence Capture"
+            description="Create claims and capture evidence from your screened papers. Upload PDFs and extract relevant quotes to build your systematic review."
+            action={{
+              label: "Create First Claim",
+              onClick: () => console.log('Create claim')
+            }}
+            secondaryAction={{
+              label: "View Help",
+              onClick: () => setShowHelp(true)
+            }}
+          />
+        );
       case 'draft':
         return (
           <DraftEditor
@@ -220,7 +284,21 @@ export function Project() {
           />
         );
       case 'exports':
-        return <ExportCenter projectId={id || ''} />;
+        return (
+          <EmptyState
+            icon="📤"
+            title="Export Your Review"
+            description="Generate your systematic review in multiple formats. Export as Markdown, BibTeX, PRISMA diagram, or structured data."
+            action={{
+              label: "Start Export",
+              onClick: () => console.log('Start export')
+            }}
+            secondaryAction={{
+              label: "View Help",
+              onClick: () => setShowHelp(true)
+            }}
+          />
+        );
       case 'explorer':
         return (
           <div className="p-6">
@@ -258,6 +336,13 @@ export function Project() {
                   {jobStatus.data.jobStatus.error && (
                     <div className="text-sm text-red-600 mt-1">
                       Error: {jobStatus.data.jobStatus.error}
+                      <button
+                        onClick={() => retryJobMutation.mutate(currentJobId!)}
+                        disabled={retryJobMutation.isPending}
+                        className="ml-2 px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                      >
+                        {retryJobMutation.isPending ? 'Retrying...' : 'Retry'}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -373,6 +458,11 @@ export function Project() {
       </div>
       
       <HelpOverlay isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <QuickTour 
+        isOpen={showTour} 
+        onClose={() => setShowTour(false)} 
+        onComplete={() => setShowTour(false)} 
+      />
     </div>
   );
 }

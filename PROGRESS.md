@@ -198,3 +198,25 @@
 - Batch mode enables rapid screening workflow with automatic progression to next candidate
 - Progress bar updates in real-time as decisions are made and candidates are screened
 
+## Task 19 - Retry/resume for jobs + robust error toasts ✅
+- Added POST /api/v1/job-status/:jobId/retry endpoint for failed Explorer jobs
+- Implemented job retry functionality that resets status to pending and restarts simulation
+- Updated sendError utility to include requestId parameter for consistent error tracking
+- Created centralized ToastProvider with useToast hook for error/success notifications
+- Added retry action buttons in error toasts for JobStatus failures
+- Integrated toast system into Project component with proper error handling
+- Added retry button in job status display when Explorer jobs fail
+- All API errors now include requestId and consistent error.code values
+- Failed Explorer jobs can be retried and complete successfully with proper user feedback
+
+## Task 20 - Help & Empty States + Quick Tour ✅
+- Created EmptyState component with icons, descriptions, and action buttons
+- Added friendly empty states for each step (Screening, Evidence, Exports) with explainers
+- Created QuickTour component with 6-step guided tour of main features
+- Added localStorage flag to show tour only on first visit
+- Integrated empty states into Project component for better user guidance
+- Added tour completion tracking and automatic tour display for new users
+- Empty states include primary CTAs and secondary help actions
+- Quick tour covers all major features: Problem Profile, Screening, Evidence, Drafting, Exports
+- Each empty state provides contextual help and next steps for users
+
