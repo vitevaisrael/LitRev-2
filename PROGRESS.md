@@ -41,3 +41,13 @@
 - PRISMA counters initialized with identified=3, others=0
 - All data is properly linked and ready for testing the application
 
+## Task 5 - Explorer (stub) UX ✅
+- Added explorer run mutation to start AI Explorer jobs
+- Added import refs mutation to import selected references as candidates
+- Updated ExplorerPanel with 'Run Explorer' button and mock data
+- Shows outline, narrative sections, and reference table
+- Import selected refs calls POST /projects/:id/explorer/import
+- On success, shows how many candidates were created and refetches CandidateList
+- Can run stub Explorer job and import 1-2 refs as new Candidates
+- All functionality is wired to real API endpoints
+
