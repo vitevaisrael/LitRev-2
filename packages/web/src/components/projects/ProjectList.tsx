@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useProjects, useCreateProject } from '../../hooks/useApi';
 
 export function ProjectList() {
@@ -47,17 +48,19 @@ export function ProjectList() {
       
       <div className="space-y-2">
         {(projects?.data as any)?.projects?.map((project: any) => (
-          <div key={project.id} className="p-3 border rounded-md hover:bg-gray-50">
-            <h3 className="font-medium">{project.title}</h3>
-            <p className="text-sm text-gray-500">
-              Created {new Date(project.createdAt).toLocaleDateString()}
-            </p>
-            {project.prisma && (
-              <div className="text-xs text-gray-400 mt-1">
-                {project.prisma.identified} identified, {project.prisma.included} included
-              </div>
-            )}
-          </div>
+          <Link to={`/project/${project.id}`} key={project.id} className="block">
+            <div className="p-3 border rounded-md hover:bg-gray-50">
+              <h3 className="font-medium">{project.title}</h3>
+              <p className="text-sm text-gray-500">
+                Created {new Date(project.createdAt).toLocaleDateString()}
+              </p>
+              {project.prisma && (
+                <div className="text-xs text-gray-400 mt-1">
+                  {project.prisma.identified} identified, {project.prisma.included} included
+                </div>
+              )}
+            </div>
+          </Link>
         ))}
       </div>
     </div>

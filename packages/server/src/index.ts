@@ -1,5 +1,5 @@
 import Fastify from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { routes } from './routes';
 import { env } from './config/env';
 
@@ -18,7 +18,7 @@ const fastify = Fastify({
 
 // Request ID and logging
 fastify.addHook('onRequest', async (request, reply) => {
-  request.id = crypto.randomUUID();
+  request.id = randomUUID();
   
   // Extract projectId and userId for logging
   const projectId = (request.params as any)?.projectId || (request.body as any)?.projectId;
