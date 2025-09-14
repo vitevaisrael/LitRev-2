@@ -7,10 +7,8 @@ import { TopBar } from '../components/layout/TopBar';
 import { ProblemProfile } from '../components/intake/ProblemProfile';
 import { DecisionCard } from '../components/screen/DecisionCard';
 import { CandidateList } from '../components/screen/CandidateList';
-import { ClaimDetail } from '../components/ledger/ClaimDetail';
 import { DraftEditor } from '../components/draft/DraftEditor';
 import { ExplorerPanel } from '../components/explorer/ExplorerPanel';
-import { ExportCenter } from '../components/exports/ExportCenter';
 import { PrismaWidget } from '../components/shared/PrismaWidget';
 import { AuditLog } from '../components/shared/AuditLog';
 import { HelpOverlay } from '../components/shared/HelpOverlay';
@@ -51,30 +49,23 @@ export function Project() {
   });
 
   // Poll job status when we have a current job
-  const { data: jobStatus } = useQuery({
+  const { data: jobStatus, error: jobStatusError } = useQuery({
     queryKey: queryKeys['job-status'](currentJobId || ''),
     queryFn: () => api.get(`/job-status/${currentJobId}`),
     enabled: !!currentJobId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Stop polling if job is completed or failed
+      const data = query.state.data as any;
       if (data?.data?.jobStatus?.status === 'completed' || data?.data?.jobStatus?.status === 'failed') {
         return false;
       }
       return 2000; // Poll every 2 seconds
-    },
-    onError: (error: any) => {
-      const requestId = error?.response?.data?.error?.requestId;
-      showError(
-        error?.response?.data?.error?.message || 'Failed to fetch job status',
-        requestId,
-        () => retryJobMutation.mutate(currentJobId!),
-        'Retry Job'
-      );
     }
   });
 
+
   // Fetch explorer run when job is completed
-  const runId = jobStatus?.data?.jobStatus?.progress?.runId;
+  const runId = (jobStatus as any)?.data?.jobStatus?.progress?.runId;
   const { data: explorerRun } = useQuery({
     queryKey: queryKeys['explorer-run'](id || '', runId || ''),
     queryFn: () => api.get(`/projects/${id}/explorer/${runId}`),
@@ -86,7 +77,7 @@ export function Project() {
     mutationFn: (decision: any) => api.post(`/projects/${id}/decide`, decision),
     onSuccess: () => {
       // Refetch candidates, PRISMA data, and audit logs
-      queryClient.invalidateQueries({ queryKey: queryKeys.candidates(id || '') });
+      queryClient.invalidateQueries({ queryKey: ['candidates', id || ''] });
       queryClient.invalidateQueries({ queryKey: queryKeys.prisma(id || '') });
       queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs(id || '') });
       
@@ -139,13 +130,27 @@ export function Project() {
     }
   });
 
+  // Handle job status errors
+  useEffect(() => {
+    if (jobStatusError) {
+      const error = jobStatusError as any;
+      const requestId = error?.response?.data?.error?.requestId;
+      showError(
+        error?.response?.data?.error?.message || 'Failed to fetch job status',
+        requestId,
+        () => retryJobMutation.mutate(currentJobId!),
+        'Retry Job'
+      );
+    }
+  }, [jobStatusError, currentJobId, showError, retryJobMutation]);
+
   // Import refs mutation
   const importRefsMutation = useMutation({
     mutationFn: (data: any) => api.post(`/projects/${id}/explorer/import`, data),
     onSuccess: (response) => {
       console.log('References imported:', (response.data as any).imported.length);
       // Refetch candidates to show new ones
-      queryClient.invalidateQueries({ queryKey: queryKeys.candidates(id || '') });
+      queryClient.invalidateQueries({ queryKey: ['candidates', id || ''] });
       queryClient.invalidateQueries({ queryKey: queryKeys.prisma(id || '') });
     },
     onError: (error) => {
@@ -162,14 +167,6 @@ export function Project() {
   };
   const prismaHistory = (prismaData?.data as any)?.history || [];
 
-  // Auto-advance function for batch mode
-  const handleAutoAdvance = () => {
-    if (batchMode) {
-      // This will be called after a decision is made to select the next candidate
-      // The actual selection logic will be handled by the CandidateList component
-      console.log('Auto-advancing to next candidate');
-    }
-  };
 
   // Mock data for other components (to be replaced later)
   // const mockAuditEntries = [
@@ -181,19 +178,6 @@ export function Project() {
   //   }
   // ];
 
-  const mockClaim = {
-    id: '1',
-    text: 'Corticosteroid therapy reduces proteinuria in IgA nephropathy patients.',
-    section: 'Results',
-    supports: [
-      {
-        id: '1',
-        quote: 'Corticosteroid therapy was associated with a significant reduction in proteinuria.',
-        locator: { page: 3, sentence: 2 },
-        candidateId: '1'
-      }
-    ]
-  };
 
   useKeyboard((key) => {
     switch (key) {
@@ -314,30 +298,30 @@ export function Project() {
               </button>
               
               {/* Job Status Display */}
-              {jobStatus?.data?.jobStatus && (
+              {(jobStatus as any)?.data?.jobStatus && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">Status: {jobStatus.data.jobStatus.status}</span>
+                    <span className="font-medium">Status: {(jobStatus as any)?.data?.jobStatus?.status}</span>
                     <span className="text-sm text-gray-600">
-                      {jobStatus.data.jobStatus.progress?.count || 0} / {jobStatus.data.jobStatus.progress?.total || 0}
+                      {(jobStatus as any)?.data?.jobStatus?.progress?.count || 0} / {(jobStatus as any)?.data?.jobStatus?.progress?.total || 0}
                     </span>
                   </div>
-                  {jobStatus.data.jobStatus.progress && (
+                  {(jobStatus as any)?.data?.jobStatus?.progress && (
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                         style={{ 
-                          width: `${((jobStatus.data.jobStatus.progress.count || 0) / (jobStatus.data.jobStatus.progress.total || 1)) * 100}%` 
+                          width: `${(((jobStatus as any)?.data?.jobStatus?.progress?.count || 0) / ((jobStatus as any)?.data?.jobStatus?.progress?.total || 1)) * 100}%` 
                         }}
                       ></div>
                     </div>
                   )}
                   <div className="text-sm text-gray-600 mt-1">
-                    Step: {jobStatus.data.jobStatus.progress?.step || 'initializing'}
+                    Step: {(jobStatus as any)?.data?.jobStatus?.progress?.step || 'initializing'}
                   </div>
-                  {jobStatus.data.jobStatus.error && (
+                  {(jobStatus as any)?.data?.jobStatus?.error && (
                     <div className="text-sm text-red-600 mt-1">
-                      Error: {jobStatus.data.jobStatus.error}
+                      Error: {(jobStatus as any)?.data?.jobStatus?.error}
                       <button
                         onClick={() => retryJobMutation.mutate(currentJobId!)}
                         disabled={retryJobMutation.isPending}
@@ -352,7 +336,7 @@ export function Project() {
             </div>
             
             <ExplorerPanel
-              run={explorerRun?.data?.explorer}
+              run={(explorerRun as any)?.data?.explorer}
               onImportSelected={(refs) => {
                 if (runId) {
                   importRefsMutation.mutate({
@@ -382,7 +366,6 @@ export function Project() {
             onSelect={setSelectedCandidate}
             batchMode={batchMode}
             onBatchModeChange={setBatchMode}
-            onAutoAdvance={handleAutoAdvance}
           />
         );
       default:

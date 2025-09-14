@@ -396,6 +396,30 @@ export async function explorerRoutes(fastify: FastifyInstance) {
           }
         }
 
+        // Update PRISMA counters (identified) and write audit log
+        const added = candidates.length;
+        await tx.prismaData.upsert({
+          where: { projectId },
+          update: { identified: { increment: added } },
+          create: {
+            projectId,
+            identified: added,
+            duplicates: 0,
+            screened: 0,
+            included: 0,
+            excluded: 0
+          }
+        });
+
+        await tx.auditLog.create({
+          data: {
+            projectId,
+            userId: projectId,
+            action: 'import_completed',
+            details: { added, source: 'explorer' }
+          }
+        });
+
         return candidates;
       });
 

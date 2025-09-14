@@ -220,3 +220,19 @@
 - Quick tour covers all major features: Problem Profile, Screening, Evidence, Drafting, Exports
 - Each empty state provides contextual help and next steps for users
 
+## Task 21 - JWT Authentication & Authorization System ✅
+- Implemented complete JWT-based authentication system with bcryptjs password hashing
+- Created auth routes: POST /auth/register, POST /auth/login, POST /auth/logout, GET /auth/me, POST /auth/refresh
+- Added authentication middleware to protect API routes and validate JWT tokens
+- Implemented project ownership validation middleware for secure data access
+- Updated User model in Prisma schema to include optional name field
+- Added httpOnly cookie support for secure token storage with CORS configuration
+- Created frontend AuthProvider with useAuth hook for authentication state management
+- Updated Login component with registration/login toggle and proper error handling
+- Added ProtectedRoute component to guard authenticated routes
+- Implemented user menu in TopBar with logout functionality and user profile display
+- Updated API client to include credentials for cookie-based authentication
+- All API endpoints now require authentication except health and auth routes
+- Projects are properly isolated by user ownership with secure access validation
+- Authentication system supports token refresh and secure logout with cookie clearing
+

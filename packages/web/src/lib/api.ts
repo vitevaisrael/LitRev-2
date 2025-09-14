@@ -26,6 +26,7 @@ class ApiClient {
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers,
+      credentials: 'include', // Include cookies for authentication
     });
 
     let data: any = null;

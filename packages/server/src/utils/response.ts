@@ -22,8 +22,9 @@ export function sendSuccess<T>(reply: FastifyReply, data: T, statusCode = 200) {
 }
 
 export function sendError(reply: FastifyReply, code: string, message: string, statusCode = 400, requestId?: string) {
+  const rid = requestId || (reply as any)?.request?.id;
   return reply.status(statusCode).send({
     ok: false,
-    error: { code, message, requestId }
+    error: { code, message, requestId: rid }
   } as ApiError);
 }

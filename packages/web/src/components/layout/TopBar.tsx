@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
 
 interface TopBarProps {
   onRunExplorer: () => void;
@@ -8,6 +9,8 @@ interface TopBarProps {
 
 export function TopBar({ onRunExplorer, onExport, onImport }: TopBarProps) {
   const [showHelp, setShowHelp] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <div className="bg-white border-b px-6 py-4 flex justify-between items-center">
@@ -42,6 +45,37 @@ export function TopBar({ onRunExplorer, onExport, onImport }: TopBarProps) {
         >
           ?
         </button>
+        
+        {/* User Menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-gray-900"
+          >
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+              {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <span className="text-sm">{user?.name || user?.email}</span>
+          </button>
+          
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+              <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                <div className="font-medium">{user?.name || 'User'}</div>
+                <div className="text-gray-500">{user?.email}</div>
+              </div>
+              <button
+                onClick={() => {
+                  logout();
+                  setShowUserMenu(false);
+                }}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
       </div>
       
       {showHelp && (

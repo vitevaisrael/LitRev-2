@@ -69,12 +69,14 @@ export async function screenRoutes(fastify: FastifyInstance) {
           where: { projectId },
           update: {
             screened: { increment: 1 },
-            [payload.action === 'include' ? 'included' : 'excluded']: { increment: 1 }
+            included: { increment: payload.action === 'include' ? 1 : 0 },
+            excluded: { increment: payload.action === 'exclude' ? 1 : 0 }
           },
           create: {
             projectId,
             screened: 1,
-            [payload.action === 'include' ? 'included' : 'excluded']: 1
+            included: payload.action === 'include' ? 1 : 0,
+            excluded: payload.action === 'exclude' ? 1 : 0
           }
         });
 

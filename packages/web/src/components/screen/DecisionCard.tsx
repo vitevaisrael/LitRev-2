@@ -224,7 +224,7 @@ export function DecisionCard({
       {candidate.score && (
         <div>
           <div className="flex justify-between items-center mb-2">
-            <h3 className="font-medium">Score: {candidate.score.total}/65</h3>
+            <h3 className="font-medium">Score: {candidate.score.total}/60</h3>
             <button
               onClick={() => recomputeScoreMutation.mutate()}
               disabled={recomputeScoreMutation.isPending}

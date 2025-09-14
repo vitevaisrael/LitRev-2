@@ -26,16 +26,14 @@ interface CandidateListProps {
   onSelect: (candidate: Candidate) => void;
   batchMode?: boolean;
   onBatchModeChange?: (enabled: boolean) => void;
-  onAutoAdvance?: () => void;
 }
 
-export function CandidateList({ 
-  projectId, 
-  selectedId, 
+export function CandidateList({
+  projectId,
+  selectedId,
   onSelect,
   batchMode = false,
-  onBatchModeChange,
-  onAutoAdvance
+  onBatchModeChange
 }: CandidateListProps) {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<{
@@ -137,7 +135,7 @@ export function CandidateList({
             <div className="text-xs text-gray-600 space-y-1">
               <div>{candidate.journal} ({candidate.year})</div>
               {candidate.score && (
-                <div className="font-medium">Score: {candidate.score.total}/65</div>
+                <div className="font-medium">Score: {candidate.score.total}/60</div>
               )}
               {candidate.decisions?.[0] && (
                 <div className={`text-xs px-1 py-0.5 rounded ${

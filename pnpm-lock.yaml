@@ -17,6 +17,12 @@ importers:
 
   packages/server:
     dependencies:
+      '@fastify/cookie':
+        specifier: ^8.3.0
+        version: 8.3.0
+      '@fastify/cors':
+        specifier: ^8.5.0
+        version: 8.5.0
       '@fastify/multipart':
         specifier: ^7.7.3
         version: 7.7.3
@@ -26,9 +32,12 @@ importers:
       '@the-scientist/schemas':
         specifier: workspace:*
         version: link:../shared/schemas
-      argon2:
-        specifier: ^0.31.0
-        version: 0.31.2
+      '@types/bcryptjs':
+        specifier: ^3.0.0
+        version: 3.0.0
+      bcryptjs:
+        specifier: ^3.0.2
+        version: 3.0.2
       bibtex-parse-js:
         specifier: ^0.0.24
         version: 0.0.24
@@ -586,6 +595,12 @@ packages:
     resolution: {integrity: sha512-7PQA7EH43S0CxcOa9OeAnaeA0oQ+e/DHNPZwSQM9CQHW76jle5+OvLdibRp/Aafs9KXbLhxyjOTkRjWUbQEd3Q==}
     engines: {node: '>=14'}
 
+  '@fastify/cookie@8.3.0':
+    resolution: {integrity: sha512-P9hY9GO11L20TnZ33XN3i0bt+3x0zaT7S0ohAzWO950E9PB2xnNhLYzPFJIGFi5AVN0yr5+/iZhWxeYvR6KCzg==}
+
+  '@fastify/cors@8.5.0':
+    resolution: {integrity: sha512-/oZ1QSb02XjP0IK1U0IXktEsw/dUBTxJOW7IpIeO8c/tNalw/KjoNSJv1Sf6eqoBPO+TDGkifq6ynFK3v68HFQ==}
+
   '@fastify/deepmerge@1.3.0':
     resolution: {integrity: sha512-J8TOSBq3SoZbDhM9+R/u77hP93gz/rajSA+K2kGyijPpORPWUXHUpTaleoj+92As0S9uPRP7Oi8IqMf0u+ro6A==}
 
@@ -713,10 +728,6 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
-
-  '@phc/format@1.0.0':
-    resolution: {integrity: sha512-m7X9U6BG2+J+R1lSOdCiITLLrxm+cWlNI3HUFA92oLO77ObGNzaKdh8pMLqdZcshtkKuV84olNNXDfMc4FezBQ==}
-    engines: {node: '>=10'}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -1052,6 +1063,10 @@ packages:
   '@types/babel__traverse@7.28.0':
     resolution: {integrity: sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==}
 
+  '@types/bcryptjs@3.0.0':
+    resolution: {integrity: sha512-WRZOuCuaz8UcZZE4R5HXTco2goQSI2XxjGY3hbM/xDvwmqFWd4ivooImsMx65OKM6CtNKbnZ5YL+YwAwK7c1dg==}
+    deprecated: This is a stub types definition. bcryptjs provides its own type definitions, so you do not need this installed.
+
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -1269,10 +1284,6 @@ packages:
 
   arg@5.0.2:
     resolution: {integrity: sha512-PYjyFOLKQ9y57JvQ6QLo8dAgNqswh8M1RMJYdQduT6xbWSgK36P/Z/v+p888pM69jMMfS8Xd8F6I1kQ/I9HUGg==}
-
-  argon2@0.31.2:
-    resolution: {integrity: sha512-QSnJ8By5Mth60IEte45w9Y7v6bWcQw3YhRtJKKN8oNCxnTLDiv/AXXkDPf2srTMfxFVn3QJdVv2nhXESsUa+Yg==}
-    engines: {node: '>=14.0.0'}
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -1615,6 +1626,10 @@ packages:
     resolution: {integrity: sha512-mcE+Wr2CAhHNWxXN/DdTI+n4gsPc5QpXpWnyCQWiQYIYZX+ZMJ8juXZgjRa/0/YPJo/NSsgW15/YgmI4nbysYw==}
     hasBin: true
 
+  bcryptjs@3.0.2:
+    resolution: {integrity: sha512-k38b3XOZKv60C4E2hVsXTolJWfkGRMbILBIe2IBITXciy5bOsTKot5kDrf3ZfufQtQOUN5mXceUEpU1rTl9Uog==}
+    hasBin: true
+
   bibtex-parse-js@0.0.24:
     resolution: {integrity: sha512-mbH57T1NDeSt+jkOpqeG7zyfj+1yQydnDbNmuYFRyggMFEPOEHHMZ0z/Ss6K1P+Z8R/DukqUwh0erw7vvJN9hg==}
 
@@ -1857,6 +1872,10 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  cookie@0.5.0:
+    resolution: {integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==}
+    engines: {node: '>= 0.6'}
 
   cookie@0.7.2:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
@@ -3188,6 +3207,9 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  mnemonist@0.39.6:
+    resolution: {integrity: sha512-A/0v5Z59y63US00cRSLiloEIw3t5G+MiKz4BhX21FI+YBJXBOGW0ohFxTxO08dsOYlzxo87T7vGfZKYp2bcAWA==}
+
   ms@0.7.3:
     resolution: {integrity: sha512-lrKNzMWqQZgwJahtrtrM+9NgOoDUveDrVmm5aGXrf3BdtL0mq7X6IVzoZaw+TfNti29eHd1/8GI+h45K5cQ6/w==}
 
@@ -3228,9 +3250,6 @@ packages:
 
   node-abort-controller@3.1.1:
     resolution: {integrity: sha512-AGK2yQKIjRuqnc6VkX2Xj5d+QW8xZ87pa1UK6yA6ouUyuxfHuMP6umE5QK7UmTeOAymo+Zx1Fxiuw9rVx8taHQ==}
-
-  node-addon-api@7.1.1:
-    resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
 
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
@@ -3328,6 +3347,9 @@ packages:
   object.pick@1.3.0:
     resolution: {integrity: sha512-tqa/UMy/CCoYmj+H5qc07qvSL9dqcs/WZENZ1JbtWBlATP+iVOe778gE6MSijnyCnORzDuX6hU+LA4SZ09YjFQ==}
     engines: {node: '>=0.10.0'}
+
+  obliterator@2.0.5:
+    resolution: {integrity: sha512-42CPE9AhahZRsMNslczq0ctAEtqk8Eka26QofnqC346BZdHDySk3LWka23LI7ULIw11NmltpiLagIq8gBozxTw==}
 
   observable-to-promise@0.4.0:
     resolution: {integrity: sha512-/e9WRNDQoetZciJeB6Wc6r8nF1cwLtATbwG1oQjpL3v8nHmfhIGKRqy7VBq8GgXsQ7pLoslcbj6yMhJTxmx8/g==}
@@ -4891,6 +4913,16 @@ snapshots:
     dependencies:
       text-decoding: 1.0.0
 
+  '@fastify/cookie@8.3.0':
+    dependencies:
+      cookie: 0.5.0
+      fastify-plugin: 4.5.1
+
+  '@fastify/cors@8.5.0':
+    dependencies:
+      fastify-plugin: 4.5.1
+      mnemonist: 0.39.6
+
   '@fastify/deepmerge@1.3.0': {}
 
   '@fastify/error@3.4.1': {}
@@ -5027,6 +5059,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
+    optional: true
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
     optional: true
@@ -5057,8 +5090,6 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
-
-  '@phc/format@1.0.0': {}
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
@@ -5382,6 +5413,10 @@ snapshots:
     dependencies:
       '@babel/types': 7.28.4
 
+  '@types/bcryptjs@3.0.0':
+    dependencies:
+      bcryptjs: 3.0.2
+
   '@types/json-schema@7.0.15': {}
 
   '@types/jsonwebtoken@9.0.10':
@@ -5528,7 +5563,8 @@ snapshots:
   '@zxing/text-encoding@0.9.0':
     optional: true
 
-  abbrev@1.1.1: {}
+  abbrev@1.1.1:
+    optional: true
 
   abort-controller@3.0.0:
     dependencies:
@@ -5551,6 +5587,7 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
   agentkeepalive@4.6.0:
     dependencies:
@@ -5611,23 +5648,16 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  aproba@2.1.0: {}
+  aproba@2.1.0:
+    optional: true
 
   are-we-there-yet@2.0.0:
     dependencies:
       delegates: 1.0.0
       readable-stream: 3.6.2
+    optional: true
 
   arg@5.0.2: {}
-
-  argon2@0.31.2:
-    dependencies:
-      '@mapbox/node-pre-gyp': 1.0.11
-      '@phc/format': 1.0.0
-      node-addon-api: 7.1.1
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
 
   argparse@2.0.1: {}
 
@@ -6319,6 +6349,8 @@ snapshots:
 
   baseline-browser-mapping@2.8.3: {}
 
+  bcryptjs@3.0.2: {}
+
   bibtex-parse-js@0.0.24:
     dependencies:
       ava: 0.15.2
@@ -6538,7 +6570,8 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  chownr@2.0.0: {}
+  chownr@2.0.0:
+    optional: true
 
   ci-info@1.6.0: {}
 
@@ -6591,7 +6624,8 @@ snapshots:
 
   color-name@1.1.4: {}
 
-  color-support@1.1.3: {}
+  color-support@1.1.3:
+    optional: true
 
   combined-stream@1.0.8:
     dependencies:
@@ -6620,7 +6654,8 @@ snapshots:
       write-file-atomic: 1.3.4
       xdg-basedir: 2.0.0
 
-  console-control-strings@1.1.0: {}
+  console-control-strings@1.1.0:
+    optional: true
 
   content-disposition@0.5.4:
     dependencies:
@@ -6629,6 +6664,8 @@ snapshots:
   convert-source-map@1.9.0: {}
 
   convert-source-map@2.0.0: {}
+
+  cookie@0.5.0: {}
 
   cookie@0.7.2: {}
 
@@ -6753,7 +6790,8 @@ snapshots:
 
   delayed-stream@1.0.0: {}
 
-  delegates@1.0.0: {}
+  delegates@1.0.0:
+    optional: true
 
   denque@2.1.0: {}
 
@@ -6763,7 +6801,8 @@ snapshots:
     dependencies:
       repeating: 2.0.1
 
-  detect-libc@2.0.4: {}
+  detect-libc@2.0.4:
+    optional: true
 
   detect-node-es@1.1.0: {}
 
@@ -7294,6 +7333,7 @@ snapshots:
   fs-minipass@2.1.0:
     dependencies:
       minipass: 3.3.6
+    optional: true
 
   fs.realpath@1.0.0: {}
 
@@ -7330,6 +7370,7 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wide-align: 1.1.5
+    optional: true
 
   gensync@1.0.0-beta.2: {}
 
@@ -7502,7 +7543,8 @@ snapshots:
     dependencies:
       has-symbols: 1.1.0
 
-  has-unicode@2.0.1: {}
+  has-unicode@2.0.1:
+    optional: true
 
   has-value@0.3.1:
     dependencies:
@@ -7552,6 +7594,7 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
   humanize-ms@1.2.1:
     dependencies:
@@ -8041,6 +8084,7 @@ snapshots:
   make-dir@3.1.0:
     dependencies:
       semver: 6.3.1
+    optional: true
 
   map-cache@0.2.2:
     optional: true
@@ -8174,8 +8218,10 @@ snapshots:
   minipass@3.3.6:
     dependencies:
       yallist: 4.0.0
+    optional: true
 
-  minipass@5.0.0: {}
+  minipass@5.0.0:
+    optional: true
 
   minipass@7.1.2: {}
 
@@ -8183,6 +8229,7 @@ snapshots:
     dependencies:
       minipass: 3.3.6
       yallist: 4.0.0
+    optional: true
 
   mixin-deep@1.3.2:
     dependencies:
@@ -8194,7 +8241,12 @@ snapshots:
     dependencies:
       minimist: 1.2.8
 
-  mkdirp@1.0.4: {}
+  mkdirp@1.0.4:
+    optional: true
+
+  mnemonist@0.39.6:
+    dependencies:
+      obliterator: 2.0.5
 
   ms@0.7.3: {}
 
@@ -8257,8 +8309,6 @@ snapshots:
 
   node-abort-controller@3.1.1: {}
 
-  node-addon-api@7.1.1: {}
-
   node-domexception@1.0.0: {}
 
   node-fetch@2.7.0:
@@ -8277,6 +8327,7 @@ snapshots:
   nopt@5.0.0:
     dependencies:
       abbrev: 1.1.1
+    optional: true
 
   normalize-package-data@2.5.0:
     dependencies:
@@ -8304,6 +8355,7 @@ snapshots:
       console-control-strings: 1.1.0
       gauge: 3.0.2
       set-blocking: 2.0.0
+    optional: true
 
   number-is-nan@1.0.1: {}
 
@@ -8351,6 +8403,8 @@ snapshots:
     dependencies:
       isobject: 3.0.1
     optional: true
+
+  obliterator@2.0.5: {}
 
   observable-to-promise@0.4.0:
     dependencies:
@@ -9013,7 +9067,8 @@ snapshots:
 
   semver@7.7.2: {}
 
-  set-blocking@2.0.0: {}
+  set-blocking@2.0.0:
+    optional: true
 
   set-cookie-parser@2.7.1: {}
 
@@ -9353,6 +9408,7 @@ snapshots:
       minizlib: 2.1.2
       mkdirp: 1.0.4
       yallist: 4.0.0
+    optional: true
 
   text-decoding@1.0.0: {}
 
@@ -9676,6 +9732,7 @@ snapshots:
   wide-align@1.1.5:
     dependencies:
       string-width: 4.2.3
+    optional: true
 
   widest-line@1.0.0:
     dependencies:
@@ -9738,7 +9795,8 @@ snapshots:
 
   yallist@3.1.1: {}
 
-  yallist@4.0.0: {}
+  yallist@4.0.0:
+    optional: true
 
   yaml@2.8.1: {}
 

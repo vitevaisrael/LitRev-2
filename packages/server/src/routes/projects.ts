@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { authenticate, validateProjectOwnership, AuthenticatedRequest } from '../middleware/auth';
 import { z } from 'zod';
 
 const CreateProjectSchema = z.object({
@@ -9,9 +10,14 @@ const CreateProjectSchema = z.object({
 
 export async function projectsRoutes(fastify: FastifyInstance) {
   // GET /api/v1/projects
-  fastify.get('/projects', async (request, reply) => {
+  fastify.get('/projects', {
+    preHandler: authenticate
+  }, async (request: AuthenticatedRequest, reply) => {
     try {
       const projects = await prisma.project.findMany({
+        where: {
+          ownerId: request.user!.id
+        },
         include: {
           prisma: true
         },
@@ -26,25 +32,22 @@ export async function projectsRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/projects
   fastify.post('/projects', {
-    preHandler: async (request, reply) => {
+    preHandler: [authenticate, async (request, reply) => {
       try {
         request.body = CreateProjectSchema.parse(request.body);
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
-    }
-  }, async (request, reply) => {
+    }]
+  }, async (request: AuthenticatedRequest, reply) => {
     try {
       const { title } = request.body as { title: string };
-      
-      // For now, use a default user ID (in real app, get from JWT)
-      const defaultUserId = '00000000-0000-0000-0000-000000000000';
       
       const project = await prisma.$transaction(async (tx) => {
         const newProject = await tx.project.create({
           data: {
             title,
-            ownerId: defaultUserId,
+            ownerId: request.user!.id,
             settings: { preferOA: true }
           },
           include: {
@@ -56,7 +59,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
         await tx.auditLog.create({
           data: {
             projectId: newProject.id,
-            userId: defaultUserId,
+            userId: request.user!.id,
             action: 'project_created',
             details: { title }
           }
@@ -72,7 +75,9 @@ export async function projectsRoutes(fastify: FastifyInstance) {
   });
 
   // GET /api/v1/projects/:id/prisma
-  fastify.get('/projects/:id/prisma', async (request, reply) => {
+  fastify.get('/projects/:id/prisma', {
+    preHandler: [authenticate, validateProjectOwnership]
+  }, async (request: AuthenticatedRequest, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       
@@ -88,7 +93,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
       const auditLogs = await prisma.auditLog.findMany({
         where: {
           projectId,
-          action: { in: ['decision_made', 'candidate_imported', 'project_created'] }
+          action: { in: ['decision_made', 'candidate_imported', 'import_completed', 'project_created'] }
         },
         orderBy: { timestamp: 'asc' },
         take: 100 // Limit to last 100 relevant events
@@ -116,14 +121,20 @@ export async function projectsRoutes(fastify: FastifyInstance) {
           // Project creation - start with identified count
           currentCounts.identified = prismaData.identified;
         } else if (log.action === 'candidate_imported') {
-          // Import - increment identified
+          // Legacy single-candidate import event
           currentCounts.identified += 1;
+        } else if (log.action === 'import_completed') {
+          // Batch import completed with counts
+          const added = Number((log as any).details?.added || 0);
+          const dups = Number((log as any).details?.duplicates || 0);
+          currentCounts.identified += added;
+          currentCounts.duplicates += dups;
         } else if (log.action === 'decision_made') {
           // Decision - increment screened and include/exclude
           currentCounts.screened += 1;
-          if (log.details?.action === 'include') {
+          if ((log.details as any)?.action === 'include') {
             currentCounts.included += 1;
-          } else if (log.details?.action === 'exclude') {
+          } else if ((log.details as any)?.action === 'exclude') {
             currentCounts.excluded += 1;
           }
         }

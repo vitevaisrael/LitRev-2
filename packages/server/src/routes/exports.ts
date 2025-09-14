@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { generatePrismaSvg } from '../modules/exports/prismaSvg';
 
 export async function exportsRoutes(fastify: FastifyInstance) {
   // POST /api/v1/projects/:id/exports/markdown
@@ -257,7 +258,7 @@ export async function exportsRoutes(fastify: FastifyInstance) {
         },
         claims: claims.map(claim => ({
           id: claim.id,
-          statement: (claim as any).statement,
+          text: (claim as any).text,
           supports: claim.supports.map(support => ({
             id: support.id,
             quote: support.quote,
@@ -301,38 +302,4 @@ export async function exportsRoutes(fastify: FastifyInstance) {
 
 // Helper function to generate PRISMA SVG
 function generatePrismaSvg(prismaData: any): string {
-  const { identified, screened, assessed, included } = prismaData;
-  
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-  <rect width="400" height="300" fill="white"/>
-  
-  <!-- Title -->
-  <text x="200" y="30" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold">PRISMA Flow Diagram</text>
-  
-  <!-- Boxes -->
-  <rect x="150" y="60" width="100" height="40" fill="#e1f5fe" stroke="#01579b" stroke-width="2"/>
-  <text x="200" y="85" text-anchor="middle" font-family="Arial" font-size="12">Records identified: ${identified}</text>
-  
-  <rect x="150" y="120" width="100" height="40" fill="#e8f5e8" stroke="#2e7d32" stroke-width="2"/>
-  <text x="200" y="145" text-anchor="middle" font-family="Arial" font-size="12">Records screened: ${screened}</text>
-  
-  <rect x="150" y="180" width="100" height="40" fill="#fff3e0" stroke="#ef6c00" stroke-width="2"/>
-  <text x="200" y="205" text-anchor="middle" font-family="Arial" font-size="12">Full-text assessed: ${assessed}</text>
-  
-  <rect x="150" y="240" width="100" height="40" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2"/>
-  <text x="200" y="265" text-anchor="middle" font-family="Arial" font-size="12">Studies included: ${included}</text>
-  
-  <!-- Arrows -->
-  <path d="M 200 100 L 200 120" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-  <path d="M 200 160 L 200 180" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-  <path d="M 200 220 L 200 240" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-  
-  <!-- Arrow marker -->
-  <defs>
-    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
-    </marker>
-  </defs>
-</svg>`;
-}
+  // remove local generator; using shared generator via import

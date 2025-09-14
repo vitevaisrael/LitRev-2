@@ -1,3 +1,4 @@
+
 import Fastify from 'fastify';
 import { randomUUID } from 'crypto';
 import { routes } from './routes';
@@ -14,6 +15,18 @@ const fastify = Fastify({
       })
     }
   }
+});
+
+// Register cookie support
+fastify.register(require('@fastify/cookie'), {
+  secret: env.JWT_SECRET,
+  parseOptions: {}
+});
+
+// Register CORS support
+fastify.register(require('@fastify/cors'), {
+  origin: env.NODE_ENV === 'production' ? false : ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true
 });
 
 // Request ID and logging
