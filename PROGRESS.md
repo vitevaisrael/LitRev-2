@@ -219,21 +219,44 @@
 - Empty states include primary CTAs and secondary help actions
 - Quick tour covers all major features: Problem Profile, Screening, Evidence, Drafting, Exports
 
-## Task 21 - Explorer: Real Job + PubMed Adapter (In Progress)
-- Implemented BullMQ-backed Explorer job with stepwise progress (planning → browsing → drafting → finalizing)
-- Worker starts with the server (skips gracefully if Redis unavailable)
-- PubMed adapter uses E-utilities (ESearch + EFetch) to retrieve refs; falls back to mock if offline
-- POST /projects/:id/explorer/run enqueues a job and returns jobId
-- JobStatus polling unchanged; retry endpoint supported
-- GET /projects/:id/explorer/:runId serves artifact persisted by the worker
-- Explorer import increments PRISMA.identified and writes AuditLog { action: "import_completed", details: { added, source: 'explorer' } }
-- Web: Explorer UI accepts topic input (or uses Problem Profile) and shows progress/results
+## Task 22 - AI Review Generation Strategy ✅
 
-Next Up:
-- Harden LLM output validation and switch to a production model when OPENAI_API_KEY is present
-- Add explicit error toasts and run-time guardrails in Explorer UI
-- Optional: coverage metrics for narrative vs. refs
-- Each empty state provides contextual help and next steps for users
+**Decision Made: Sequential Implementation Approach**
+
+**Phase 1: Backend Foundation (Codex Implementation) ✅**
+- Real PubMed integration with ESearch/EFetch for scholarly source browsing
+- BullMQ job queues for explorer workflow with stepwise progress tracking
+- Enhanced ExplorerRun model with proper JSON artifact storage
+- Real LLM integration with structured prompts for systematic review generation
+- Standalone Explorer endpoints for generating reviews without existing projects
+
+**Phase 2: Chat Interface (Completed) ✅**
+- Conversational UI for topic refinement and clarification
+- AI assistant that can ask PICO-like questions to improve review quality
+- Integration with existing Explorer backend infrastructure
+- Seamless import to project workflow after review generation
+
+**Key Features Implemented:**
+- Generate complete systematic reviews from topics/findings
+- Can run in parallel with existing workflow OR standalone
+- Feeds citations (not text) into normal screening flow
+- Maintains all existing guardrails (locator-or-block, no direct Draft writes)
+- Feature-flagged implementation for safe deployment
+
+**Chat Interface Implementation:**
+- Created ChatSession and ChatMessage Prisma models with proper relationships
+- Implemented ReviewChatService for AI assistant orchestration
+- Built chat API routes with session management and message handling
+- Created conversational UI components (ChatStarter, ChatInterface, ChatReview page)
+- Integrated with existing Explorer backend for review generation
+- Added FEATURE_CHAT_REVIEW feature flag for safe deployment
+- Real-time message polling and status updates
+- Import to project functionality for generated reviews
+
+**Updated Engineering Document:**
+- Added standalone Explorer endpoints and chat interface specification
+- Documented two-phase implementation strategy
+- Added chat data models and API endpoints for future development
 
 ## Task 21 - JWT Authentication & Authorization System ✅
 - Implemented complete JWT-based authentication system with bcryptjs password hashing
@@ -250,3 +273,79 @@ Next Up:
 - All API endpoints now require authentication except health and auth routes
 - Projects are properly isolated by user ownership with secure access validation
 - Authentication system supports token refresh and secure logout with cookie clearing
+
+## Task UI-01 (Revised) — Design System + App Shell ✅
+
+**Goal**: Ship a clean, desktop-first 3-pane shell with a consistent design system. Pure UI polish; **no backend or flow changes**.
+
+### ✅ Completed Implementation
+
+**0) Pre-flight: UI Dependencies**
+- ✅ Verified and installed shadcn/ui dependencies: `lucide-react`, `class-variance-authority`, `tailwind-merge`, `clsx`, `tailwindcss-animate`
+- ✅ Added missing Radix UI packages: `@radix-ui/react-avatar`, `@radix-ui/react-separator`, `@radix-ui/react-label`
+- ✅ Created essential shadcn/ui components: `button`, `card`, `dropdown-menu`, `avatar`, `badge`, `separator`, `alert`, `skeleton`, `input`, `label`
+- ✅ Added Inter font with `@fontsource/inter` for no layout shift
+
+**1) Design Tokens (Tailwind + CSS Vars)**
+- ✅ Updated `tailwind.config.js` with comprehensive design system:
+  - Color tokens: `primary`, `secondary`, `destructive`, `muted`, `accent`, `popover`, `card`
+  - Border radius: `md=8px`, `lg=12px`, `sm=6px`
+  - Typography: Inter font stack with proper fallbacks
+  - Container: centered with 12px padding
+  - Animations: accordion and other keyframes
+- ✅ Updated `globals.css` with CSS variables and utility classes:
+  - Typography scale (H1-H4, body, caption)
+  - Utility classes for cards, muted text, separators
+  - Font display swap for no layout shift
+
+**2) Font Loading (Inter)**
+- ✅ Added `@fontsource/inter` with weights 400, 500, 600, 700
+- ✅ Configured `font-display: swap` and proper fallback stack
+- ✅ Integrated with Tailwind `fontFamily.sans` configuration
+
+**3) App Shell Polish (TopBar, LeftRail, 3-pane)**
+- ✅ **TopBar**: Sticky header with backdrop blur, shadcn Button components, DropdownMenu for user menu, Avatar component
+- ✅ **LeftRail**: Fixed width (w-72), icon-based navigation with Lucide icons, active states, separator
+- ✅ **ThreePane**: Independent scrolling for each pane, proper overflow handling, consistent spacing
+
+**4) Baseline Component Restyle**
+- ✅ **Projects page cards**: Converted to shadcn Card with title, created date, health pill (Active/New badges)
+- ✅ **PRISMA widget**: Clean 2×3 grid layout with large numbers, loading skeleton states, progress indicators
+- ✅ **AuditLog**: List with action badges, time stamps, loading/error states, proper truncation
+
+**5) Error Boundary**
+- ✅ Created `ErrorBoundary.tsx` with React error boundary
+- ✅ Fallback UI with shadcn Alert, error details, and Reload button
+- ✅ Proper error logging and user-friendly messaging
+
+### ✅ Acceptance Criteria Met
+- ✅ App renders with new TopBar, LeftRail, and 3-pane layout
+- ✅ Independent vertical scroll in all panes; no full-page scroll
+- ✅ Projects page uses shadcn Card with empty state & health pill
+- ✅ PRISMA + AuditLog are styled cards with loading/empty/error states
+- ✅ Inter font loaded with no visible layout shift and proper fallback
+- ✅ No changes to flows, APIs, or shortcuts (desktop-only)
+- ✅ All TypeScript errors resolved and build successful
+- ✅ Application runs successfully on http://localhost:5173
+
+### 🎨 Design System Features
+- **Professional Color Palette**: Indigo primary, emerald success, amber warning, rose danger, slate neutral
+- **Consistent Spacing**: 8px grid system with 4, 8, 12, 16, 24, 32, 48 spacing scale
+- **Typography Hierarchy**: Clear H1-H4 with proper font weights and tracking
+- **Component Library**: Reusable shadcn/ui components with consistent styling
+- **Loading States**: Skeleton screens for better UX during data fetching
+- **Error Handling**: Graceful error boundaries with user-friendly messaging
+
+### 📱 Desktop-First Implementation
+- **Three-Pane Layout**: LeftRail (280px) + Main Content (flexible) + Context Panel (384px)
+- **Sticky Navigation**: TopBar with backdrop blur and proper z-indexing
+- **Icon-Based Navigation**: Lucide React icons for consistent iconography
+- **Responsive Design**: Deferred to Phase 2 as planned
+
+### 🔧 Technical Implementation
+- **Build Success**: All TypeScript errors resolved, production build working
+- **No Breaking Changes**: All existing functionality preserved
+- **Performance**: Optimized font loading and component rendering
+- **Accessibility**: Proper ARIA labels and keyboard navigation support
+
+**Next Steps**: Ready for Phase 2 (responsive design) and Phase 3 (advanced components) when needed.

@@ -9,3 +9,4 @@ export * from './explorer';
 export * from './exports';
 export * from './prisma';
 export * from './pdf';
+export * from './chat';

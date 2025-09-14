@@ -1,3 +1,6 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+
 interface ProjectCardProps {
   project: {
     id: string;
@@ -15,23 +18,48 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
+  const hasData = project.prisma && project.prisma.identified > 0;
+  const isHealthy = hasData && (project.prisma?.screened ?? 0) > 0;
+
   return (
-    <div 
+    <Card 
       onClick={onClick}
-      className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+      className="cursor-pointer hover:shadow-md transition-shadow"
     >
-      <h3 className="font-semibold text-lg mb-2">{project.title}</h3>
-      <p className="text-sm text-gray-600 mb-2">
-        Created {new Date(project.createdAt).toLocaleDateString()}
-      </p>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-lg">{project.title}</CardTitle>
+          <Badge variant={isHealthy ? "default" : "secondary"}>
+            {isHealthy ? "Active" : "New"}
+          </Badge>
+        </div>
+        <CardDescription>
+          Created {new Date(project.createdAt).toLocaleDateString()}
+        </CardDescription>
+      </CardHeader>
       
       {project.prisma && (
-        <div className="text-xs text-gray-500 space-y-1">
-          <div>Identified: {project.prisma.identified}</div>
-          <div>Included: {project.prisma.included}</div>
-          <div>Excluded: {project.prisma.excluded}</div>
-        </div>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Identified:</span>
+              <span className="font-medium">{project.prisma.identified}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Included:</span>
+              <span className="font-medium">{project.prisma.included}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Excluded:</span>
+              <span className="font-medium">{project.prisma.excluded}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Screened:</span>
+              <span className="font-medium">{project.prisma.screened}</span>
+            </div>
+          </div>
+        </CardContent>
       )}
-    </div>
+    </Card>
   );
 }

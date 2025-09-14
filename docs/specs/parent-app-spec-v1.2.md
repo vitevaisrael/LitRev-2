@@ -6,7 +6,7 @@
 
 A desktop-first web app that delivers an end-to-end medical literature workflow:
 
-**Intake → Search/Dedupe → Screening (Decision Cards) → Evidence Ledger → DIY Draft → Exports**, plus an **AI Explorer Draft (Unverified)** running in parallel that can feed **citations** (not text) into the normal screening flow.
+**Intake → Search/Dedupe → Screening (Decision Cards) → Evidence Ledger → DIY Draft → Exports**, plus an **AI Explorer Draft (Unverified)** that can run in parallel or standalone, generating complete systematic reviews from topics/findings and feeding **citations** (not text) into the normal screening flow.
 
 **Hard guardrails:**
 - Models reason over **parsed text only**.
@@ -417,6 +417,8 @@ Candidates (paginated):
 	•	POST /api/v1/projects/:id/explorer/run { prompt?, model? } → Create JobStatus, return jobId
 	•	GET /api/v1/projects/:id/explorer/:runId → Get explorer artifact
 	•	POST /api/v1/projects/:id/explorer/import { runId, refs[] } → Import citations as Candidates (no Draft writes)
+	•	POST /api/v1/explorer/standalone { topic, findings?, model? } → Create standalone review (no project required)
+	•	GET /api/v1/explorer/standalone/:runId → Get standalone review artifact
 
 ⸻
 
@@ -426,6 +428,7 @@ Candidates (paginated):
 	•	searchQueue: PubMed search → enrich → dedupe → update PRISMA
 	•	ingestQueue: PDF fetch/upload → parse → store S3 + ParsedDoc
 	•	explorerQueue: LLM browsing → generate draft → store artifact
+	•	standaloneExplorerQueue: LLM browsing → generate standalone review → store artifact
 
 5.2 Job Status Tracking
 
@@ -689,6 +692,7 @@ Foundation Release "Done" Requirements:
 	6.	Draft: Insert citation chips referencing Ledger items only; basic text editing
 	7.	Exports: Generate minimal DOCX, BibTeX, PRISMA SVG, and Ledger JSON files
 	8.	Explorer: Run generates artifact with refs; import creates Candidates for screening; no direct Draft writes
+	9.	Standalone Explorer: Generate complete systematic reviews from topics without requiring existing project
 
 Quality Gates:
 	•	All API requests validate with Zod schemas
@@ -698,7 +702,69 @@ Quality Gates:
 
 ⸻
 
-13) Development Scripts
+13) AI Review Chat Interface (Future Enhancement)
+
+13.1 Chat Mode Overview
+
+A conversational interface that allows users to generate complete systematic reviews through an AI chat assistant. The assistant can:
+- Ask clarifying questions about the research topic
+- Generate research plans and outlines
+- Browse scholarly sources automatically
+- Create structured review content
+- Offer import/export actions
+
+13.2 Chat Data Model
+
+```prisma
+model ChatSession {
+  id         String   @id @default(uuid())
+  projectId  String?  // Assigned once review is generated
+  topic      String
+  findings   String?
+  status     String   @default("pending") // pending|waiting_user|running|completed|failed
+  runId      String?  // ExplorerRun.runId for the artifact
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  messages   ChatMessage[]
+  @@index([createdAt])
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  sessionId   String
+  role        String   // user|assistant|tool|system
+  content     String   // markdown/plaintext
+  payload     Json?    // tool results, artifacts, etc.
+  createdAt   DateTime @default(now())
+  session     ChatSession @relation(fields: [sessionId], references: [id])
+  @@index([sessionId, createdAt])
+}
+```
+
+13.3 Chat API Endpoints
+
+- POST /api/v1/chat/sessions { topic, findings? } → Create chat session
+- GET /api/v1/chat/sessions/:id → Get session with messages
+- POST /api/v1/chat/sessions/:id/messages { message } → Send user message
+- POST /api/v1/chat/sessions/:id/import → Import generated review to project
+
+13.4 Implementation Strategy
+
+**Phase 1: Backend Foundation (Current)**
+- Real PubMed integration with ESearch/EFetch
+- BullMQ job queues for explorer workflow
+- Enhanced ExplorerRun model with proper artifact storage
+- Real LLM integration with structured prompts
+
+**Phase 2: Chat Interface (Future)**
+- Conversational UI for topic refinement
+- AI assistant that can ask clarifying questions
+- Integration with existing Explorer backend
+- Seamless import to project workflow
+
+⸻
+
+14) Development Scripts
 
 {
   "scripts": {

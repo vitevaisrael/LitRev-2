@@ -1,3 +1,8 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,6 +37,34 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-display: swap;
+  }
+  
+  /* Typography scale */
+  h1 {
+    @apply text-3xl font-bold tracking-tight;
+  }
+  h2 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+  h3 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+  h4 {
+    @apply text-lg font-semibold tracking-tight;
+  }
+  
+  /* Utility classes */
+  .card {
+    @apply rounded-xl shadow-sm border bg-card text-card-foreground;
+  }
+  
+  .muted {
+    @apply text-muted-foreground;
+  }
+  
+  .separator {
+    @apply border-t border-border;
   }
 }

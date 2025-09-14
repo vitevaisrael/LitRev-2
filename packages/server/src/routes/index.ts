@@ -12,6 +12,7 @@ import { scoringRoutes } from './scoring';
 import { draftRoutes } from './draft';
 import { exportsRoutes } from './exports';
 import { importRoutes } from './import';
+import { chatRoutes } from './chat';
 import { env } from '../config/env';
 
 export async function routes(fastify: FastifyInstance) {
@@ -31,5 +32,10 @@ export async function routes(fastify: FastifyInstance) {
   // Register explorer routes only if feature is enabled
   if (env.FEATURE_EXPLORER) {
     await fastify.register(explorerRoutes);
+  }
+  
+  // Register chat routes only if feature is enabled
+  if (env.FEATURE_CHAT_REVIEW) {
+    await fastify.register(chatRoutes);
   }
 }

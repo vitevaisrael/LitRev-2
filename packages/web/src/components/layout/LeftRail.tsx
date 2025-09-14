@@ -1,4 +1,13 @@
-// import { ReactNode } from 'react';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
+import { 
+  FileText, 
+  Search, 
+  BookOpen, 
+  Edit, 
+  Download, 
+  Sparkles 
+} from 'lucide-react';
 
 interface LeftRailProps {
   activeItem: string;
@@ -7,43 +16,52 @@ interface LeftRailProps {
 
 export function LeftRail({ activeItem, onNavigate }: LeftRailProps) {
   const steps = [
-    { id: 'intake', label: '1. Intake', key: '1' },
-    { id: 'screen', label: '2. Screen', key: '2' },
-    { id: 'ledger', label: '3. Ledger', key: '3' },
-    { id: 'draft', label: '4. Draft', key: '4' },
-    { id: 'exports', label: '5. Exports', key: '5' },
+    { id: 'intake', label: 'Intake', key: '1', icon: FileText },
+    { id: 'screen', label: 'Screen', key: '2', icon: Search },
+    { id: 'ledger', label: 'Ledger', key: '3', icon: BookOpen },
+    { id: 'draft', label: 'Draft', key: '4', icon: Edit },
+    { id: 'exports', label: 'Exports', key: '5', icon: Download },
   ];
 
   return (
-    <div className="p-4">
-      <nav className="space-y-2">
-        {steps.map((step) => (
-          <button
-            key={step.id}
-            onClick={() => onNavigate(step.id)}
-            className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-              activeItem === step.id
-                ? 'bg-blue-100 text-blue-900 border border-blue-200'
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            {step.label}
-          </button>
-        ))}
-        
-        <div className="border-t pt-4 mt-4">
-          <button
+    <div className="w-72 bg-muted/30 border-r">
+      <div className="p-4">
+        <nav className="space-y-1">
+          {steps.map((step) => {
+            const Icon = step.icon;
+            return (
+              <Button
+                key={step.id}
+                onClick={() => onNavigate(step.id)}
+                variant={activeItem === step.id ? "secondary" : "ghost"}
+                className={`w-full justify-start gap-3 ${
+                  activeItem === step.id
+                    ? 'bg-secondary text-secondary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="font-medium">{step.label}</span>
+              </Button>
+            );
+          })}
+          
+          <Separator className="my-4" />
+          
+          <Button
             onClick={() => onNavigate('explorer')}
-            className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+            variant={activeItem === 'explorer' ? "secondary" : "ghost"}
+            className={`w-full justify-start gap-3 ${
               activeItem === 'explorer'
-                ? 'bg-purple-100 text-purple-900 border border-purple-200'
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-secondary text-secondary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            AI Explorer
-          </button>
-        </div>
-      </nav>
+            <Sparkles className="h-4 w-4" />
+            <span className="font-medium">AI Explorer</span>
+          </Button>
+        </nav>
+      </div>
     </div>
   );
 }

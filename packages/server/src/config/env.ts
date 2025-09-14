@@ -13,6 +13,7 @@ export const env = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   UNPAYWALL_EMAIL: process.env.UNPAYWALL_EMAIL!,
   FEATURE_EXPLORER: process.env.FEATURE_EXPLORER === 'true',
+  FEATURE_CHAT_REVIEW: process.env.FEATURE_CHAT_REVIEW === 'true',
   PORT: parseInt(process.env.PORT || '3000'),
   NODE_ENV: process.env.NODE_ENV || 'development'
 };

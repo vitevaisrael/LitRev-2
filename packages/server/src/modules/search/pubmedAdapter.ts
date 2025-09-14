@@ -18,7 +18,7 @@ export class PubMedAdapter {
       const esearchUrl = `${this.base}/esearch.fcgi?db=pubmed&retmode=json&retmax=${Math.min(maxResults, 200)}&term=${encodeURIComponent(query)}`;
       const esResp = await fetch(esearchUrl);
       const esData = await esResp.json();
-      const pmids: string[] = esData?.esearchresult?.idlist || [];
+      const pmids: string[] = (esData as any)?.esearchresult?.idlist || [];
       if (pmids.length === 0) return [];
 
       // 2) EFetch: get details

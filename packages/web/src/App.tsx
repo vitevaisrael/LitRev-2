@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
 import { Projects } from './pages/Projects';
 import { Project } from './pages/Project';
+import { ChatReview } from './pages/ChatReview';
 
 function App() {
   return (
@@ -24,6 +25,11 @@ function App() {
               <Route path="/project/:id" element={
                 <ProtectedRoute>
                   <Project />
+                </ProtectedRoute>
+              } />
+              <Route path="/chat-review" element={
+                <ProtectedRoute>
+                  <ChatReview />
                 </ProtectedRoute>
               } />
               <Route path="/" element={
