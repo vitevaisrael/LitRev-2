@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { JobStatusSchema } from '@the-scientist/schemas';
-import { getExplorerQueue } from '../modules/explorer/queue';
+import { explorerService } from '../modules/explorer/service';
 
 const ExplorerRunSchema = z.object({
   prompt: z.string().optional(),
@@ -203,21 +203,8 @@ export async function explorerRoutes(fastify: FastifyInstance) {
       const { id: projectId } = request.params as { id: string };
       const { prompt, model } = request.body as { prompt?: string; model?: string };
       
-      // Create job status
-      const queue = getExplorerQueue();
-      const job = await queue.add('run', { projectId, prompt, model });
-
-      await prisma.jobStatus.create({
-        data: {
-          jobId: String(job.id),
-          projectId,
-          type: 'explorer',
-          status: 'pending',
-          progress: { step: 'initializing', count: 0, total: 4 }
-        }
-      });
-
-      return sendSuccess(reply, { jobId: String(job.id) });
+      const { jobId } = await explorerService.launch({ projectId, prompt, model });
+      return sendSuccess(reply, { jobId });
     } catch (error) {
       return sendError(reply, 'EXPLORER_ERROR', 'Failed to start explorer run', 500);
     }
@@ -228,9 +215,7 @@ export async function explorerRoutes(fastify: FastifyInstance) {
     try {
       const { id: projectId, runId } = request.params as { id: string; runId: string };
       
-      const explorerRun = await prisma.explorerRun.findFirst({
-        where: { runId, projectId }
-      });
+      const explorerRun = await explorerService.getRun(projectId, runId);
 
       if (!explorerRun) {
         return sendError(reply, 'NOT_FOUND', 'Explorer run not found', 404);
