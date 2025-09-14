@@ -10,5 +10,6 @@ export const queryKeys = {
   draft: (id: string) => ['draft', id] as const,
   'explorer-runs': (id: string) => ['explorer-runs', id] as const,
   'explorer-run': (id: string, runId: string) => ['explorer-run', id, runId] as const,
+  'job-status': (jobId: string) => ['job-status', jobId] as const,
   auditLogs: (id: string) => ['audit-logs', id] as const,
 } as const;

@@ -142,3 +142,26 @@
 - Automatic file download with proper headers and filenames
 - User-friendly export interface with loading states and descriptions
 
+## Task 14 - Intake (Problem Profile save + Plan stub) ✅
+- Add GET /api/v1/projects/:id/intake/profile endpoint to fetch existing profile
+- Add POST /api/v1/projects/:id/intake/profile endpoint for upsert with Zod validation
+- Add POST /api/v1/projects/:id/intake/plan endpoint to generate plan from saved profile
+- Update ProblemProfile.tsx to load existing profile on mount
+- Add Save Profile functionality with loading states and error handling
+- Add Generate Plan functionality with mini-abstract and PICO anchors
+- Create audit log entries for profile saves
+- Display generated plan in right context pane (C3) with mini-abstract, anchors, and outline
+- Plan generation uses saved profile data to create structured review plan
+- Real-time UI updates with proper loading states and user feedback
+
+## Task 15 - Explorer polish: job status + run view + selective import ✅
+- Added GET /api/v1/job-status/:jobId endpoint for job status tracking with 404 handling
+- Updated POST /projects/:id/explorer/run with stepwise progress simulation (planning → browsing → drafting → finalizing)
+- Created ExplorerRun with canned data including outline, narrative sections, and 5 references with DOI/PMID
+- Added job status polling in frontend with 2-second intervals until completion/failure
+- Added progress bar display showing current step, count/total, and error states
+- Connected real ExplorerRun data to ExplorerPanel with selective import functionality
+- Import selected refs calls existing POST /projects/:id/explorer/import with real runId
+- Automatic refetch of candidates, PRISMA widget, and audit logs after import
+- Visible stepwise progress with results appearing and selected refs importing as Candidates
+

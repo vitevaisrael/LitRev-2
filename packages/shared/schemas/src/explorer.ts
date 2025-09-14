@@ -38,5 +38,21 @@ export const ImportRefsSchema = z.object({
   }))
 }).strict();
 
+export const JobStatusSchema = z.object({
+  jobId: UUIDSchema,
+  projectId: UUIDSchema,
+  type: z.string(),
+  status: z.enum(['pending', 'running', 'completed', 'failed']),
+  progress: z.object({
+    step: z.string(),
+    count: z.number().int(),
+    total: z.number().int()
+  }).optional(),
+  error: z.string().optional(),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema
+}).strict();
+
 export type ExplorerRun = z.infer<typeof ExplorerRunSchema>;
 export type ImportRefs = z.infer<typeof ImportRefsSchema>;
+export type JobStatus = z.infer<typeof JobStatusSchema>;

@@ -22,6 +22,7 @@ export function Project() {
   const [activeStep, setActiveStep] = useState('intake');
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch PRISMA data
@@ -29,6 +30,28 @@ export function Project() {
     queryKey: queryKeys.prisma(id || ''),
     queryFn: () => api.get(`/projects/${id}/prisma`),
     enabled: !!id
+  });
+
+  // Poll job status when we have a current job
+  const { data: jobStatus } = useQuery({
+    queryKey: queryKeys['job-status'](currentJobId || ''),
+    queryFn: () => api.get(`/job-status/${currentJobId}`),
+    enabled: !!currentJobId,
+    refetchInterval: (data) => {
+      // Stop polling if job is completed or failed
+      if (data?.data?.jobStatus?.status === 'completed' || data?.data?.jobStatus?.status === 'failed') {
+        return false;
+      }
+      return 2000; // Poll every 2 seconds
+    }
+  });
+
+  // Fetch explorer run when job is completed
+  const runId = jobStatus?.data?.jobStatus?.progress?.runId;
+  const { data: explorerRun } = useQuery({
+    queryKey: queryKeys['explorer-run'](id || '', runId || ''),
+    queryFn: () => api.get(`/projects/${id}/explorer/${runId}`),
+    enabled: !!runId && !!id
   });
 
   // Decision mutation
@@ -51,8 +74,9 @@ export function Project() {
   const explorerRunMutation = useMutation({
     mutationFn: (data: any) => api.post(`/projects/${id}/explorer/run`, data),
     onSuccess: (response) => {
-      console.log('Explorer run started:', (response.data as any).jobId);
-      // In a real app, you'd poll for completion or use websockets
+      const jobId = (response.data as any).jobId;
+      console.log('Explorer run started:', jobId);
+      setCurrentJobId(jobId);
     },
     onError: (error) => {
       console.error('Failed to start explorer run:', error);
@@ -182,55 +206,52 @@ export function Project() {
             <div className="mb-4">
               <button
                 onClick={() => explorerRunMutation.mutate({ prompt: 'Generate a systematic review outline for IgA nephropathy treatment' })}
-                disabled={explorerRunMutation.isPending}
+                disabled={explorerRunMutation.isPending || currentJobId !== null}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
               >
-                {explorerRunMutation.isPending ? 'Running Explorer...' : 'Run Explorer'}
+                {explorerRunMutation.isPending ? 'Starting Explorer...' : currentJobId ? 'Explorer Running...' : 'Run Explorer'}
               </button>
+              
+              {/* Job Status Display */}
+              {jobStatus?.data?.jobStatus && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">Status: {jobStatus.data.jobStatus.status}</span>
+                    <span className="text-sm text-gray-600">
+                      {jobStatus.data.jobStatus.progress?.count || 0} / {jobStatus.data.jobStatus.progress?.total || 0}
+                    </span>
+                  </div>
+                  {jobStatus.data.jobStatus.progress && (
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ 
+                          width: `${((jobStatus.data.jobStatus.progress.count || 0) / (jobStatus.data.jobStatus.progress.total || 1)) * 100}%` 
+                        }}
+                      ></div>
+                    </div>
+                  )}
+                  <div className="text-sm text-gray-600 mt-1">
+                    Step: {jobStatus.data.jobStatus.progress?.step || 'initializing'}
+                  </div>
+                  {jobStatus.data.jobStatus.error && (
+                    <div className="text-sm text-red-600 mt-1">
+                      Error: {jobStatus.data.jobStatus.error}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+            
             <ExplorerPanel
-              run={{
-                runId: 'mock-run-123',
-                outline: [
-                  'Introduction to IgA nephropathy',
-                  'Pathophysiology and diagnosis',
-                  'Treatment options and evidence',
-                  'Corticosteroid therapy outcomes',
-                  'Future directions'
-                ],
-                narrative: [
-                  {
-                    section: 'Introduction',
-                    text: 'IgA nephropathy is the most common primary glomerulonephritis worldwide, affecting approximately 1.3% of the global population.',
-                    refs: [{ doi: '10.1001/jama.2023.12345' }]
-                  },
-                  {
-                    section: 'Treatment',
-                    text: 'Corticosteroid therapy has shown promise in reducing proteinuria in IgA nephropathy patients, though the evidence remains controversial.',
-                    refs: [{ doi: '10.1001/jama.2023.12345' }, { pmid: '87654321' }]
-                  }
-                ],
-                refs: [
-                  {
-                    title: 'Corticosteroids in IgA Nephropathy: A Systematic Review',
-                    journal: 'JAMA',
-                    year: 2023,
-                    doi: '10.1001/jama.2023.12345'
-                  },
-                  {
-                    title: 'Adalimumab for Uveitis in Spondyloarthritis',
-                    journal: 'NEJM',
-                    year: 2022,
-                    pmid: '87654321'
-                  }
-                ]
-              }}
+              run={explorerRun?.data?.explorer}
               onImportSelected={(refs) => {
-                // For now, use a mock runId since we don't have a real explorer run
-                importRefsMutation.mutate({
-                  runId: 'mock-run-123',
-                  refs: refs
-                });
+                if (runId) {
+                  importRefsMutation.mutate({
+                    runId: runId,
+                    refs: refs
+                  });
+                }
               }}
               onCreateClaimFromParagraph={(text) => {
                 console.log('Create claim from:', text);
