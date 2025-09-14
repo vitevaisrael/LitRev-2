@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface Candidate {
   id: string;
@@ -20,6 +21,7 @@ interface Candidate {
 interface DecisionCardProps {
   candidate: Candidate;
   parsedDoc?: any;
+  projectId: string;
   onInclude: (reason?: string, justification?: string) => void;
   onExclude: (reason: string, justification?: string) => void;
   onBetter: (reason?: string) => void;
@@ -29,6 +31,7 @@ interface DecisionCardProps {
 export function DecisionCard({ 
   candidate, 
   parsedDoc, 
+  projectId,
   onInclude, 
   onExclude, 
   onBetter, 
@@ -36,6 +39,75 @@ export function DecisionCard({
 }: DecisionCardProps) {
   const [reason, setReason] = useState('');
   const [justification, setJustification] = useState('');
+  const [showSentences, setShowSentences] = useState(false);
+  const [sentenceSearch, setSentenceSearch] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  // PDF upload mutation
+  const pdfUploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(`/api/v1/projects/${projectId}/candidates/${candidate.id}/pdf`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Request failed');
+      }
+      
+      return data;
+    },
+    onSuccess: () => {
+      // Refetch parsed doc and audit logs
+      queryClient.invalidateQueries({ queryKey: ['parsed', candidate.id] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs', projectId] });
+      alert('PDF uploaded and parsed successfully!');
+    },
+    onError: (error: any) => {
+      alert(`PDF upload failed: ${error.message}`);
+    }
+  });
+
+  // Fetch parsed document
+  const { data: parsedDocData } = useQuery({
+    queryKey: ['parsed', candidate.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/v1/projects/${projectId}/candidates/${candidate.id}/parsed`);
+      if (response.status === 404) return null;
+      const data = await response.json();
+      return data.data;
+    },
+    enabled: showSentences
+  });
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        alert('Please select a PDF file');
+        return;
+      }
+      pdfUploadMutation.mutate(file);
+    }
+  };
+
+  // Filter sentences based on search
+  const filteredSentences = parsedDocData?.textJson?.pages?.flatMap((page: any) =>
+    page.sentences
+      .filter((sentence: any) => 
+        sentence.text.toLowerCase().includes(sentenceSearch.toLowerCase())
+      )
+      .map((sentence: any) => ({
+        ...sentence,
+        page: page.page
+      }))
+  ) || [];
 
   return (
     <div className="p-6 space-y-6">
@@ -63,6 +135,65 @@ export function DecisionCard({
             <div>Directness: {candidate.score.directness}/10</div>
             <div>Recency: {candidate.score.recency}/5</div>
             <div>Journal: {candidate.score.journal}/5</div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Upload Section */}
+      <div className="border-t pt-4">
+        <h3 className="font-medium mb-2">PDF Document</h3>
+        <div className="space-y-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={pdfUploadMutation.isPending}
+            className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            {pdfUploadMutation.isPending ? 'Uploading...' : 'Attach PDF'}
+          </button>
+          
+          {parsedDocData && (
+            <button
+              onClick={() => setShowSentences(!showSentences)}
+              className="ml-2 px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+            >
+              {showSentences ? 'Hide' : 'Show'} Sentences
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Sentences Panel */}
+      {showSentences && parsedDocData && (
+        <div className="border-t pt-4">
+          <h3 className="font-medium mb-2">Sentences</h3>
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={sentenceSearch}
+              onChange={(e) => setSentenceSearch(e.target.value)}
+              className="w-full p-2 border rounded text-sm"
+              placeholder="Search sentences..."
+            />
+            <div className="text-sm text-gray-600">
+              {filteredSentences.length} sentences found
+            </div>
+            <div className="max-h-64 overflow-y-auto space-y-1">
+              {filteredSentences.map((sentence: any, index: number) => (
+                <div key={index} className="text-sm p-2 bg-gray-50 rounded">
+                  <div className="font-medium text-gray-600">
+                    Page {sentence.page}, Sentence {sentence.idx}
+                  </div>
+                  <div className="text-gray-800">{sentence.text}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

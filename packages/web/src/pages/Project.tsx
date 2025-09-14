@@ -122,6 +122,7 @@ export function Project() {
         return selectedCandidate ? (
           <DecisionCard
             candidate={selectedCandidate}
+            projectId={id || ''}
             onInclude={(reason, justification) => {
               decisionMutation.mutate({
                 candidateId: selectedCandidate.id,

@@ -69,3 +69,13 @@
 - Added error codes and rate limiting information
 - Both files are readable and match current behavior
 
+## Task 8 - Import (RIS/BibTeX → Candidates) ✅
+- Added import API route: POST /api/v1/projects/:id/import (multipart/form-data)
+- Implemented RIS and BibTeX parsers with normalization to common format
+- Added deduplication logic: exact DOI/PMID match, fuzzy title + year matching
+- Create Candidate records and update PrismaData.identified counters
+- Added Import button to TopBar and ImportModal component
+- Frontend import flow with file picker, validation, and success handling
+- Automatic refetch of candidates, PRISMA widget, and audit logs after import
+- Support for .ris, .bib, .bibtex file formats with proper validation
+
