@@ -1,9 +1,7 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { sendSuccess, sendError } from '../utils/response';
+import { prisma } from '../lib/prisma';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
 
 const CreateProjectSchema = z.object({
   title: z.string().min(1)

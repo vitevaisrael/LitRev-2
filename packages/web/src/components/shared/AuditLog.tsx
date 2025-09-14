@@ -32,9 +32,9 @@ export function AuditLog({ projectId }: AuditLogProps) {
           entries.map((entry: any, index: number) => (
             <div key={index} className="text-xs border-l-2 border-gray-200 pl-2">
               <div className="flex justify-between items-start">
-                <span className="font-medium">{entry.kind}</span>
+                <span className="font-medium">{entry.action}</span>
                 <span className="text-gray-500">
-                  {new Date(entry.ts).toLocaleTimeString()}
+                  {new Date(entry.timestamp).toLocaleTimeString()}
                 </span>
               </div>
               <div className="text-gray-600 mt-1">

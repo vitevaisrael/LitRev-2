@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import { NormalizedRef } from './parser';
 import { deduplicateReferences } from './deduplicator';
 import { calculateScore } from '../../utils/scoreCalculator';
-
-const prisma = new PrismaClient();
 
 export interface ImportResult {
   added: number;

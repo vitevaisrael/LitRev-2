@@ -1,9 +1,7 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { sendSuccess, sendError } from '../utils/response';
+import { prisma } from '../lib/prisma';
 import { calculateScore } from '../utils/scoreCalculator';
-
-const prisma = new PrismaClient();
 
 export async function scoringRoutes(fastify: FastifyInstance) {
   // POST /api/v1/projects/:id/candidates/:cid/recompute-score

@@ -139,7 +139,7 @@ Get audit log entries for a project.
         "userId": "uuid",
         "action": "project_created",
         "details": { "title": "Project Title" },
-        "ts": "2024-01-01T00:00:00.000Z"
+        "timestamp": "2024-01-01T00:00:00.000Z"
       }
     ]
   }
@@ -311,9 +311,8 @@ Create a new claim.
 **Request:**
 ```json
 {
-  "title": "Claim Title",
-  "description": "Claim description",
-  "source": "Source information"
+  "text": "Claim text content",
+  "section": "Optional section name"
 }
 ```
 

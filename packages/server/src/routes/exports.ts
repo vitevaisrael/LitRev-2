@@ -1,8 +1,6 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { sendSuccess, sendError } from '../utils/response';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
 
 export async function exportsRoutes(fastify: FastifyInstance) {
   // POST /api/v1/projects/:id/exports/markdown

@@ -1,12 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { sendSuccess, sendError } from '../utils/response';
+import { prisma } from '../lib/prisma';
 import { uploadFile } from '../modules/storage/s3';
 import { parsePdf } from '../modules/ingest/parser';
 import { PdfUploadResponseSchema, ParsedDocResponseSchema } from '@the-scientist/schemas';
 import { env } from '../config/env';
-
-const prisma = new PrismaClient();
 
 export async function pdfRoutes(fastify: FastifyInstance) {
   // Register multipart support (if not already registered)

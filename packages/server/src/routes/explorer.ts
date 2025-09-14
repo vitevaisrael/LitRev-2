@@ -1,11 +1,9 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { sendSuccess, sendError } from '../utils/response';
+import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { JobStatusSchema } from '@the-scientist/schemas';
-
-const prisma = new PrismaClient();
 
 const ExplorerRunSchema = z.object({
   prompt: z.string().optional(),

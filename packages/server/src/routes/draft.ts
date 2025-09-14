@@ -1,9 +1,7 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { sendSuccess, sendError } from '../utils/response';
+import { prisma } from '../lib/prisma';
 import { DraftSectionSchema, DraftResponseSchema, DraftListResponseSchema } from '@the-scientist/schemas';
-
-const prisma = new PrismaClient();
 
 export async function draftRoutes(fastify: FastifyInstance) {
   // GET /api/v1/projects/:id/draft

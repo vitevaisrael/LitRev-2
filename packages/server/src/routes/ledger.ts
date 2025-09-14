@@ -1,14 +1,11 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { sendSuccess, sendError } from '../utils/response';
+import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 
-const prisma = new PrismaClient();
-
 const CreateClaimSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().optional(),
-  source: z.string().optional()
+  text: z.string().min(1),
+  section: z.string().optional()
 }).strict();
 
 const CreateSupportSchema = z.object({
@@ -70,7 +67,7 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
             projectId,
             userId: defaultUserId,
             action: 'claim_created',
-            details: { claimId: newClaim.id, title: claimData.title }
+            details: { claimId: newClaim.id, text: claimData.text }
           }
         });
 

@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import { NormalizedRef } from './parser';
-
-const prisma = new PrismaClient();
 
 export interface DeduplicationResult {
   toAdd: NormalizedRef[];

@@ -1,10 +1,8 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { sendSuccess, sendError } from '../utils/response';
+import { prisma } from '../lib/prisma';
 import { PaginationSchema, PaginatedResponseSchema } from '@the-scientist/schemas';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
 
 const CandidateFiltersSchema = z.object({
   q: z.string().optional(),

@@ -2,10 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { ScreeningProposalSchema, DecideBodySchema } from '@the-scientist/schemas';
 import { screener } from '../modules/screen/screener';
 import { sendSuccess, sendError } from '../utils/response';
+import { prisma } from '../lib/prisma';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 const ProposeSchema = z.object({
   candidateId: z.string().uuid()
