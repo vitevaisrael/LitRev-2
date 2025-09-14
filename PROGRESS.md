@@ -349,3 +349,73 @@
 - **Accessibility**: Proper ARIA labels and keyboard navigation support
 
 **Next Steps**: Ready for Phase 2 (responsive design) and Phase 3 (advanced components) when needed.
+
+## Task UI-02 — Screening UI Baseline ✅
+
+**Goal**: Polish core desktop layout and screening surfaces with enhanced visual hierarchy and improved user experience.
+
+### ✅ Completed Implementation
+
+**1) Enhanced DecisionCard Component**
+- ✅ Converted to shadcn Card-based layout with proper visual hierarchy
+- ✅ Added header card with title, journal, year, DOI/PMID badges
+- ✅ Improved abstract section with FileText icon and better typography
+- ✅ Enhanced score display with progress bars and detailed breakdowns
+- ✅ Redesigned PDF upload section with Upload icon and better button layout
+- ✅ Improved sentences panel with search functionality and better card styling
+- ✅ Enhanced quote picker with proper form controls and visual feedback
+- ✅ Redesigned decision form with grid layout and action buttons with icons
+- ✅ Added proper loading states and error handling
+
+**2) Improved CandidateList Component**
+- ✅ Converted to shadcn Card-based layout with proper spacing
+- ✅ Added header card with progress tracking and batch mode toggle
+- ✅ Enhanced candidate cards with better visual hierarchy and status indicators
+- ✅ Added skeleton loading states for better UX
+- ✅ Improved pagination with proper button styling and icons
+- ✅ Added status badges with icons (Included/Excluded/Other decisions)
+- ✅ Better responsive layout and hover effects
+
+**3) Enhanced FilterBar Component**
+- ✅ Converted to shadcn Card-based layout
+- ✅ Added search icon and improved input styling
+- ✅ Enhanced form controls with proper labels and styling
+- ✅ Added reset button with icon
+- ✅ Better responsive layout and spacing
+
+**4) Polished Three-Pane Layout**
+- ✅ Improved visual hierarchy with proper background colors
+- ✅ Added subtle borders and better contrast
+- ✅ Enhanced spacing and layout consistency
+- ✅ Better visual separation between panes
+
+**5) Added Missing UI Components**
+- ✅ Created Progress component with Radix UI integration
+- ✅ Created Checkbox component with Radix UI integration
+- ✅ Added proper dependencies (@radix-ui/react-progress, @radix-ui/react-checkbox)
+
+### ✅ Acceptance Criteria Met
+- ✅ All screening components use shadcn/ui design system consistently
+- ✅ Enhanced visual hierarchy with proper card layouts and spacing
+- ✅ Improved user experience with better loading states and feedback
+- ✅ Better status indicators and progress tracking
+- ✅ Enhanced form controls and input styling
+- ✅ No breaking changes to existing functionality
+- ✅ Build successful and application running on http://localhost:5173
+- ✅ All TypeScript errors resolved
+
+### 🎨 Design Improvements
+- **Card-Based Layout**: All components now use consistent shadcn Card components
+- **Visual Hierarchy**: Clear separation of content with proper headers and sections
+- **Status Indicators**: Enhanced badges and progress bars for better status visibility
+- **Form Controls**: Improved input styling with proper labels and icons
+- **Loading States**: Skeleton components for better perceived performance
+- **Interactive Elements**: Better hover effects and visual feedback
+
+### 🔧 Technical Implementation
+- **Component Library**: Consistent use of shadcn/ui components throughout
+- **Accessibility**: Proper labels, ARIA attributes, and keyboard navigation
+- **Performance**: Optimized rendering with proper loading states
+- **Maintainability**: Clean component structure with reusable patterns
+
+**Next Steps**: Ready for UI-03 (PDF Upload UX Upgrade) and subsequent UI tasks.

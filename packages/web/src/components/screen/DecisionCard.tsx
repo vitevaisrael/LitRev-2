@@ -1,5 +1,13 @@
 import { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Separator } from '../ui/separator';
+import { Alert, AlertDescription } from '../ui/alert';
+import { FileText, Upload, Search, Quote, CheckCircle, XCircle, HelpCircle, MessageSquare } from 'lucide-react';
 import { queryKeys } from '../../lib/queryKeys';
 
 interface Candidate {
@@ -205,206 +213,324 @@ export function DecisionCard({
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-2">{candidate.title}</h2>
-        <div className="text-sm text-gray-600 space-y-1">
-          <div>{candidate.journal} ({candidate.year})</div>
-          {candidate.doi && <div>DOI: {candidate.doi}</div>}
-          {candidate.pmid && <div>PMID: {candidate.pmid}</div>}
-        </div>
-      </div>
+      {/* Header Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl leading-tight">{candidate.title}</CardTitle>
+          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+            <Badge variant="outline">{candidate.journal}</Badge>
+            <Badge variant="outline">{candidate.year}</Badge>
+            {candidate.doi && (
+              <Badge variant="secondary" className="font-mono text-xs">
+                DOI: {candidate.doi}
+              </Badge>
+            )}
+            {candidate.pmid && (
+              <Badge variant="secondary" className="font-mono text-xs">
+                PMID: {candidate.pmid}
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+      </Card>
 
       {candidate.abstract && (
-        <div>
-          <h3 className="font-medium mb-2">Abstract</h3>
-          <p className="text-sm text-gray-700">{candidate.abstract}</p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Abstract
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed">{candidate.abstract}</p>
+          </CardContent>
+        </Card>
       )}
 
       {candidate.score && (
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-medium">Score: {candidate.score.total}/60</h3>
-            <button
-              onClick={() => recomputeScoreMutation.mutate()}
-              disabled={recomputeScoreMutation.isPending}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50"
-              title="Recompute score based on current data"
-            >
-              {recomputeScoreMutation.isPending ? 'Computing...' : 'Recompute'}
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div title="Study design type (SR/MA=40, RCT=35, Cohort=28, etc.)">
-              Design: {candidate.score.design}/40
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg">Quality Score: {candidate.score.total}/65</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => recomputeScoreMutation.mutate()}
+                disabled={recomputeScoreMutation.isPending}
+                title="Recompute score based on current data"
+              >
+                {recomputeScoreMutation.isPending ? 'Computing...' : 'Recompute'}
+              </Button>
             </div>
-            <div title="Relevance to problem profile (exact=10, close=7, partial=3, off=0)">
-              Directness: {candidate.score.directness}/10
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Design</span>
+                  <span className="font-medium">{candidate.score.design}/40</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(candidate.score.design / 40) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Study design type (SR/MA=40, RCT=35, Cohort=28, etc.)</p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Directness</span>
+                  <span className="font-medium">{candidate.score.directness}/10</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(candidate.score.directness / 10) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Relevance to problem profile (exact=10, close=7, partial=3, off=0)</p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Recency</span>
+                  <span className="font-medium">{candidate.score.recency}/5</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(candidate.score.recency / 5) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Publication recency (≤2y=5, ≤5y=3, older=1, very old=0)</p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Journal</span>
+                  <span className="font-medium">{candidate.score.journal}/5</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(candidate.score.journal / 5) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Journal impact factor (NEJM/Lancet/JAMA=5, etc.)</p>
+              </div>
             </div>
-            <div title="Publication recency (≤2y=5, ≤5y=3, older=1, very old=0)">
-              Recency: {candidate.score.recency}/5
-            </div>
-            <div title="Journal impact factor (NEJM/Lancet/JAMA=5, etc.)">
-              Journal: {candidate.score.journal}/5
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* PDF Upload Section */}
-      <div className="border-t pt-4">
-        <h3 className="font-medium mb-2">PDF Document</h3>
-        <div className="space-y-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={pdfUploadMutation.isPending}
-            className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {pdfUploadMutation.isPending ? 'Uploading...' : 'Attach PDF'}
-          </button>
-          
-          {parsedDocData && (
-            <>
-              <button
-                onClick={() => setShowSentences(!showSentences)}
-                className="ml-2 px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-              >
-                {showSentences ? 'Hide' : 'Show'} Sentences
-              </button>
-              <button
-                onClick={() => setShowQuotePicker(!showQuotePicker)}
-                className="ml-2 px-3 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
-              >
-                {showQuotePicker ? 'Cancel' : 'Capture Quote'}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Upload className="h-5 w-5" />
+            PDF Document
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={pdfUploadMutation.isPending}
+              className="w-full"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {pdfUploadMutation.isPending ? 'Uploading...' : 'Attach PDF'}
+            </Button>
+            
+            {parsedDocData && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSentences(!showSentences)}
+                  className="flex-1"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  {showSentences ? 'Hide' : 'Show'} Sentences
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowQuotePicker(!showQuotePicker)}
+                  className="flex-1"
+                >
+                  <Quote className="h-4 w-4 mr-2" />
+                  {showQuotePicker ? 'Cancel' : 'Capture Quote'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Sentences Panel */}
       {showSentences && parsedDocData && (
-        <div className="border-t pt-4">
-          <h3 className="font-medium mb-2">Sentences</h3>
-          <div className="space-y-2">
-            <input
-              type="text"
-              value={sentenceSearch}
-              onChange={(e) => setSentenceSearch(e.target.value)}
-              className="w-full p-2 border rounded text-sm"
-              placeholder="Search sentences..."
-            />
-            <div className="text-sm text-gray-600">
-              {filteredSentences.length} sentences found
-            </div>
-            <div className="max-h-64 overflow-y-auto space-y-1">
-              {filteredSentences.map((sentence: any, index: number) => (
-                <div key={index} className="text-sm p-2 bg-gray-50 rounded">
-                  <div className="font-medium text-gray-600">
-                    Page {sentence.page}, Sentence {sentence.idx}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Document Sentences
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="sentence-search">Search sentences</Label>
+                <Input
+                  id="sentence-search"
+                  type="text"
+                  value={sentenceSearch}
+                  onChange={(e) => setSentenceSearch(e.target.value)}
+                  placeholder="Search sentences..."
+                />
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {filteredSentences.length} sentences found
+              </div>
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {filteredSentences.map((sentence: any, index: number) => (
+                  <div key={index} className="p-3 bg-muted rounded-lg">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                      <Badge variant="outline" className="text-xs">
+                        Page {sentence.page}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        Sentence {sentence.idx}
+                      </Badge>
+                    </div>
+                    <div className="text-sm">{sentence.text}</div>
                   </div>
-                  <div className="text-gray-800">{sentence.text}</div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Quote Picker Panel */}
       {showQuotePicker && parsedDocData && (
-        <div className="border-t pt-4">
-          <h3 className="font-medium mb-4">Capture Quote</h3>
-          
-          {/* Claim Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Select Claim</label>
-            <select
-              value={selectedClaimId}
-              onChange={(e) => setSelectedClaimId(e.target.value)}
-              className="w-full p-2 border rounded text-sm"
-            >
-              <option value="">Choose a claim...</option>
-              {claimsData?.claims?.map((claim: any) => (
-                <option key={claim.id} value={claim.id}>
-                  {claim.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Sentence Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Search and Select Sentence</label>
-            <input
-              type="text"
-              value={sentenceSearch}
-              onChange={(e) => setSentenceSearch(e.target.value)}
-              className="w-full p-2 border rounded text-sm mb-2"
-              placeholder="Search sentences..."
-            />
-            <div className="text-sm text-gray-600 mb-2">
-              {filteredSentences.length} sentences found
-            </div>
-            <div className="max-h-48 overflow-y-auto space-y-1">
-              {filteredSentences.map((sentence: any, index: number) => (
-                <div
-                  key={index}
-                  onClick={() => handleSentenceSelect(sentence)}
-                  className={`text-sm p-2 rounded cursor-pointer transition-colors ${
-                    selectedSentence?.idx === sentence.idx && selectedSentence?.page === sentence.page
-                      ? 'bg-purple-100 border-2 border-purple-300'
-                      : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Quote className="h-5 w-5" />
+              Capture Quote
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Claim Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="claim-select">Select Claim</Label>
+                <select
+                  id="claim-select"
+                  value={selectedClaimId}
+                  onChange={(e) => setSelectedClaimId(e.target.value)}
+                  className="w-full p-2 border rounded text-sm"
                 >
-                  <div className="font-medium text-gray-600">
-                    Page {sentence.page}, Sentence {sentence.idx}
-                  </div>
-                  <div className="text-gray-800">{sentence.text}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Selected Sentence Preview */}
-          {selectedSentence && (
-            <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded">
-              <div className="text-sm font-medium text-purple-800 mb-1">Selected Quote:</div>
-              <div className="text-sm text-purple-700">
-                Page {selectedSentence.page}, Sentence {selectedSentence.idx}
+                  <option value="">Choose a claim...</option>
+                  {claimsData?.claims?.map((claim: any) => (
+                    <option key={claim.id} value={claim.id}>
+                      {claim.title}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="text-sm text-gray-800 mt-1">{selectedSentence.text}</div>
-            </div>
-          )}
 
-          {/* Capture Button */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleCaptureQuote}
-              disabled={!selectedSentence || !selectedClaimId || createSupportMutation.isPending}
-              className="px-4 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 disabled:opacity-50"
-            >
-              {createSupportMutation.isPending ? 'Capturing...' : 'Capture Quote'}
-            </button>
-            <button
-              onClick={() => {
-                setShowQuotePicker(false);
-                setSelectedSentence(null);
-                setSelectedClaimId('');
-              }}
-              className="px-4 py-2 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+              <Separator />
+
+              {/* Sentence Selection */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="quote-search">Search and Select Sentence</Label>
+                  <Input
+                    id="quote-search"
+                    type="text"
+                    value={sentenceSearch}
+                    onChange={(e) => setSentenceSearch(e.target.value)}
+                    placeholder="Search sentences..."
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {filteredSentences.length} sentences found
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-2">
+                  {filteredSentences.map((sentence: any, index: number) => (
+                    <div
+                      key={index}
+                      onClick={() => handleSentenceSelect(sentence)}
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedSentence?.idx === sentence.idx && selectedSentence?.page === sentence.page
+                          ? 'bg-primary/10 border-2 border-primary'
+                          : 'bg-muted hover:bg-muted/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                        <Badge variant="outline" className="text-xs">
+                          Page {sentence.page}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Sentence {sentence.idx}
+                        </Badge>
+                      </div>
+                      <div className="text-sm">{sentence.text}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selected Sentence Preview */}
+              {selectedSentence && (
+                <Alert>
+                  <Quote className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <div className="font-medium">Selected Quote:</div>
+                      <div className="text-sm text-muted-foreground">
+                        Page {selectedSentence.page}, Sentence {selectedSentence.idx}
+                      </div>
+                      <div className="text-sm">{selectedSentence.text}</div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Capture Button */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleCaptureQuote}
+                  disabled={!selectedSentence || !selectedClaimId || createSupportMutation.isPending}
+                  className="flex-1"
+                >
+                  <Quote className="h-4 w-4 mr-2" />
+                  {createSupportMutation.isPending ? 'Capturing...' : 'Capture Quote'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowQuotePicker(false);
+                    setSelectedSentence(null);
+                    setSelectedClaimId('');
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {parsedDoc && (
@@ -425,56 +551,72 @@ export function DecisionCard({
         </div>
       )}
 
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm font-medium mb-1">Reason (optional)</label>
-          <input
-            type="text"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="w-full p-2 border rounded"
-            placeholder="Brief reason for decision..."
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-1">Justification (optional)</label>
-          <textarea
-            value={justification}
-            onChange={(e) => setJustification(e.target.value)}
-            className="w-full p-2 border rounded"
-            placeholder="Detailed justification..."
-            rows={3}
-          />
-        </div>
-      </div>
+      {/* Decision Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Make Decision</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reason">Reason (optional)</Label>
+              <Input
+                id="reason"
+                type="text"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Brief reason for decision..."
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="justification">Justification (optional)</Label>
+              <textarea
+                id="justification"
+                value={justification}
+                onChange={(e) => setJustification(e.target.value)}
+                className="w-full p-2 border rounded resize-none"
+                placeholder="Detailed justification..."
+                rows={3}
+              />
+            </div>
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => onInclude(reason, justification)}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Include
-        </button>
-        <button
-          onClick={() => onExclude(reason || 'No reason provided', justification)}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Exclude
-        </button>
-        <button
-          onClick={() => onBetter(reason)}
-          className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-        >
-          Better
-        </button>
-        <button
-          onClick={() => onAsk(reason)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Ask
-        </button>
-      </div>
+            <Separator />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={() => onInclude(reason, justification)}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Include
+              </Button>
+              <Button
+                onClick={() => onExclude(reason || 'No reason provided', justification)}
+                variant="destructive"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Exclude
+              </Button>
+              <Button
+                onClick={() => onBetter(reason)}
+                variant="outline"
+                className="border-yellow-500 text-yellow-700 hover:bg-yellow-50"
+              >
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Better
+              </Button>
+              <Button
+                onClick={() => onAsk(reason)}
+                variant="outline"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Ask
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
