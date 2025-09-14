@@ -342,9 +342,12 @@ Create a new support for a claim.
 ```json
 {
   "claimId": "uuid",
-  "page": 3,
-  "sentence": 2,
-  "text": "Supporting text quote"
+  "candidateId": "uuid",
+  "quote": "Supporting text quote",
+  "locator": {
+    "page": 3,
+    "sentence": 2
+  }
 }
 ```
 
@@ -356,11 +359,14 @@ Create a new support for a claim.
     "support": {
       "id": "uuid",
       "claimId": "uuid",
-      "page": 3,
-      "sentence": 2,
-      "text": "Supporting text quote",
+      "candidateId": "uuid",
+      "quote": "Supporting text quote",
+      "locator": {
+        "page": 3,
+        "sentence": 2
+      },
+      "evidenceType": null,
       "projectId": "uuid",
-      "userId": "uuid",
       "createdAt": "2024-01-01T00:00:00.000Z"
     }
   }

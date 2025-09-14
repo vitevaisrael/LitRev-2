@@ -13,9 +13,12 @@ const CreateClaimSchema = z.object({
 
 const CreateSupportSchema = z.object({
   claimId: z.string().uuid(),
-  page: z.number().int().positive(),
-  sentence: z.number().int().positive(),
-  text: z.string().min(1)
+  candidateId: z.string().uuid(),
+  quote: z.string().min(1),
+  locator: z.object({
+    page: z.number().int().positive(),
+    sentence: z.number().int().positive()
+  })
 }).strict();
 
 export async function ledgerRoutes(fastify: FastifyInstance) {
@@ -107,6 +110,18 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
         return sendError(reply, 'NOT_FOUND', 'Claim not found', 404);
       }
 
+      // Verify candidate exists and belongs to project
+      const candidate = await prisma.candidate.findFirst({
+        where: {
+          id: supportData.candidateId,
+          projectId
+        }
+      });
+
+      if (!candidate) {
+        return sendError(reply, 'NOT_FOUND', 'Candidate not found', 404);
+      }
+
       const support = await prisma.$transaction(async (tx) => {
         const newSupport = await tx.support.create({
           data: {
@@ -124,8 +139,9 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
             details: { 
               supportId: newSupport.id, 
               claimId: supportData.claimId,
-              page: supportData.page,
-              sentence: supportData.sentence
+              candidateId: supportData.candidateId,
+              page: supportData.locator.page,
+              sentence: supportData.locator.sentence
             }
           }
         });

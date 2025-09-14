@@ -165,3 +165,15 @@
 - Automatic refetch of candidates, PRISMA widget, and audit logs after import
 - Visible stepwise progress with results appearing and selected refs importing as Candidates
 
+## Task 16 - Evidence Capture: quote picker from ParsedDoc → Support ✅
+- Fixed POST /projects/:id/ledger/supports endpoint schema to match Prisma model (quote, locator, candidateId)
+- Added candidate validation to ensure candidate belongs to project before creating support
+- Added "Capture Quote" button in DecisionCard component with purple styling
+- Created quote picker UI with claim selection dropdown and searchable sentence list
+- Added sentence selection with visual highlighting and preview of selected quote
+- Integrated with existing parsed document endpoint for fetching sentences
+- Added support creation mutation with proper error handling and success feedback
+- Automatic refetch of supports for active claim and audit logs after quote capture
+- Quote picker shows page/sentence locator information and validates claim/candidate selection
+- Selected sentences create Support records with correct locator and appear immediately in ClaimDetail
+

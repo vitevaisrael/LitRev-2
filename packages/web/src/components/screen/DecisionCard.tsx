@@ -42,6 +42,9 @@ export function DecisionCard({
   const [justification, setJustification] = useState('');
   const [showSentences, setShowSentences] = useState(false);
   const [sentenceSearch, setSentenceSearch] = useState('');
+  const [showQuotePicker, setShowQuotePicker] = useState(false);
+  const [selectedSentence, setSelectedSentence] = useState<any>(null);
+  const [selectedClaimId, setSelectedClaimId] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -109,7 +112,51 @@ export function DecisionCard({
       const data = await response.json();
       return data.data;
     },
-    enabled: showSentences
+    enabled: showSentences || showQuotePicker
+  });
+
+  // Fetch claims for quote picker
+  const { data: claimsData } = useQuery({
+    queryKey: queryKeys['ledger-claims'](projectId),
+    queryFn: async () => {
+      const response = await fetch(`/api/v1/projects/${projectId}/ledger/claims`);
+      const data = await response.json();
+      return data.data;
+    },
+    enabled: showQuotePicker
+  });
+
+  // Create support mutation
+  const createSupportMutation = useMutation({
+    mutationFn: async (supportData: any) => {
+      const response = await fetch(`/api/v1/projects/${projectId}/ledger/supports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(supportData),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Request failed');
+      }
+      
+      return data;
+    },
+    onSuccess: () => {
+      // Refetch supports for the claim and audit logs
+      queryClient.invalidateQueries({ queryKey: queryKeys.supports(selectedClaimId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs(projectId) });
+      alert('Quote captured successfully!');
+      setShowQuotePicker(false);
+      setSelectedSentence(null);
+      setSelectedClaimId('');
+    },
+    onError: (error: any) => {
+      alert(`Failed to capture quote: ${error.message}`);
+    }
   });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,6 +181,27 @@ export function DecisionCard({
         page: page.page
       }))
   ) || [];
+
+  const handleSentenceSelect = (sentence: any) => {
+    setSelectedSentence(sentence);
+  };
+
+  const handleCaptureQuote = () => {
+    if (!selectedSentence || !selectedClaimId) {
+      alert('Please select a sentence and a claim');
+      return;
+    }
+
+    createSupportMutation.mutate({
+      claimId: selectedClaimId,
+      candidateId: candidate.id,
+      quote: selectedSentence.text,
+      locator: {
+        page: selectedSentence.page,
+        sentence: selectedSentence.idx
+      }
+    });
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -203,12 +271,20 @@ export function DecisionCard({
           </button>
           
           {parsedDocData && (
-            <button
-              onClick={() => setShowSentences(!showSentences)}
-              className="ml-2 px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-            >
-              {showSentences ? 'Hide' : 'Show'} Sentences
-            </button>
+            <>
+              <button
+                onClick={() => setShowSentences(!showSentences)}
+                className="ml-2 px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+              >
+                {showSentences ? 'Hide' : 'Show'} Sentences
+              </button>
+              <button
+                onClick={() => setShowQuotePicker(!showQuotePicker)}
+                className="ml-2 px-3 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
+              >
+                {showQuotePicker ? 'Cancel' : 'Capture Quote'}
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -238,6 +314,95 @@ export function DecisionCard({
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quote Picker Panel */}
+      {showQuotePicker && parsedDocData && (
+        <div className="border-t pt-4">
+          <h3 className="font-medium mb-4">Capture Quote</h3>
+          
+          {/* Claim Selection */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Select Claim</label>
+            <select
+              value={selectedClaimId}
+              onChange={(e) => setSelectedClaimId(e.target.value)}
+              className="w-full p-2 border rounded text-sm"
+            >
+              <option value="">Choose a claim...</option>
+              {claimsData?.claims?.map((claim: any) => (
+                <option key={claim.id} value={claim.id}>
+                  {claim.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sentence Selection */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Search and Select Sentence</label>
+            <input
+              type="text"
+              value={sentenceSearch}
+              onChange={(e) => setSentenceSearch(e.target.value)}
+              className="w-full p-2 border rounded text-sm mb-2"
+              placeholder="Search sentences..."
+            />
+            <div className="text-sm text-gray-600 mb-2">
+              {filteredSentences.length} sentences found
+            </div>
+            <div className="max-h-48 overflow-y-auto space-y-1">
+              {filteredSentences.map((sentence: any, index: number) => (
+                <div
+                  key={index}
+                  onClick={() => handleSentenceSelect(sentence)}
+                  className={`text-sm p-2 rounded cursor-pointer transition-colors ${
+                    selectedSentence?.idx === sentence.idx && selectedSentence?.page === sentence.page
+                      ? 'bg-purple-100 border-2 border-purple-300'
+                      : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="font-medium text-gray-600">
+                    Page {sentence.page}, Sentence {sentence.idx}
+                  </div>
+                  <div className="text-gray-800">{sentence.text}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Selected Sentence Preview */}
+          {selectedSentence && (
+            <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded">
+              <div className="text-sm font-medium text-purple-800 mb-1">Selected Quote:</div>
+              <div className="text-sm text-purple-700">
+                Page {selectedSentence.page}, Sentence {selectedSentence.idx}
+              </div>
+              <div className="text-sm text-gray-800 mt-1">{selectedSentence.text}</div>
+            </div>
+          )}
+
+          {/* Capture Button */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleCaptureQuote}
+              disabled={!selectedSentence || !selectedClaimId || createSupportMutation.isPending}
+              className="px-4 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 disabled:opacity-50"
+            >
+              {createSupportMutation.isPending ? 'Capturing...' : 'Capture Quote'}
+            </button>
+            <button
+              onClick={() => {
+                setShowQuotePicker(false);
+                setSelectedSentence(null);
+                setSelectedClaimId('');
+              }}
+              className="px-4 py-2 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
