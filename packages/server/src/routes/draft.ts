@@ -130,4 +130,60 @@ export async function draftRoutes(fastify: FastifyInstance) {
       return sendError(reply, 'DRAFT_ERROR', 'Failed to save draft section', 500);
     }
   });
+
+  // POST /api/v1/projects/:id/draft/suggest-citations (stub)
+  fastify.post('/projects/:id/draft/suggest-citations', async (request, reply) => {
+    try {
+      const { id: projectId } = request.params as { id: string };
+      const { section, text } = request.body as { section: string; text: string };
+      
+      // Stub implementation - return mock citation suggestions
+      const suggestions = [
+        {
+          id: 'suggestion-1',
+          text: 'Recent studies have shown...',
+          confidence: 0.85,
+          supportId: 'support-123'
+        }
+      ];
+      
+      return sendSuccess(reply, { suggestions });
+    } catch (error) {
+      return sendError(reply, 'DRAFT_ERROR', 'Failed to suggest citations', 500);
+    }
+  });
+
+  // POST /api/v1/projects/:id/draft/tighten (stub)
+  fastify.post('/projects/:id/draft/tighten', async (request, reply) => {
+    try {
+      const { id: projectId } = request.params as { id: string };
+      const { section, text } = request.body as { section: string; text: string };
+      
+      // Stub implementation - return improved text
+      const improvedText = text + ' [Improved by AI]';
+      
+      return sendSuccess(reply, { improvedText });
+    } catch (error) {
+      return sendError(reply, 'DRAFT_ERROR', 'Failed to tighten text', 500);
+    }
+  });
+
+  // POST /api/v1/projects/:id/draft/coverage (stub)
+  fastify.post('/projects/:id/draft/coverage', async (request, reply) => {
+    try {
+      const { id: projectId } = request.params as { id: string };
+      const { section, text } = request.body as { section: string; text: string };
+      
+      // Stub implementation - return coverage analysis
+      const coverage = {
+        score: 0.75,
+        gaps: ['Missing evidence for claim X', 'Need more recent studies'],
+        suggestions: ['Add citation for recent RCT', 'Include meta-analysis']
+      };
+      
+      return sendSuccess(reply, coverage);
+    } catch (error) {
+      return sendError(reply, 'DRAFT_ERROR', 'Failed to analyze coverage', 500);
+    }
+  });
 }
