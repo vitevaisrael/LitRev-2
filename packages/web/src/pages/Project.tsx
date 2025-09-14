@@ -13,6 +13,7 @@ import { ExplorerPanel } from '../components/explorer/ExplorerPanel';
 import { ExportCenter } from '../components/exports/ExportCenter';
 import { PrismaWidget } from '../components/shared/PrismaWidget';
 import { AuditLog } from '../components/shared/AuditLog';
+import { HelpOverlay } from '../components/shared/HelpOverlay';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryKeys';
@@ -23,6 +24,8 @@ export function Project() {
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [batchMode, setBatchMode] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch PRISMA data
@@ -62,6 +65,13 @@ export function Project() {
       queryClient.invalidateQueries({ queryKey: queryKeys.candidates(id || '') });
       queryClient.invalidateQueries({ queryKey: queryKeys.prisma(id || '') });
       queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs(id || '') });
+      
+      // Auto-advance to next candidate in batch mode
+      if (batchMode) {
+        // Clear selected candidate to trigger auto-advance
+        setSelectedCandidate(null);
+      }
+      
       // Show success toast (you can add a toast library later)
       console.log('Decision recorded successfully');
     },
@@ -104,6 +114,16 @@ export function Project() {
     included: 0,
     excluded: 0
   };
+  const prismaHistory = (prismaData?.data as any)?.history || [];
+
+  // Auto-advance function for batch mode
+  const handleAutoAdvance = () => {
+    if (batchMode) {
+      // This will be called after a decision is made to select the next candidate
+      // The actual selection logic will be handled by the CandidateList component
+      console.log('Auto-advancing to next candidate');
+    }
+  };
 
   // Mock data for other components (to be replaced later)
   // const mockAuditEntries = [
@@ -137,6 +157,7 @@ export function Project() {
       case 'step-4': setActiveStep('draft'); break;
       case 'step-5': setActiveStep('exports'); break;
       case 'explorer': setActiveStep('explorer'); break;
+      case 'help': setShowHelp(true); break;
     }
   });
 
@@ -272,6 +293,9 @@ export function Project() {
             projectId={id || ''}
             selectedId={selectedCandidate?.id}
             onSelect={setSelectedCandidate}
+            batchMode={batchMode}
+            onBatchModeChange={setBatchMode}
+            onAutoAdvance={handleAutoAdvance}
           />
         );
       default:
@@ -325,11 +349,11 @@ export function Project() {
           </div>
         );
       case 'screen':
-        return <PrismaWidget counters={prismaCounters} />;
+        return <PrismaWidget counters={prismaCounters} history={prismaHistory} />;
       case 'ledger':
         return <AuditLog projectId={id || ''} />;
       default:
-        return <PrismaWidget counters={prismaCounters} />;
+        return <PrismaWidget counters={prismaCounters} history={prismaHistory} />;
     }
   };
 
@@ -347,6 +371,8 @@ export function Project() {
           right={renderRightContent()}
         />
       </div>
+      
+      <HelpOverlay isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
 }

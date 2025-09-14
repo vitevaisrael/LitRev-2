@@ -177,3 +177,24 @@
 - Quote picker shows page/sentence locator information and validates claim/candidate selection
 - Selected sentences create Support records with correct locator and appear immediately in ClaimDetail
 
+## Task 17 - PRISMA dashboard widget (trend & mini-flow) ✅
+- Extended GET /api/v1/projects/:id/prisma to include history array of counters from audit logs
+- Built history from decision_made, candidate_imported, and project_created audit log events
+- Added mini flow display showing identified → duplicates → screened → included/excluded progression
+- Created SVG sparkline showing "screened per day" trend with proper scaling and visualization
+- Added history data to PrismaWidget component with optional history parameter
+- Updated Project.tsx to pass history data to PrismaWidget in right context pane (C3)
+- Widget shows current counts and basic trend curve that updates after new decisions/imports
+- History synthesis creates single point from current totals if no audit log history exists
+
+## Task 18 - Batch Screening Mode + keyboard helpers ✅
+- Added Batch mode toggle in CandidateList with checkbox in header area
+- Implemented auto-advance functionality that clears selected candidate after decisions
+- Added progress bar (screened/total) above CandidateList with percentage display
+- Enhanced keyboard shortcuts with proper 'ask' action (A key) and 'explorer' action (R key)
+- Created HelpOverlay component showing all keyboard shortcuts with organized sections
+- Added help overlay state management and keyboard shortcut (? key) to show/hide overlay
+- Integrated help overlay into Project component with proper z-index and modal styling
+- Batch mode enables rapid screening workflow with automatic progression to next candidate
+- Progress bar updates in real-time as decisions are made and candidates are screened
+

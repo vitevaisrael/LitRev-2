@@ -24,12 +24,18 @@ interface CandidateListProps {
   projectId: string;
   selectedId?: string;
   onSelect: (candidate: Candidate) => void;
+  batchMode?: boolean;
+  onBatchModeChange?: (enabled: boolean) => void;
+  onAutoAdvance?: () => void;
 }
 
 export function CandidateList({ 
   projectId, 
   selectedId, 
-  onSelect
+  onSelect,
+  batchMode = false,
+  onBatchModeChange,
+  onAutoAdvance
 }: CandidateListProps) {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<{
@@ -68,13 +74,49 @@ export function CandidateList({
     setPage(1); // Reset to first page when filters change
   };
 
+  // Calculate screened count for progress bar
+  const screenedCount = candidates.filter((c: any) => c.decisions && c.decisions.length > 0).length;
+  const progressPercentage = total > 0 ? (screenedCount / total) * 100 : 0;
+
   return (
     <div>
       <FilterBar filters={filters} onFiltersChange={handleFiltersChange} />
+      
+      {/* Batch Mode Toggle and Progress Bar */}
+      <div className="p-4 border-b bg-gray-50">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">
+            Candidates ({total})
+          </h2>
+          {onBatchModeChange && (
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={batchMode}
+                onChange={(e) => onBatchModeChange(e.target.checked)}
+                className="rounded"
+              />
+              <span className="text-sm font-medium">Batch mode</span>
+            </label>
+          )}
+        </div>
+        
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>Screened: {screenedCount}/{total}</span>
+            <span>{Math.round(progressPercentage)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+        </div>
+      </div>
+      
       <div className="p-4">
-        <h2 className="text-lg font-semibold mb-4">
-          Candidates ({total})
-        </h2>
       
       {isLoading && <div className="text-sm text-gray-500">Loading...</div>}
       

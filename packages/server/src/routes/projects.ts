@@ -85,8 +85,73 @@ export async function projectsRoutes(fastify: FastifyInstance) {
       if (!prismaData) {
         return sendError(reply, 'NOT_FOUND', 'PRISMA data not found', 404);
       }
+
+      // Get audit logs to build history
+      const auditLogs = await prisma.auditLog.findMany({
+        where: {
+          projectId,
+          action: { in: ['decision_made', 'candidate_imported', 'project_created'] }
+        },
+        orderBy: { timestamp: 'asc' },
+        take: 100 // Limit to last 100 relevant events
+      });
+
+      // Build history from audit logs
+      const history = [];
+      let currentCounts = {
+        identified: 0,
+        duplicates: 0,
+        screened: 0,
+        included: 0,
+        excluded: 0
+      };
+
+      // Add initial state
+      history.push({
+        timestamp: new Date().toISOString(),
+        ...currentCounts
+      });
+
+      // Process audit logs to build history
+      for (const log of auditLogs) {
+        if (log.action === 'project_created') {
+          // Project creation - start with identified count
+          currentCounts.identified = prismaData.identified;
+        } else if (log.action === 'candidate_imported') {
+          // Import - increment identified
+          currentCounts.identified += 1;
+        } else if (log.action === 'decision_made') {
+          // Decision - increment screened and include/exclude
+          currentCounts.screened += 1;
+          if (log.details?.action === 'include') {
+            currentCounts.included += 1;
+          } else if (log.details?.action === 'exclude') {
+            currentCounts.excluded += 1;
+          }
+        }
+
+        history.push({
+          timestamp: log.timestamp.toISOString(),
+          ...currentCounts
+        });
+      }
+
+      // If no history exists, create a single point from current data
+      if (history.length === 1) {
+        history[0] = {
+          timestamp: new Date().toISOString(),
+          identified: prismaData.identified,
+          duplicates: prismaData.duplicates,
+          screened: prismaData.screened,
+          included: prismaData.included,
+          excluded: prismaData.excluded
+        };
+      }
       
-      return sendSuccess(reply, { prisma: prismaData });
+      return sendSuccess(reply, { 
+        prisma: prismaData,
+        history: history.slice(-20) // Return last 20 history points
+      });
     } catch (error) {
       return sendError(reply, 'DATABASE_ERROR', 'Failed to fetch PRISMA data', 500);
     }

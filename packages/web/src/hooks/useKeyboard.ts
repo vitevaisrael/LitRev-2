@@ -21,6 +21,9 @@ export function useKeyboard(onKey: (key: string) => void) {
           onKey('better');
           break;
         case 'a': case 'A':
+          onKey('ask');
+          break;
+        case 'r': case 'R':
           onKey('explorer');
           break;
         case 'e': case 'E':
