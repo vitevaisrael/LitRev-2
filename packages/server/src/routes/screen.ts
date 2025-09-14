@@ -67,7 +67,7 @@ export async function screenRoutes(fastify: FastifyInstance) {
         });
 
         // Update PRISMA counters
-        await tx.prisma.upsert({
+        await tx.prismaData.upsert({
           where: { projectId },
           update: {
             screened: { increment: 1 },
@@ -136,7 +136,7 @@ export async function screenRoutes(fastify: FastifyInstance) {
         }, {} as Record<string, number>);
 
         // Update PRISMA counters
-        await tx.prisma.upsert({
+        await tx.prismaData.upsert({
           where: { projectId },
           update: {
             screened: { increment: payloads.length },

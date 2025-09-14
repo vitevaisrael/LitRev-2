@@ -72,4 +72,23 @@ export async function projectsRoutes(fastify: FastifyInstance) {
       return sendError(reply, 'DATABASE_ERROR', 'Failed to create project', 500);
     }
   });
+
+  // GET /api/v1/projects/:id/prisma
+  fastify.get('/projects/:id/prisma', async (request, reply) => {
+    try {
+      const { id: projectId } = request.params as { id: string };
+      
+      const prismaData = await prisma.prismaData.findUnique({
+        where: { projectId }
+      });
+      
+      if (!prismaData) {
+        return sendError(reply, 'NOT_FOUND', 'PRISMA data not found', 404);
+      }
+      
+      return sendSuccess(reply, { prisma: prismaData });
+    } catch (error) {
+      return sendError(reply, 'DATABASE_ERROR', 'Failed to fetch PRISMA data', 500);
+    }
+  });
 }

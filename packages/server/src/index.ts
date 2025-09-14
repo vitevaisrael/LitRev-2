@@ -21,8 +21,8 @@ fastify.addHook('onRequest', async (request, reply) => {
   request.id = crypto.randomUUID();
   
   // Extract projectId and userId for logging
-  const projectId = request.params?.projectId || request.body?.projectId;
-  const userId = request.user?.id;
+  const projectId = (request.params as any)?.projectId || (request.body as any)?.projectId;
+  const userId = (request as any).user?.id;
   
   if (projectId || userId) {
     request.log.info({ projectId, userId }, 'Request context');

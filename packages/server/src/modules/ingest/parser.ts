@@ -12,7 +12,7 @@ export async function parsePdf(buffer: Buffer): Promise<ParsedDoc> {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const textContent = await page.getTextContent();
-    const text = textContent.items.map(item => item.str).join(' ');
+    const text = textContent.items.map(item => 'str' in item ? item.str : '').join(' ');
     const doc = nlp.readDoc(text);
     const sentences = doc.sentences().out();
     

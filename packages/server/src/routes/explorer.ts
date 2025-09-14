@@ -102,7 +102,7 @@ export async function explorerRoutes(fastify: FastifyInstance) {
               OR: [
                 ref.doi ? { doi: ref.doi } : undefined,
                 ref.pmid ? { pmid: ref.pmid } : undefined
-              ].filter(Boolean)
+              ].filter(Boolean) as any[]
             }
           });
 

@@ -5,6 +5,7 @@ import { intakeRoutes } from './intake';
 import { screenRoutes } from './screen';
 import { candidatesRoutes } from './candidates';
 import { explorerRoutes } from './explorer';
+import { ledgerRoutes } from './ledger';
 import { env } from '../config/env';
 
 export async function routes(fastify: FastifyInstance) {
@@ -13,6 +14,7 @@ export async function routes(fastify: FastifyInstance) {
   await fastify.register(intakeRoutes);
   await fastify.register(screenRoutes);
   await fastify.register(candidatesRoutes);
+  await fastify.register(ledgerRoutes);
   
   // Register explorer routes only if feature is enabled
   if (env.FEATURE_EXPLORER) {
