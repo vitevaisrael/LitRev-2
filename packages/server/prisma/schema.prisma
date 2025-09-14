@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  projects     Project[]
+}
+
+model Project {
+  id         String   @id @default(uuid())
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id])
+  title      String
+  settings   Json     // { preferOA: boolean }
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  prisma     PrismaData?
+  problemProfile ProblemProfile?
+  candidates Candidate[]
+  decisions  Decision[]
+  parsedDocs ParsedDoc[]
+  claims     Claim[]
+  supports   Support[]
+  drafts     Draft[]
+  explorerRuns ExplorerRun[]
+  auditLogs    AuditLog[]
+  jobStatuses  JobStatus[]
+}
+
+model ProblemProfile {
+  id         String   @id @default(uuid())
+  projectId  String   @unique
+  project    Project  @relation(fields: [projectId], references: [id])
+  version    String
+  population Json
+  exposure   Json
+  comparator Json
+  outcomes   Json
+  timeframe  Json     // { from:int, to:int }
+  mesh       Json
+  include    Json
+  exclude    Json
+  notes      String?
+  createdAt  DateTime @default(now())
+}
+
+model Candidate {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
+  doi         String?  @db.VarChar(255)
+  pmid        String?  @db.VarChar(32)
+  title       String
+  journal     String
+  year        Int
+  authors     Json?
+  abstract    String?
+  links       Json?    // { oaUrl?, publisherUrl?, pubmedUrl? }
+  flags       Json?    // { retracted?:bool, predatory?:bool }
+  score       Json?    // { design, directness, recency, journal, total }
+  createdAt   DateTime @default(now())
+  decisions   Decision[]
+  parsedDoc   ParsedDoc?
+  supports    Support[]
+  @@index([projectId])
+  @@index([doi])
+  @@index([pmid])
+  @@index([title, year])
+  @@index([projectId, createdAt])
+}
+
+model Decision {
+  id            String   @id @default(uuid())
+  projectId     String
+  candidateId   String
+  action        String   // include|exclude|better|ask
+  reason        String?
+  justification String?
+  stage         String   // title_abstract|full_text
+  userId        String
+  ts            DateTime @default(now())
+  project       Project  @relation(fields: [projectId], references: [id])
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  @@index([projectId])
+  @@index([candidateId])
+  @@index([projectId, ts])
+}
+
+model PrismaData {
+  projectId  String   @id
+  identified Int      @default(0)
+  duplicates Int      @default(0)
+  screened   Int      @default(0)
+  included   Int      @default(0)
+  excluded   Int      @default(0)
+  project    Project  @relation(fields: [projectId], references: [id])
+}
+
+model ParsedDoc {
+  id          String   @id @default(uuid())
+  projectId   String
+  candidateId String   @unique
+  storageKey  String   // S3 key to PDF
+  textJson    Json     // [{page:int, sentences:[{idx:int, text:string}]}]
+  createdAt   DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id])
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+}
+
+model Claim {
+  id         String   @id @default(uuid())
+  projectId  String
+  text       String
+  section    String?
+  createdAt  DateTime @default(now())
+  project    Project  @relation(fields: [projectId], references: [id])
+  supports   Support[]
+  @@index([projectId])
+}
+
+model Support {
+  id          String   @id @default(uuid())
+  projectId   String
+  claimId     String
+  candidateId String
+  quote       String
+  locator     Json     // { page:int, sentence:int }
+  evidenceType String?
+  createdAt   DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id])
+  claim       Claim    @relation(fields: [claimId], references: [id])
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  @@index([projectId])
+  @@index([claimId])
+  @@index([candidateId])
+  @@index([projectId, candidateId])
+}
+
+model Draft {
+  id         String   @id @default(uuid())
+  projectId  String
+  section    String
+  content    String
+  citations  Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  project    Project  @relation(fields: [projectId], references: [id])
+  @@index([projectId])
+}
+
+model ExplorerRun {
+  runId     String   @id @default(uuid())
+  projectId String
+  prompt    String
+  model     String   // GPT-5 with browsing
+  output    Json     // { outline?, narrative?, refs[] }
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  action    String   // "project_created" | "decision_made" | "export_run" | ...
+  details   Json     // Flexible audit details
+  timestamp DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id])
+  @@index([projectId, timestamp])
+}
+
+model JobStatus {
+  jobId     String   @id
+  projectId String
+  type      String   // "search" | "ingest" | "explorer"
+  status    String   // "pending" | "running" | "completed" | "failed"
+  progress  Json?    // { step, count, total }
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id])
+  @@index([projectId, updatedAt])
+}

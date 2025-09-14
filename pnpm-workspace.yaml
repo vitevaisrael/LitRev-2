@@ -1,0 +1,14 @@
+packages:
+  - packages/*
+  - packages/*/*
+
+ignoredBuiltDependencies:
+  - argon2
+  - canvas
+  - msgpackr-extract
+
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - esbuild
+  - prisma
