@@ -91,3 +91,17 @@
 - Create audit log entries for PDF attachments with page/sentence counts
 - Real-time UI updates after PDF upload with searchable sentence display
 
+## Task 10 - Scoring Breakdown (0–65) + UI tooltips ✅
+- Added scoreCalculator.ts utility with design, directness, recency, journal scoring
+- Created journalSignal.json with journal impact scores (NEJM/Lancet/JAMA=5, etc.)
+- Added score computation to candidate creation/import with problem profile integration
+- Added recompute-score endpoint: POST /api/v1/projects/:id/candidates/:cid/recompute-score
+- Include score in GET candidates response (already included in existing endpoint)
+- Added score display to CandidateList showing 'Score NN/65'
+- Added score tooltip to DecisionCard with 4-part breakdown and recompute button
+- Design scoring: SR/MA=40, RCT=35, Prospective=28, Case-control=22, etc.
+- Directness scoring: keyword overlap with ProblemProfile (exact=10, close=7, partial=3, off=0)
+- Recency scoring: year-based (≤2y=5, ≤5y=3, older=1, very old=0)
+- Journal scoring: impact factor mapping capped at 5
+- Real-time score recomputation with audit logging
+

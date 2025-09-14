@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { queryKeys } from '../../lib/queryKeys';
+import { FilterBar } from './FilterBar';
 
 interface Candidate {
   id: string;
@@ -23,24 +24,21 @@ interface CandidateListProps {
   projectId: string;
   selectedId?: string;
   onSelect: (candidate: Candidate) => void;
-  filters?: {
-    q?: string;
-    year_min?: number;
-    year_max?: number;
-    journal?: string;
-    status?: 'included' | 'excluded' | 'undecided';
-  };
-  onFilterChange?: (filters: any) => void;
 }
 
 export function CandidateList({ 
   projectId, 
   selectedId, 
-  onSelect, 
-  filters = {}, 
-  onFilterChange: _onFilterChange
+  onSelect
 }: CandidateListProps) {
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<{
+    q?: string;
+    year_min?: number;
+    year_max?: number;
+    journal?: string;
+    status?: 'included' | 'excluded' | 'undecided';
+  }>({});
   const pageSize = 20;
 
   const { data, isLoading } = useQuery({
@@ -65,11 +63,18 @@ export function CandidateList({
   const total = (data?.data as any)?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  const handleFiltersChange = (newFilters: any) => {
+    setFilters(newFilters);
+    setPage(1); // Reset to first page when filters change
+  };
+
   return (
-    <div className="p-4">
-      <h2 className="text-lg font-semibold mb-4">
-        Candidates ({total})
-      </h2>
+    <div>
+      <FilterBar filters={filters} onFiltersChange={handleFiltersChange} />
+      <div className="p-4">
+        <h2 className="text-lg font-semibold mb-4">
+          Candidates ({total})
+        </h2>
       
       {isLoading && <div className="text-sm text-gray-500">Loading...</div>}
       
@@ -127,6 +132,7 @@ export function CandidateList({
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
