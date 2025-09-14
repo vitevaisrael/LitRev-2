@@ -485,3 +485,7 @@ All endpoints include rate limiting headers in responses:
 - `X-RateLimit-Limit`: Request limit per window
 - `X-RateLimit-Remaining`: Remaining requests in current window
 - `X-RateLimit-Reset`: Time when the rate limit resets
+
+## Implementation Notes
+
+For an internal overview of the Explorer pipeline (service → queue → worker → JobStatus/ExplorerRun) and how it’s designed to integrate with a future Chat interface, see `docs/EXPLORER-ARCHITECTURE.md`.
