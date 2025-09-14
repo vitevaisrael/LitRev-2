@@ -91,4 +91,23 @@ export async function projectsRoutes(fastify: FastifyInstance) {
       return sendError(reply, 'DATABASE_ERROR', 'Failed to fetch PRISMA data', 500);
     }
   });
+
+  // GET /api/v1/projects/:id/audit-logs
+  fastify.get('/projects/:id/audit-logs', async (request, reply) => {
+    try {
+      const { id: projectId } = request.params as { id: string };
+      const query = request.query as any;
+      const limit = Math.min(parseInt(query.limit || '20'), 100);
+      
+      const auditLogs = await prisma.auditLog.findMany({
+        where: { projectId },
+        orderBy: { ts: 'desc' },
+        take: limit
+      });
+      
+      return sendSuccess(reply, { auditLogs });
+    } catch (error) {
+      return sendError(reply, 'DATABASE_ERROR', 'Failed to fetch audit logs', 500);
+    }
+  });
 }

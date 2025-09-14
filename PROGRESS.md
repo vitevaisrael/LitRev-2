@@ -15,3 +15,21 @@
 - All endpoints return { ok: true, data } format with proper error handling
 - Added requestId to error payloads via request logging hook
 
+## Task 2 - Wire PRISMA widget & Candidate list to real data ✅
+- Updated Project page to fetch PRISMA data from API
+- Added decision mutation with automatic refetch of candidates and PRISMA data
+- Connected DecisionCard buttons to real API calls for include/exclude/better/ask
+- PrismaWidget now displays live data from backend
+- CandidateList already had real data integration with pagination
+- Fixed TypeScript errors in web components
+- All components now use real API data instead of mock data
+
+## Task 3 - Minimal Audit Log UI ✅
+- Added GET /projects/:id/audit-logs API endpoint with limit parameter
+- Updated AuditLog component to fetch real data from API
+- Added auditLogs query key for React Query caching
+- Updated Project page to use real audit log data
+- Decision mutations now invalidate audit log queries for live updates
+- Audit log shows latest 20 entries ordered by timestamp desc
+- After decisions or project creation, new entries appear without page reload
+
