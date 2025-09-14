@@ -21,6 +21,7 @@ export function Project() {
   const { id } = useParams<{ id: string }>();
   const [activeStep, setActiveStep] = useState('intake');
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
+  const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const queryClient = useQueryClient();
 
   // Fetch PRISMA data
@@ -118,7 +119,7 @@ export function Project() {
   const renderCenterContent = () => {
     switch (activeStep) {
       case 'intake':
-        return <ProblemProfile />;
+        return <ProblemProfile projectId={id || ''} onPlanGenerated={setGeneratedPlan} />;
       case 'screen':
         return selectedCandidate ? (
           <DecisionCard
@@ -259,6 +260,49 @@ export function Project() {
 
   const renderRightContent = () => {
     switch (activeStep) {
+      case 'intake':
+        return generatedPlan ? (
+          <div className="p-4">
+            <h3 className="font-semibold mb-3">Generated Plan</h3>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium mb-2">Mini Abstract</h4>
+                <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
+                  {generatedPlan.miniAbstract}
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">PICO Anchors</h4>
+                <div className="space-y-2">
+                  {generatedPlan.anchors?.map((anchor: any) => (
+                    <div key={anchor.id} className="text-sm p-2 bg-blue-50 rounded">
+                      <div className="font-medium">{anchor.title}</div>
+                      <div className="text-gray-600">{anchor.description}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Review Outline</h4>
+                <div className="space-y-1">
+                  {generatedPlan.outline?.map((section: any, index: number) => (
+                    <div key={index} className="text-sm p-2 bg-gray-50 rounded">
+                      <div className="font-medium">{section.section}</div>
+                      <div className="text-gray-600">{section.description}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4">
+            <h3 className="font-semibold mb-3">Plan Preview</h3>
+            <p className="text-sm text-gray-600">
+              Save your problem profile and click "Generate Plan" to see the review outline and PICO anchors.
+            </p>
+          </div>
+        );
       case 'screen':
         return <PrismaWidget counters={prismaCounters} />;
       case 'ledger':

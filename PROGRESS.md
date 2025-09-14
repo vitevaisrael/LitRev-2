@@ -128,3 +128,17 @@
 - Citation validation ensures only valid Support IDs are accepted
 - Draft persistence across reloads with proper error handling
 
+## Task 13 - Exports v1 (Markdown, BibTeX, PRISMA.svg, Ledger.json) ✅
+- Add POST /api/v1/projects/:id/exports/markdown endpoint with complete report generation
+- Add POST /api/v1/projects/:id/exports/bibtex endpoint with included studies
+- Add POST /api/v1/projects/:id/exports/prisma endpoint with SVG flow diagram
+- Add POST /api/v1/projects/:id/exports/ledger endpoint with JSON evidence structure
+- Create ExportCenter frontend component with 4 download buttons
+- Generate markdown with problem profile, draft sections, and formatted references
+- Generate BibTeX with DOI and PMID information for included studies
+- Generate PRISMA SVG with current screening statistics and visual flow
+- Generate ledger JSON with claims, supports, and candidate metadata
+- Create audit log entries for each export type
+- Automatic file download with proper headers and filenames
+- User-friendly export interface with loading states and descriptions
+

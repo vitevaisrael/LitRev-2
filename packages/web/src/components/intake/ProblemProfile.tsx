@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-export function ProblemProfile() {
+interface ProblemProfileProps {
+  projectId: string;
+  onPlanGenerated?: (plan: any) => void;
+}
+
+export function ProblemProfile({ projectId, onPlanGenerated }: ProblemProfileProps) {
   const [profile, setProfile] = useState({
     population: '',
     exposure: '',
@@ -11,9 +17,106 @@ export function ProblemProfile() {
     include: [],
     exclude: []
   });
+  
+  const queryClient = useQueryClient();
+
+  // Load existing profile on mount
+  const { data: existingProfile, isLoading } = useQuery({
+    queryKey: ['problem-profile', projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/v1/projects/${projectId}/intake/profile`);
+      const data = await response.json();
+      return data.data;
+    },
+    enabled: !!projectId
+  });
+
+  // Initialize profile when data loads
+  useEffect(() => {
+    if (existingProfile) {
+      setProfile({
+        population: existingProfile.population || '',
+        exposure: existingProfile.exposure || '',
+        comparator: existingProfile.comparator || '',
+        outcomes: existingProfile.outcomes || '',
+        timeframe: existingProfile.timeframe || { from: 2020, to: 2024 },
+        mesh: existingProfile.mesh || [],
+        include: existingProfile.include || [],
+        exclude: existingProfile.exclude || []
+      });
+    }
+  }, [existingProfile]);
+
+  // Save profile mutation
+  const saveProfileMutation = useMutation({
+    mutationFn: async (profileData: any) => {
+      const response = await fetch(`/api/v1/projects/${projectId}/intake/profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileData)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Request failed');
+      }
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['problem-profile', projectId] });
+      alert('Profile saved successfully!');
+    },
+    onError: (error: any) => {
+      alert(`Failed to save profile: ${error.message}`);
+    }
+  });
+
+  // Generate plan mutation
+  const generatePlanMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/v1/projects/${projectId}/intake/plan`, {
+        method: 'POST',
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Request failed');
+      }
+      
+      return data;
+    },
+    onSuccess: (data) => {
+      if (onPlanGenerated) {
+        onPlanGenerated(data.data);
+      }
+      alert('Plan generated successfully!');
+    },
+    onError: (error: any) => {
+      alert(`Failed to generate plan: ${error.message}`);
+    }
+  });
+
+  const handleSaveProfile = () => {
+    saveProfileMutation.mutate(profile);
+  };
+
+  const handleGeneratePlan = () => {
+    generatePlanMutation.mutate();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="text-center text-gray-500">Loading profile...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <h2 className="text-xl font-semibold">Problem Profile (PICO)</h2>
       
       <div className="grid grid-cols-2 gap-4">
@@ -59,11 +162,19 @@ export function ProblemProfile() {
       </div>
       
       <div className="flex gap-4">
-        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          Save Profile
+        <button 
+          onClick={handleSaveProfile}
+          disabled={saveProfileMutation.isPending}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {saveProfileMutation.isPending ? 'Saving...' : 'Save Profile'}
         </button>
-        <button className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
-          Generate Plan
+        <button 
+          onClick={handleGeneratePlan}
+          disabled={generatePlanMutation.isPending}
+          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+        >
+          {generatePlanMutation.isPending ? 'Generating...' : 'Generate Plan'}
         </button>
       </div>
     </div>
