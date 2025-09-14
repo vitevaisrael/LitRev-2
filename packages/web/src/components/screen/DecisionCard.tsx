@@ -11,6 +11,7 @@ import { Dropzone } from '../ui/dropzone';
 import { FileText, Upload, Search, Quote, CheckCircle, XCircle, HelpCircle, MessageSquare } from 'lucide-react';
 import { queryKeys } from '../../lib/queryKeys';
 import { notifySuccess, notifyError, handleApiError } from '../../lib/notify';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 
 interface Candidate {
   id: string;
@@ -59,6 +60,13 @@ export function DecisionCard({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const queryClient = useQueryClient();
+
+  // Set up keyboard shortcuts for screening actions
+  useKeyboardShortcuts({
+    onInclude: () => onInclude(reason, justification),
+    onExclude: () => onExclude(reason || 'No reason provided', justification),
+    onMarkBetter: () => onBetter(reason),
+  });
 
   // Recompute score mutation
   const recomputeScoreMutation = useMutation({
@@ -641,24 +649,30 @@ export function DecisionCard({
               <Button
                 onClick={() => onInclude(reason, justification)}
                 className="bg-green-600 hover:bg-green-700 text-white"
+                title="Include candidate (I)"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Include
+                <kbd className="ml-2 bg-green-700 px-1 py-0.5 rounded text-xs">I</kbd>
               </Button>
               <Button
                 onClick={() => onExclude(reason || 'No reason provided', justification)}
                 variant="destructive"
+                title="Exclude candidate (X)"
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Exclude
+                <kbd className="ml-2 bg-red-700 px-1 py-0.5 rounded text-xs">X</kbd>
               </Button>
               <Button
                 onClick={() => onBetter(reason)}
                 variant="outline"
                 className="border-yellow-500 text-yellow-700 hover:bg-yellow-50"
+                title="Mark as Better (B)"
               >
                 <HelpCircle className="h-4 w-4 mr-2" />
                 Better
+                <kbd className="ml-2 bg-yellow-600 px-1 py-0.5 rounded text-xs">B</kbd>
               </Button>
               <Button
                 onClick={() => onAsk(reason)}

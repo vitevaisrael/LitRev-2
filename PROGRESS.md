@@ -557,3 +557,70 @@
 - **Integration**: Seamless integration with React Query and existing systems
 
 **Next Steps**: Ready for UI-05 (Discoverability) and subsequent UI tasks.
+
+## Task UI-05 — Discoverability (TopBar Actions + Keyboard Help) ✅
+
+**Goal**: Make key actions obvious and self-documenting with proper icons, tooltips, and comprehensive keyboard shortcuts help.
+
+### ✅ Completed Implementation
+
+**1) Enhanced TopBar with Action Icons and Tooltips**
+- ✅ Added proper icons to all action buttons (MessageSquare, Upload, Zap, Download, Keyboard)
+- ✅ Added descriptive tooltips with keyboard shortcuts for all actions
+- ✅ Improved visual hierarchy with consistent icon placement and spacing
+- ✅ Added keyboard shortcut indicators in tooltips (Ctrl+I, Ctrl+E, etc.)
+- ✅ Enhanced help button with keyboard icon and clear tooltip
+
+**2) Created Comprehensive Keyboard Shortcuts System**
+- ✅ Built `useKeyboardShortcuts` hook for centralized keyboard event handling
+- ✅ Implemented keyboard shortcuts for all major actions:
+  - Navigation: Ctrl+1 (Projects), Ctrl+2 (Screening)
+  - Actions: I (Include), X (Exclude), B (Better), Ctrl+I (Import), Ctrl+E (Export)
+  - AI Features: Ctrl+Shift+A (AI Explorer), Ctrl+Shift+C (AI Review Chat)
+  - General: ? (Show help), Esc (Close modal)
+- ✅ Added proper event handling with input field detection
+- ✅ Implemented context-aware shortcuts that work across components
+
+**3) Enhanced Keyboard Shortcuts Help Modal**
+- ✅ Redesigned help overlay with comprehensive shortcut documentation
+- ✅ Organized shortcuts into logical categories (Navigation, Actions, General)
+- ✅ Added proper styling with kbd elements and consistent formatting
+- ✅ Implemented close button and keyboard shortcut (Esc) to dismiss
+- ✅ Added proper z-index and positioning for overlay
+
+**4) Added Visual Indicators for Keyboard Shortcuts**
+- ✅ Added kbd elements to decision buttons (Include, Exclude, Better)
+- ✅ Color-coded keyboard indicators matching button themes
+- ✅ Added tooltips showing keyboard shortcuts for all interactive elements
+- ✅ Implemented consistent visual language for keyboard shortcuts
+
+**5) Integrated Keyboard Shortcuts Across Components**
+- ✅ Added keyboard shortcuts to TopBar for global actions
+- ✅ Integrated screening shortcuts in DecisionCard component
+- ✅ Implemented proper event handling to avoid conflicts with input fields
+- ✅ Added context-aware shortcuts that work based on current component
+
+### ✅ Acceptance Criteria Met
+- ✅ Added key actions to TopBar with proper icons and tooltips
+- ✅ Created comprehensive keyboard shortcuts help modal/overlay
+- ✅ Implemented keyboard shortcut handlers for common actions
+- ✅ Added visual indicators for available keyboard shortcuts
+- ✅ Integrated keyboard shortcuts across multiple components
+- ✅ Build successful and application running properly
+- ✅ All TypeScript errors resolved
+
+### 🎨 UX Improvements
+- **Discoverability**: All actions now have clear visual indicators and tooltips
+- **Keyboard Efficiency**: Comprehensive keyboard shortcuts for power users
+- **Self-Documenting**: Help modal provides complete reference for all shortcuts
+- **Visual Consistency**: Consistent icon usage and keyboard shortcut indicators
+- **Accessibility**: Proper tooltips and keyboard navigation support
+
+### 🔧 Technical Features
+- **Centralized Management**: Single hook for all keyboard shortcut handling
+- **Context Awareness**: Shortcuts work appropriately based on current context
+- **Input Field Detection**: Prevents shortcuts from triggering while typing
+- **Event Handling**: Proper event prevention and cleanup
+- **Type Safety**: Full TypeScript support with proper type definitions
+
+**Next Steps**: Ready for UI-06 (Theme & Tokens) and subsequent UI tasks.
