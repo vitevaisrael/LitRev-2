@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import { randomUUID } from 'crypto';
 import { routes } from './routes';
 import { env } from './config/env';
+import { startExplorerWorker } from './modules/explorer/worker';
 
 const fastify = Fastify({
   logger: {
@@ -70,6 +71,13 @@ fastify.register(routes, { prefix: '/api/v1' });
 // Start server
 const start = async () => {
   try {
+    // Start background workers (Explorer)
+    try {
+      startExplorerWorker();
+      fastify.log.info('Explorer worker started');
+    } catch (e) {
+      fastify.log.warn('Explorer worker not started (Redis unavailable)');
+    }
     await fastify.listen({ port: env.PORT, host: '0.0.0.0' });
     console.log(`Server listening on port ${env.PORT}`);
   } catch (err) {

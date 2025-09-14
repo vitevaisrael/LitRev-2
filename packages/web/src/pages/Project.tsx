@@ -27,6 +27,7 @@ export function Project() {
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [batchMode, setBatchMode] = useState(false);
+  const [explorerTopic, setExplorerTopic] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [showTour, setShowTour] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -289,8 +290,15 @@ export function Project() {
         return (
           <div className="p-6">
             <div className="mb-4">
+              <input
+                type="text"
+                value={explorerTopic}
+                onChange={(e) => setExplorerTopic(e.target.value)}
+                placeholder="Enter topic or leave blank to use Problem Profile"
+                className="mr-3 px-3 py-2 border rounded w-96"
+              />
               <button
-                onClick={() => explorerRunMutation.mutate({ prompt: 'Generate a systematic review outline for IgA nephropathy treatment' })}
+                onClick={() => explorerRunMutation.mutate({ prompt: explorerTopic || undefined })}
                 disabled={explorerRunMutation.isPending || currentJobId !== null}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
               >

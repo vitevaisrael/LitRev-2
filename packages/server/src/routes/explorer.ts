@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { JobStatusSchema } from '@the-scientist/schemas';
+import { getExplorerQueue } from '../modules/explorer/queue';
 
 const ExplorerRunSchema = z.object({
   prompt: z.string().optional(),
@@ -203,10 +204,12 @@ export async function explorerRoutes(fastify: FastifyInstance) {
       const { prompt, model } = request.body as { prompt?: string; model?: string };
       
       // Create job status
-      const jobId = randomUUID();
-      const jobStatus = await prisma.jobStatus.create({
+      const queue = getExplorerQueue();
+      const job = await queue.add('run', { projectId, prompt, model });
+
+      await prisma.jobStatus.create({
         data: {
-          jobId,
+          jobId: String(job.id),
           projectId,
           type: 'explorer',
           status: 'pending',
@@ -214,120 +217,7 @@ export async function explorerRoutes(fastify: FastifyInstance) {
         }
       });
 
-      // Simulate progress steps
-      const simulateProgress = async () => {
-        const steps = [
-          { step: 'planning', count: 1, total: 4 },
-          { step: 'browsing', count: 2, total: 4 },
-          { step: 'drafting', count: 3, total: 4 },
-          { step: 'finalizing', count: 4, total: 4 }
-        ];
-
-        for (const step of steps) {
-          await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5s delay
-          
-          await prisma.jobStatus.update({
-            where: { jobId },
-            data: {
-              status: 'running',
-              progress: step,
-              updatedAt: new Date()
-            }
-          });
-        }
-
-        // Create ExplorerRun with canned data
-        const runId = randomUUID();
-        const explorerRun = await prisma.explorerRun.create({
-          data: {
-            runId,
-            projectId,
-            prompt: prompt || 'Generate systematic review outline',
-            model: model || 'gpt-4',
-            output: {
-              outline: [
-                'Introduction and Background',
-                'Methods and Search Strategy',
-                'Results and Analysis',
-                'Discussion and Conclusions'
-              ],
-              narrative: [
-                {
-                  section: 'Introduction',
-                  text: 'This systematic review examines the effectiveness of treatment interventions for the specified condition. The review follows PRISMA guidelines and includes comprehensive analysis of available evidence.',
-                  refs: [{ doi: '10.1000/example1' }]
-                },
-                {
-                  section: 'Methods',
-                  text: 'A comprehensive search strategy was developed using multiple databases including PubMed, Embase, and Cochrane Library. Studies were screened according to predefined inclusion and exclusion criteria.',
-                  refs: [{ doi: '10.1000/example2' }]
-                }
-              ],
-              refs: [
-                {
-                  title: 'Effectiveness of Treatment A in Clinical Practice',
-                  journal: 'New England Journal of Medicine',
-                  year: 2023,
-                  doi: '10.1000/example1',
-                  pmid: '12345678'
-                },
-                {
-                  title: 'Systematic Review Methodology Best Practices',
-                  journal: 'Cochrane Database of Systematic Reviews',
-                  year: 2022,
-                  doi: '10.1000/example2',
-                  pmid: '87654321'
-                },
-                {
-                  title: 'Meta-analysis of Treatment Outcomes',
-                  journal: 'The Lancet',
-                  year: 2023,
-                  doi: '10.1000/example3',
-                  pmid: '11223344'
-                },
-                {
-                  title: 'Clinical Guidelines for Treatment Selection',
-                  journal: 'JAMA',
-                  year: 2022,
-                  doi: '10.1000/example4',
-                  pmid: '44332211'
-                },
-                {
-                  title: 'Patient-Reported Outcomes in Treatment Studies',
-                  journal: 'BMJ',
-                  year: 2023,
-                  doi: '10.1000/example5',
-                  pmid: '55667788'
-                }
-              ]
-            }
-          }
-        });
-
-        // Mark job as completed with runId
-        await prisma.jobStatus.update({
-          where: { jobId },
-          data: {
-            status: 'completed',
-            progress: { step: 'completed', count: 4, total: 4, runId },
-            updatedAt: new Date()
-          }
-        });
-      };
-
-      // Start simulation in background
-      simulateProgress().catch(async (error) => {
-        await prisma.jobStatus.update({
-          where: { jobId },
-          data: {
-            status: 'failed',
-            error: error.message,
-            updatedAt: new Date()
-          }
-        });
-      });
-      
-      return sendSuccess(reply, { jobId });
+      return sendSuccess(reply, { jobId: String(job.id) });
     } catch (error) {
       return sendError(reply, 'EXPLORER_ERROR', 'Failed to start explorer run', 500);
     }

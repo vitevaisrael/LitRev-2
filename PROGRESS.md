@@ -218,6 +218,21 @@
 - Added tour completion tracking and automatic tour display for new users
 - Empty states include primary CTAs and secondary help actions
 - Quick tour covers all major features: Problem Profile, Screening, Evidence, Drafting, Exports
+
+## Task 21 - Explorer: Real Job + PubMed Adapter (In Progress)
+- Implemented BullMQ-backed Explorer job with stepwise progress (planning → browsing → drafting → finalizing)
+- Worker starts with the server (skips gracefully if Redis unavailable)
+- PubMed adapter uses E-utilities (ESearch + EFetch) to retrieve refs; falls back to mock if offline
+- POST /projects/:id/explorer/run enqueues a job and returns jobId
+- JobStatus polling unchanged; retry endpoint supported
+- GET /projects/:id/explorer/:runId serves artifact persisted by the worker
+- Explorer import increments PRISMA.identified and writes AuditLog { action: "import_completed", details: { added, source: 'explorer' } }
+- Web: Explorer UI accepts topic input (or uses Problem Profile) and shows progress/results
+
+Next Up:
+- Harden LLM output validation and switch to a production model when OPENAI_API_KEY is present
+- Add explicit error toasts and run-time guardrails in Explorer UI
+- Optional: coverage metrics for narrative vs. refs
 - Each empty state provides contextual help and next steps for users
 
 ## Task 21 - JWT Authentication & Authorization System ✅
@@ -235,4 +250,3 @@
 - All API endpoints now require authentication except health and auth routes
 - Projects are properly isolated by user ownership with secure access validation
 - Authentication system supports token refresh and secure logout with cookie clearing
-
