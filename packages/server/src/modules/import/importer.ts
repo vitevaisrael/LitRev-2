@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NormalizedRef } from './parser';
 import { deduplicateReferences } from './deduplicator';
+import { calculateScore } from '../../utils/scoreCalculator';
 
 const prisma = new PrismaClient();
 
@@ -35,10 +36,28 @@ export async function importReferences(
     };
   }
   
-  // Create new candidates
+  // Get problem profile for scoring
+  const problemProfile = await prisma.problemProfile.findUnique({
+    where: { projectId }
+  });
+
+  // Create new candidates with scoring
   const candidates = await Promise.all(
-    toAdd.map(ref => 
-      prisma.candidate.create({
+    toAdd.map(async ref => {
+      const score = calculateScore(
+        ref.title,
+        ref.journal,
+        ref.year,
+        ref.abstract,
+        problemProfile ? {
+          population: problemProfile.population,
+          exposure: problemProfile.exposure,
+          comparator: problemProfile.comparator,
+          outcomes: problemProfile.outcomes
+        } : undefined
+      );
+
+      return prisma.candidate.create({
         data: {
           projectId,
           title: ref.title,
@@ -47,10 +66,11 @@ export async function importReferences(
           doi: ref.doi || null,
           pmid: ref.pmid || null,
           authors: ref.authors,
-          abstract: ref.abstract || null
+          abstract: ref.abstract || null,
+          score: score as any
         }
-      })
-    )
+      });
+    })
   );
   
   // Update PrismaData counters

@@ -79,3 +79,15 @@
 - Automatic refetch of candidates, PRISMA widget, and audit logs after import
 - Support for .ris, .bib, .bibtex file formats with proper validation
 
+## Task 9 - PDF Upload + Parse → ParsedDoc + Sentences Panel ✅
+- Added S3 storage wrapper module for MinIO with automatic bucket creation
+- Added PDF upload endpoint: POST /api/v1/projects/:id/candidates/:cid/pdf
+- Added PDF parsing using existing pdfjs-dist + sentence splitter
+- Added ParsedDoc read endpoint: GET /api/v1/projects/:id/candidates/:cid/parsed
+- Added Zod validation schemas for PDF endpoints with proper error handling
+- Added frontend PDF upload button and file picker in DecisionCard component
+- Created Sentences panel with search functionality and real-time filtering
+- Support PDF file upload to S3 with automatic parsing and storage
+- Create audit log entries for PDF attachments with page/sentence counts
+- Real-time UI updates after PDF upload with searchable sentence display
+

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 
 interface Candidate {
   id: string;
@@ -43,6 +44,31 @@ export function DecisionCard({
   const [sentenceSearch, setSentenceSearch] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  // Recompute score mutation
+  const recomputeScoreMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/v1/projects/${projectId}/candidates/${candidate.id}/recompute-score`, {
+        method: 'POST',
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Request failed');
+      }
+      
+      return data;
+    },
+    onSuccess: () => {
+      // Refetch candidates to update the score
+      queryClient.invalidateQueries({ queryKey: queryKeys.candidates(projectId) });
+      alert('Score recomputed successfully!');
+    },
+    onError: (error: any) => {
+      alert(`Score recomputation failed: ${error.message}`);
+    }
+  });
 
   // PDF upload mutation
   const pdfUploadMutation = useMutation({
@@ -129,12 +155,30 @@ export function DecisionCard({
 
       {candidate.score && (
         <div>
-          <h3 className="font-medium mb-2">Score: {candidate.score.total}/65</h3>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-medium">Score: {candidate.score.total}/65</h3>
+            <button
+              onClick={() => recomputeScoreMutation.mutate()}
+              disabled={recomputeScoreMutation.isPending}
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50"
+              title="Recompute score based on current data"
+            >
+              {recomputeScoreMutation.isPending ? 'Computing...' : 'Recompute'}
+            </button>
+          </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <div>Design: {candidate.score.design}/40</div>
-            <div>Directness: {candidate.score.directness}/10</div>
-            <div>Recency: {candidate.score.recency}/5</div>
-            <div>Journal: {candidate.score.journal}/5</div>
+            <div title="Study design type (SR/MA=40, RCT=35, Cohort=28, etc.)">
+              Design: {candidate.score.design}/40
+            </div>
+            <div title="Relevance to problem profile (exact=10, close=7, partial=3, off=0)">
+              Directness: {candidate.score.directness}/10
+            </div>
+            <div title="Publication recency (≤2y=5, ≤5y=3, older=1, very old=0)">
+              Recency: {candidate.score.recency}/5
+            </div>
+            <div title="Journal impact factor (NEJM/Lancet/JAMA=5, etc.)">
+              Journal: {candidate.score.journal}/5
+            </div>
           </div>
         </div>
       )}
