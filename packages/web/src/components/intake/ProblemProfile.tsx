@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { notifySuccess, handleApiError } from '../../lib/notify';
 
 interface ProblemProfileProps {
   projectId: string;
@@ -66,10 +67,10 @@ export function ProblemProfile({ projectId, onPlanGenerated }: ProblemProfilePro
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['problem-profile', projectId] });
-      alert('Profile saved successfully!');
+      notifySuccess('Profile saved successfully!');
     },
     onError: (error: any) => {
-      alert(`Failed to save profile: ${error.message}`);
+      handleApiError(error, 'Failed to save profile');
     }
   });
 
@@ -92,10 +93,10 @@ export function ProblemProfile({ projectId, onPlanGenerated }: ProblemProfilePro
       if (onPlanGenerated) {
         onPlanGenerated(data.data);
       }
-      alert('Plan generated successfully!');
+      notifySuccess('Plan generated successfully!');
     },
     onError: (error: any) => {
-      alert(`Failed to generate plan: ${error.message}`);
+      handleApiError(error, 'Failed to generate plan');
     }
   });
 

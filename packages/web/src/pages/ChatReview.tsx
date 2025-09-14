@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChatStarter } from '../components/chat/ChatStarter';
 import { ChatInterface } from '../components/chat/ChatInterface';
 import { ArrowLeft, Plus } from 'lucide-react';
+import { notifyInfo } from '../lib/notify';
 
 export function ChatReview() {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -19,7 +20,7 @@ export function ChatReview() {
   const handleImportToProject = (_sessionId: string) => {
     // For now, just show a message. In a real implementation, this would
     // open a project selection modal or redirect to project creation
-    alert('Import to project functionality would be implemented here');
+    notifyInfo('Import to project functionality would be implemented here');
   };
 
   return (

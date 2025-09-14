@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { Dropzone } from '../ui/dropzone';
 import { FileText, Upload, Search, Quote, CheckCircle, XCircle, HelpCircle, MessageSquare } from 'lucide-react';
 import { queryKeys } from '../../lib/queryKeys';
+import { notifySuccess, notifyError, handleApiError } from '../../lib/notify';
 
 interface Candidate {
   id: string;
@@ -77,10 +78,10 @@ export function DecisionCard({
     onSuccess: () => {
       // Refetch candidates to update the score
       queryClient.invalidateQueries({ queryKey: queryKeys.candidates(projectId) });
-      alert('Score recomputed successfully!');
+      notifySuccess('Score recomputed successfully!');
     },
     onError: (error: any) => {
-      alert(`Score recomputation failed: ${error.message}`);
+      handleApiError(error, 'Score recomputation failed');
     }
   });
 
@@ -142,6 +143,8 @@ export function DecisionCard({
       queryClient.invalidateQueries({ queryKey: ['parsed', candidate.id] });
       queryClient.invalidateQueries({ queryKey: ['audit-logs', projectId] });
       
+      notifySuccess('PDF uploaded and parsed successfully!');
+      
       // Reset success state after a delay
       setTimeout(() => {
         setUploadSuccess(false);
@@ -151,6 +154,8 @@ export function DecisionCard({
     onError: (error: any) => {
       setUploadError(error.message);
       setUploadProgress(0);
+      
+      handleApiError(error, 'PDF upload failed');
       
       // Clear error after a delay
       setTimeout(() => {
@@ -205,13 +210,13 @@ export function DecisionCard({
       // Refetch supports for the claim and audit logs
       queryClient.invalidateQueries({ queryKey: queryKeys.supports(selectedClaimId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs(projectId) });
-      alert('Quote captured successfully!');
+      notifySuccess('Quote captured successfully!');
       setShowQuotePicker(false);
       setSelectedSentence(null);
       setSelectedClaimId('');
     },
     onError: (error: any) => {
-      alert(`Failed to capture quote: ${error.message}`);
+      handleApiError(error, 'Failed to capture quote');
     }
   });
 
@@ -223,7 +228,9 @@ export function DecisionCard({
     }
     
     if (file.type !== 'application/pdf') {
-      setUploadError('Please select a PDF file');
+      const errorMessage = 'Please select a PDF file';
+      setUploadError(errorMessage);
+      notifyError(errorMessage);
       setTimeout(() => setUploadError(null), 5000);
       return;
     }

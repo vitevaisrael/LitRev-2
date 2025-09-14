@@ -489,3 +489,71 @@
 - **Responsive Design**: Works across different screen sizes and devices
 
 **Next Steps**: Ready for UI-04 (Toaster & Error Helpers) and subsequent UI tasks.
+
+## Task UI-04 — Toaster & Error Helpers ✅
+
+**Goal**: Create `lib/notify.ts` and standardize toasts across the application, replacing all `alert()` calls with proper toast notifications.
+
+### ✅ Completed Implementation
+
+**1) Created Standardized Notification System**
+- ✅ Built comprehensive `lib/notify.ts` with react-hot-toast integration
+- ✅ Added multiple notification types: success, error, warning, info, loading
+- ✅ Implemented promise-based notifications for async operations
+- ✅ Created error helper utilities with consistent error handling
+- ✅ Added API error handler with context support
+- ✅ Implemented notification state management with automatic cleanup
+
+**2) Installed and Configured Toast Library**
+- ✅ Added react-hot-toast dependency for modern toast notifications
+- ✅ Configured Toaster component in main App with custom styling
+- ✅ Set up consistent toast positioning (top-right) and duration settings
+- ✅ Added custom styling for different toast types (success, error, info)
+- ✅ Integrated with existing ToastProvider for backward compatibility
+
+**3) Replaced All Alert() Calls**
+- ✅ Updated DecisionCard component: score recomputation, PDF upload, quote capture
+- ✅ Updated ChatReview component: import to project functionality
+- ✅ Updated ProblemProfile component: profile save and plan generation
+- ✅ Updated ExportCenter component: export error handling
+- ✅ Replaced all alert() calls with appropriate toast notifications
+- ✅ Added proper error context and user-friendly messages
+
+**4) Enhanced Error Handling**
+- ✅ Created `handleApiError` utility for consistent API error handling
+- ✅ Added `handleSuccess` and `handleLoading` helpers for common operations
+- ✅ Implemented `NotificationError` class for structured error handling
+- ✅ Added automatic error logging for debugging purposes
+- ✅ Created context-aware error messages with operation descriptions
+
+**5) Technical Implementation**
+- ✅ Added proper TypeScript types for all notification functions
+- ✅ Integrated with existing React Query error handling
+- ✅ Maintained backward compatibility with existing toast system
+- ✅ Added proper accessibility with ARIA attributes
+- ✅ Ensured consistent styling with design system
+
+### ✅ Acceptance Criteria Met
+- ✅ Created `lib/notify.ts` with standardized toast notification system
+- ✅ Installed and configured react-hot-toast library
+- ✅ Replaced all `alert()` calls with proper toast notifications
+- ✅ Added comprehensive error helper utilities
+- ✅ Integrated with existing application architecture
+- ✅ Build successful and application running properly
+- ✅ All TypeScript errors resolved
+
+### 🎨 UX Improvements
+- **Consistent Notifications**: All user feedback now uses standardized toast system
+- **Better Error Messages**: Context-aware error messages with operation descriptions
+- **Visual Feedback**: Modern toast notifications with proper styling and positioning
+- **Accessibility**: Proper ARIA attributes and keyboard navigation support
+- **User Experience**: Non-blocking notifications that don't interrupt workflow
+
+### 🔧 Technical Features
+- **Promise Support**: Built-in support for async operation notifications
+- **Error Handling**: Comprehensive error handling with automatic logging
+- **Type Safety**: Full TypeScript support with proper type definitions
+- **Customization**: Configurable duration, position, and styling options
+- **Integration**: Seamless integration with React Query and existing systems
+
+**Next Steps**: Ready for UI-05 (Discoverability) and subsequent UI tasks.

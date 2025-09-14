@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { notifyError } from '../../lib/notify';
 
 interface ExportCenterProps {
   projectId: string;
@@ -43,7 +44,7 @@ export function ExportCenter({ projectId }: ExportCenterProps) {
       
     } catch (error) {
       console.error(`Failed to export ${type}:`, error);
-      alert(`Failed to export ${type}. Please try again.`);
+      notifyError(`Failed to export ${type}. Please try again.`);
     } finally {
       setIsExporting(null);
     }
