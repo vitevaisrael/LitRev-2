@@ -105,3 +105,13 @@
 - Journal scoring: impact factor mapping capped at 5
 - Real-time score recomputation with audit logging
 
+## Task 11 - Candidate Filters UI ✅
+- Added FilterBar component with q, year_min, year_max, journal, status filters
+- Wire filters to existing GET /api/v1/projects/:id/candidates endpoint
+- Preserve filter state in component with reset functionality
+- Ensure pagination works correctly with filters applied
+- Reset to page 1 when filters change
+- Compact filter bar above CandidateList with responsive layout
+- Support text search, year range, journal filtering, and status filtering
+- Real-time filtering with existing paginated endpoint
+

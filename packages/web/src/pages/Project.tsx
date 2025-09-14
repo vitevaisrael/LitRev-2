@@ -168,10 +168,8 @@ export function Project() {
       case 'draft':
         return (
           <DraftEditor
+            projectId={id || ''}
             section="Introduction"
-            content="This systematic review examines the efficacy of corticosteroid therapy in IgA nephropathy..."
-            onChange={() => {}}
-            onInsertCitation={() => {}}
           />
         );
       case 'exports':
