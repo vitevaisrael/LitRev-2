@@ -9,6 +9,7 @@ import { ledgerRoutes } from './ledger';
 import { pdfRoutes } from './pdf';
 import { scoringRoutes } from './scoring';
 import { draftRoutes } from './draft';
+import { exportsRoutes } from './exports';
 import { env } from '../config/env';
 
 export async function routes(fastify: FastifyInstance) {
@@ -21,6 +22,7 @@ export async function routes(fastify: FastifyInstance) {
   await fastify.register(pdfRoutes);
   await fastify.register(scoringRoutes);
   await fastify.register(draftRoutes);
+  await fastify.register(exportsRoutes);
   
   // Register explorer routes only if feature is enabled
   if (env.FEATURE_EXPLORER) {

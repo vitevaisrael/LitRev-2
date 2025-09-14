@@ -115,3 +115,16 @@
 - Support text search, year range, journal filtering, and status filtering
 - Real-time filtering with existing paginated endpoint
 
+## Task 12 - Draft API + Editor Persistence ✅
+- Add Zod schemas for draft endpoints in shared/schemas/draft.ts
+- Add GET /api/v1/projects/:id/draft endpoint to fetch all draft sections
+- Add POST /api/v1/projects/:id/draft endpoint with citation validation
+- Validate citations are Support IDs in same project; reject otherwise
+- Create audit log entries for draft saves with section and citation count
+- Update DraftEditor to load on mount and autosave with 800ms debounce
+- Add Insert citation panel listing Supports with quote and locator
+- Insert inline citation chips [SUPPORT:xxxx] format
+- Real-time autosave with visual feedback
+- Citation validation ensures only valid Support IDs are accepted
+- Draft persistence across reloads with proper error handling
+

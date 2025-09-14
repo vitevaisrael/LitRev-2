@@ -10,6 +10,7 @@ import { CandidateList } from '../components/screen/CandidateList';
 import { ClaimDetail } from '../components/ledger/ClaimDetail';
 import { DraftEditor } from '../components/draft/DraftEditor';
 import { ExplorerPanel } from '../components/explorer/ExplorerPanel';
+import { ExportCenter } from '../components/exports/ExportCenter';
 import { PrismaWidget } from '../components/shared/PrismaWidget';
 import { AuditLog } from '../components/shared/AuditLog';
 import { useKeyboard } from '../hooks/useKeyboard';
@@ -173,29 +174,7 @@ export function Project() {
           />
         );
       case 'exports':
-        return (
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Exports</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <button className="p-4 border rounded hover:bg-gray-50">
-                <h3 className="font-medium">DOCX</h3>
-                <p className="text-sm text-gray-600">Word document with numbered references</p>
-              </button>
-              <button className="p-4 border rounded hover:bg-gray-50">
-                <h3 className="font-medium">BibTeX</h3>
-                <p className="text-sm text-gray-600">Bibliography format</p>
-              </button>
-              <button className="p-4 border rounded hover:bg-gray-50">
-                <h3 className="font-medium">PRISMA SVG</h3>
-                <p className="text-sm text-gray-600">Flow diagram</p>
-              </button>
-              <button className="p-4 border rounded hover:bg-gray-50">
-                <h3 className="font-medium">Ledger JSON</h3>
-                <p className="text-sm text-gray-600">Evidence ledger data</p>
-              </button>
-            </div>
-          </div>
-        );
+        return <ExportCenter projectId={id || ''} />;
       case 'explorer':
         return (
           <div className="p-6">
