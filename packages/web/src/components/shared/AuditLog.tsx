@@ -1,15 +1,26 @@
-interface AuditEntry {
-  ts: string;
-  kind: string;
-  userId: string;
-  details: any;
-}
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
+import { queryKeys } from '../../lib/queryKeys';
+
+// interface AuditEntry {
+//   ts: string;
+//   kind: string;
+//   userId: string;
+//   details: any;
+// }
 
 interface AuditLogProps {
-  entries: AuditEntry[];
+  projectId: string;
 }
 
-export function AuditLog({ entries }: AuditLogProps) {
+export function AuditLog({ projectId }: AuditLogProps) {
+  const { data } = useQuery({
+    queryKey: queryKeys.auditLogs(projectId),
+    queryFn: () => api.get(`/projects/${projectId}/audit-logs?limit=20`),
+    enabled: !!projectId
+  });
+
+  const entries = (data?.data as any)?.auditLogs || [];
   return (
     <div className="p-4">
       <h3 className="font-semibold mb-3">Audit Log</h3>
@@ -18,7 +29,7 @@ export function AuditLog({ entries }: AuditLogProps) {
         {entries.length === 0 ? (
           <p className="text-sm text-gray-500">No audit entries yet.</p>
         ) : (
-          entries.map((entry, index) => (
+          entries.map((entry: any, index: number) => (
             <div key={index} className="text-xs border-l-2 border-gray-200 pl-2">
               <div className="flex justify-between items-start">
                 <span className="font-medium">{entry.kind}</span>

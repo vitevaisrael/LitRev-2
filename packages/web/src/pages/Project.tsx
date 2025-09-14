@@ -33,9 +33,10 @@ export function Project() {
   const decisionMutation = useMutation({
     mutationFn: (decision: any) => api.post(`/projects/${id}/decide`, decision),
     onSuccess: () => {
-      // Refetch candidates and PRISMA data
+      // Refetch candidates, PRISMA data, and audit logs
       queryClient.invalidateQueries({ queryKey: queryKeys.candidates(id || '') });
       queryClient.invalidateQueries({ queryKey: queryKeys.prisma(id || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs(id || '') });
       // Show success toast (you can add a toast library later)
       console.log('Decision recorded successfully');
     },
@@ -53,14 +54,14 @@ export function Project() {
   };
 
   // Mock data for other components (to be replaced later)
-  const mockAuditEntries = [
-    {
-      ts: new Date().toISOString(),
-      kind: 'project_created',
-      userId: 'user1',
-      details: { message: 'Project created' }
-    }
-  ];
+  // const mockAuditEntries = [
+  //   {
+  //     ts: new Date().toISOString(),
+  //     kind: 'project_created',
+  //     userId: 'user1',
+  //     details: { message: 'Project created' }
+  //   }
+  // ];
 
   const mockClaim = {
     id: '1',
@@ -202,7 +203,7 @@ export function Project() {
       case 'screen':
         return <PrismaWidget counters={prismaCounters} />;
       case 'ledger':
-        return <AuditLog entries={mockAuditEntries} />;
+        return <AuditLog projectId={id || ''} />;
       default:
         return <PrismaWidget counters={prismaCounters} />;
     }
