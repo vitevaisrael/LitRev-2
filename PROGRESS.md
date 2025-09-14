@@ -33,3 +33,11 @@
 - Audit log shows latest 20 entries ordered by timestamp desc
 - After decisions or project creation, new entries appear without page reload
 
+## Task 4 - Seed improvements ✅
+- Seed script already creates 'IgAN & Uveitis' project with 3 realistic candidates
+- Each candidate has proper metadata: title, journal, year, DOI, PMID, authors, abstract
+- Includes realistic scoring (design, directness, recency, journal impact)
+- Creates ParsedDoc with 3 pages and 9 sentences total
+- PRISMA counters initialized with identified=3, others=0
+- All data is properly linked and ready for testing the application
+
