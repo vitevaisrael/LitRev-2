@@ -15,9 +15,11 @@
     "db:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@fastify/multipart": "^9.2.1",
     "@prisma/client": "^5.0.0",
     "@the-scientist/schemas": "workspace:*",
     "argon2": "^0.31.0",
+    "bibtex-parse-js": "^0.0.24",
     "bullmq": "^4.15.0",
     "dotenv": "^17.2.2",
     "fastify": "^4.24.0",

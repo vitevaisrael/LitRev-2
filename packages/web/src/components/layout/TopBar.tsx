@@ -3,9 +3,10 @@ import { useState } from 'react';
 interface TopBarProps {
   onRunExplorer: () => void;
   onExport: () => void;
+  onImport: () => void;
 }
 
-export function TopBar({ onRunExplorer, onExport }: TopBarProps) {
+export function TopBar({ onRunExplorer, onExport, onImport }: TopBarProps) {
   const [showHelp, setShowHelp] = useState(false);
 
   return (
@@ -16,6 +17,12 @@ export function TopBar({ onRunExplorer, onExport }: TopBarProps) {
       </div>
       
       <div className="flex items-center gap-4">
+        <button
+          onClick={onImport}
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+        >
+          Import
+        </button>
         <button
           onClick={onRunExplorer}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"

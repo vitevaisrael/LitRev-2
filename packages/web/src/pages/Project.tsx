@@ -16,6 +16,7 @@ import { AuditLog } from '../components/shared/AuditLog';
 import { HelpOverlay } from '../components/shared/HelpOverlay';
 import { EmptyState } from '../components/shared/EmptyState';
 import { QuickTour } from '../components/shared/QuickTour';
+import { ImportModal } from '../components/import/ImportModal';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { useToast } from '../hooks/useToast';
 import { api } from '../lib/api';
@@ -30,6 +31,7 @@ export function Project() {
   const [batchMode, setBatchMode] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const queryClient = useQueryClient();
   const { showError, showSuccess } = useToast();
 
@@ -447,6 +449,7 @@ export function Project() {
       <TopBar
         onRunExplorer={() => setActiveStep('explorer')}
         onExport={() => setActiveStep('exports')}
+        onImport={() => setShowImportModal(true)}
       />
       
       <div className="flex-1 overflow-hidden">
@@ -462,6 +465,11 @@ export function Project() {
         isOpen={showTour} 
         onClose={() => setShowTour(false)} 
         onComplete={() => setShowTour(false)} 
+      />
+      <ImportModal 
+        isOpen={showImportModal} 
+        onClose={() => setShowImportModal(false)} 
+        projectId={id || ''} 
       />
     </div>
   );
