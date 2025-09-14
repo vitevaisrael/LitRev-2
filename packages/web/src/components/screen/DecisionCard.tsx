@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -7,6 +7,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Separator } from '../ui/separator';
 import { Alert, AlertDescription } from '../ui/alert';
+import { Dropzone } from '../ui/dropzone';
 import { FileText, Upload, Search, Quote, CheckCircle, XCircle, HelpCircle, MessageSquare } from 'lucide-react';
 import { queryKeys } from '../../lib/queryKeys';
 
@@ -53,7 +54,9 @@ export function DecisionCard({
   const [showQuotePicker, setShowQuotePicker] = useState(false);
   const [selectedSentence, setSelectedSentence] = useState<any>(null);
   const [selectedClaimId, setSelectedClaimId] = useState<string>('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const queryClient = useQueryClient();
 
   // Recompute score mutation
@@ -81,33 +84,78 @@ export function DecisionCard({
     }
   });
 
-  // PDF upload mutation
+  // PDF upload mutation with progress tracking
   const pdfUploadMutation = useMutation({
     mutationFn: async (file: File) => {
+      setUploadError(null);
+      setUploadSuccess(false);
+      setUploadProgress(0);
+
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch(`/api/v1/projects/${projectId}/candidates/${candidate.id}/pdf`, {
-        method: 'POST',
-        body: formData,
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = (event.loaded / event.total) * 100;
+            setUploadProgress(progress);
+          }
+        });
+        
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              setUploadProgress(100);
+              setUploadSuccess(true);
+              resolve(data);
+            } catch (error) {
+              reject(new Error('Invalid response format'));
+            }
+          } else {
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              reject(new Error(errorData.error?.message || 'Upload failed'));
+            } catch {
+              reject(new Error('Upload failed'));
+            }
+          }
+        });
+        
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'));
+        });
+        
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload cancelled'));
+        });
+        
+        xhr.open('POST', `/api/v1/projects/${projectId}/candidates/${candidate.id}/pdf`);
+        xhr.send(formData);
       });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Request failed');
-      }
-      
-      return data;
     },
     onSuccess: () => {
       // Refetch parsed doc and audit logs
       queryClient.invalidateQueries({ queryKey: ['parsed', candidate.id] });
       queryClient.invalidateQueries({ queryKey: ['audit-logs', projectId] });
-      alert('PDF uploaded and parsed successfully!');
+      
+      // Reset success state after a delay
+      setTimeout(() => {
+        setUploadSuccess(false);
+        setUploadProgress(0);
+      }, 3000);
     },
     onError: (error: any) => {
-      alert(`PDF upload failed: ${error.message}`);
+      setUploadError(error.message);
+      setUploadProgress(0);
+      
+      // Clear error after a delay
+      setTimeout(() => {
+        setUploadError(null);
+      }, 5000);
     }
   });
 
@@ -167,15 +215,20 @@ export function DecisionCard({
     }
   });
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.type !== 'application/pdf') {
-        alert('Please select a PDF file');
-        return;
-      }
-      pdfUploadMutation.mutate(file);
+  const handleFileSelect = (file: File | Error) => {
+    if (file instanceof Error) {
+      setUploadError(file.message);
+      setTimeout(() => setUploadError(null), 5000);
+      return;
     }
+    
+    if (file.type !== 'application/pdf') {
+      setUploadError('Please select a PDF file');
+      setTimeout(() => setUploadError(null), 5000);
+      return;
+    }
+    
+    pdfUploadMutation.mutate(file);
   };
 
   // Filter sentences based on search
@@ -336,21 +389,15 @@ export function DecisionCard({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileSelect}
-              className="hidden"
+            <Dropzone
+              onFileSelect={handleFileSelect}
+              isUploading={pdfUploadMutation.isPending}
+              uploadProgress={uploadProgress}
+              error={uploadError}
+              success={uploadSuccess}
+              acceptedFileTypes={['.pdf']}
+              maxFileSize={10 * 1024 * 1024} // 10MB
             />
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={pdfUploadMutation.isPending}
-              className="w-full"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {pdfUploadMutation.isPending ? 'Uploading...' : 'Attach PDF'}
-            </Button>
             
             {parsedDocData && (
               <div className="flex gap-2">

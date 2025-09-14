@@ -419,3 +419,73 @@
 - **Maintainability**: Clean component structure with reusable patterns
 
 **Next Steps**: Ready for UI-03 (PDF Upload UX Upgrade) and subsequent UI tasks.
+
+## Task UI-03 — PDF Upload UX Upgrade ✅
+
+**Goal**: Improve PDF attach UX on DecisionCard with drag-and-drop functionality, progress tracking, and enhanced user feedback.
+
+### ✅ Completed Implementation
+
+**1) Created Advanced Dropzone Component**
+- ✅ Built reusable Dropzone component with react-dropzone integration
+- ✅ Added drag-and-drop functionality with visual feedback
+- ✅ Implemented file type validation (PDF only) with error messages
+- ✅ Added file size validation (10MB limit) with user-friendly error handling
+- ✅ Created visual states for idle, drag-active, uploading, success, and error
+- ✅ Added progress bar with percentage display during upload
+- ✅ Implemented proper accessibility with ARIA labels and keyboard navigation
+
+**2) Enhanced PDF Upload with Progress Tracking**
+- ✅ Replaced basic file input with advanced dropzone interface
+- ✅ Added XMLHttpRequest-based upload with real-time progress tracking
+- ✅ Implemented upload progress percentage display with visual progress bar
+- ✅ Added upload status indicators (uploading, success, error states)
+- ✅ Created automatic state reset after success/error with configurable delays
+
+**3) Improved Error Handling and Validation**
+- ✅ Enhanced file validation with specific error messages for different failure types
+- ✅ Added network error handling with user-friendly error messages
+- ✅ Implemented upload cancellation support
+- ✅ Added file size and type validation with clear feedback
+- ✅ Created error state management with automatic error clearing
+
+**4) Enhanced User Experience**
+- ✅ Added visual feedback for all upload states (idle, dragging, uploading, success, error)
+- ✅ Implemented smooth transitions and animations for state changes
+- ✅ Added file size display and validation messages
+- ✅ Created intuitive drag-and-drop interface with clear visual cues
+- ✅ Maintained backward compatibility with existing PDF processing workflow
+
+**5) Technical Implementation**
+- ✅ Added react-dropzone dependency for robust file handling
+- ✅ Integrated with existing PDF upload API endpoints
+- ✅ Maintained compatibility with existing parsed document workflow
+- ✅ Added proper TypeScript types and error handling
+- ✅ Ensured accessibility compliance with proper ARIA attributes
+
+### ✅ Acceptance Criteria Met
+- ✅ Drag-and-drop PDF upload with visual feedback
+- ✅ Real-time upload progress with percentage display
+- ✅ Enhanced error handling with user-friendly messages
+- ✅ File validation (type and size) with clear feedback
+- ✅ Visual states for all upload phases (idle, dragging, uploading, success, error)
+- ✅ Maintained existing functionality and API integration
+- ✅ Build successful and application running properly
+- ✅ All TypeScript errors resolved
+
+### 🎨 UX Improvements
+- **Drag & Drop Interface**: Intuitive file upload with visual drag states
+- **Progress Tracking**: Real-time upload progress with percentage and visual bar
+- **Error Feedback**: Clear, actionable error messages for different failure scenarios
+- **Visual States**: Distinct visual feedback for all upload phases
+- **Accessibility**: Proper ARIA labels and keyboard navigation support
+- **File Validation**: Client-side validation with immediate feedback
+
+### 🔧 Technical Features
+- **Progress Tracking**: XMLHttpRequest-based upload with real-time progress
+- **Error Handling**: Comprehensive error handling for network, validation, and server errors
+- **State Management**: Proper state management with automatic cleanup
+- **File Validation**: Client-side validation for file type and size
+- **Responsive Design**: Works across different screen sizes and devices
+
+**Next Steps**: Ready for UI-04 (Toaster & Error Helpers) and subsequent UI tasks.
