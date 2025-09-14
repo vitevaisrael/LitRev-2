@@ -57,8 +57,7 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
         const newClaim = await tx.claim.create({
           data: {
             ...claimData,
-            projectId,
-            userId: defaultUserId
+            projectId
           }
         });
 
@@ -112,8 +111,7 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
         const newSupport = await tx.support.create({
           data: {
             ...supportData,
-            projectId,
-            userId: defaultUserId
+            projectId
           }
         });
 
