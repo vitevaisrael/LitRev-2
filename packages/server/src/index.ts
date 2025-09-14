@@ -54,11 +54,6 @@ fastify.addHook('onSend', async (request, reply, payload) => {
 // Register routes
 fastify.register(routes, { prefix: '/api/v1' });
 
-// Health endpoint
-fastify.get('/api/v1/health', async (request, reply) => {
-  return { ok: true, data: { status: 'healthy', timestamp: new Date().toISOString() } };
-});
-
 // Start server
 const start = async () => {
   try {

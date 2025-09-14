@@ -51,3 +51,21 @@
 - Can run stub Explorer job and import 1-2 refs as new Candidates
 - All functionality is wired to real API endpoints
 
+## Task 6 - Quality & DX polish ✅
+- Health endpoint already exists and is used in Projects page
+- Health indicator shows 'Connected' status with green/red dot
+- All server routes use shared sendSuccess/sendError helpers with uniform shape
+- Added ESLint configuration for server package (basic setup)
+- TypeScript compilation passes for all packages
+- All API endpoints return consistent { ok: true, data } format
+- Error handling includes requestId via logging hook
+
+## Task 7 - Docs ✅
+- Updated README.md with Quick Start reflecting real steps (Docker up, migrate, seed, dev)
+- Added URLs for all services (Web: 5173, API health: 3000, MinIO: 9001)
+- Created API.md documenting all v1 endpoints with request/response examples
+- Documented all endpoints: health, projects, candidates, decisions, ledger, explorer
+- Included query parameters, request bodies, and response formats
+- Added error codes and rate limiting information
+- Both files are readable and match current behavior
+
