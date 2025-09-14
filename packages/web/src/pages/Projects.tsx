@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
-import { queryKeys } from '../lib/queryKeys';
+// import { queryKeys } from '../lib/queryKeys';
 import { ProjectList } from '../components/projects/ProjectList';
 
 export function Projects() {

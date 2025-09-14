@@ -46,7 +46,7 @@ export function ProjectList() {
       </form>
       
       <div className="space-y-2">
-        {projects?.data?.projects?.map((project: any) => (
+        {(projects?.data as any)?.projects?.map((project: any) => (
           <div key={project.id} className="p-3 border rounded-md hover:bg-gray-50">
             <h3 className="font-medium">{project.title}</h3>
             <p className="text-sm text-gray-500">

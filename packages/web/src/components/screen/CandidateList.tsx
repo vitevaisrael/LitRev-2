@@ -38,7 +38,7 @@ export function CandidateList({
   selectedId, 
   onSelect, 
   filters = {}, 
-  onFilterChange 
+  onFilterChange: _onFilterChange
 }: CandidateListProps) {
   const [page, setPage] = useState(1);
   const pageSize = 20;
@@ -61,8 +61,8 @@ export function CandidateList({
     enabled: !!projectId
   });
 
-  const candidates = data?.data?.items || [];
-  const total = data?.data?.total || 0;
+  const candidates = (data?.data as any)?.items || [];
+  const total = (data?.data as any)?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
@@ -74,7 +74,7 @@ export function CandidateList({
       {isLoading && <div className="text-sm text-gray-500">Loading...</div>}
       
       <div className="space-y-2">
-        {candidates.map((candidate) => (
+        {candidates.map((candidate: any) => (
           <div
             key={candidate.id}
             onClick={() => onSelect(candidate)}

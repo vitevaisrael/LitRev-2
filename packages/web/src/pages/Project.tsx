@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ThreePane } from '../components/layout/ThreePane';
 import { LeftRail } from '../components/layout/LeftRail';
 import { TopBar } from '../components/layout/TopBar';
@@ -12,40 +13,46 @@ import { ExplorerPanel } from '../components/explorer/ExplorerPanel';
 import { PrismaWidget } from '../components/shared/PrismaWidget';
 import { AuditLog } from '../components/shared/AuditLog';
 import { useKeyboard } from '../hooks/useKeyboard';
+import { api } from '../lib/api';
+import { queryKeys } from '../lib/queryKeys';
 
 export function Project() {
   const { id } = useParams<{ id: string }>();
   const [activeStep, setActiveStep] = useState('intake');
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
+  const queryClient = useQueryClient();
 
-  // Mock data for demonstration
-  const mockCandidates = [
-    {
-      id: '1',
-      title: 'Corticosteroids in IgA Nephropathy: A Systematic Review',
-      journal: 'JAMA',
-      year: 2023,
-      doi: '10.1001/jama.2023.12345',
-      score: { total: 55 }
+  // Fetch PRISMA data
+  const { data: prismaData } = useQuery({
+    queryKey: queryKeys.prisma(id || ''),
+    queryFn: () => api.get(`/projects/${id}/prisma`),
+    enabled: !!id
+  });
+
+  // Decision mutation
+  const decisionMutation = useMutation({
+    mutationFn: (decision: any) => api.post(`/projects/${id}/decide`, decision),
+    onSuccess: () => {
+      // Refetch candidates and PRISMA data
+      queryClient.invalidateQueries({ queryKey: queryKeys.candidates(id || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prisma(id || '') });
+      // Show success toast (you can add a toast library later)
+      console.log('Decision recorded successfully');
     },
-    {
-      id: '2',
-      title: 'Adalimumab for Uveitis in Spondyloarthritis',
-      journal: 'NEJM',
-      year: 2022,
-      doi: '10.1056/NEJM.2022.67890',
-      score: { total: 53 }
+    onError: (error) => {
+      console.error('Failed to record decision:', error);
     }
-  ];
+  });
 
-  const mockPrismaCounters = {
-    identified: 3,
+  const prismaCounters = (prismaData?.data as any)?.prisma || {
+    identified: 0,
     duplicates: 0,
     screened: 0,
     included: 0,
     excluded: 0
   };
 
+  // Mock data for other components (to be replaced later)
   const mockAuditEntries = [
     {
       ts: new Date().toISOString(),
@@ -88,10 +95,40 @@ export function Project() {
         return selectedCandidate ? (
           <DecisionCard
             candidate={selectedCandidate}
-            onInclude={() => console.log('Include')}
-            onExclude={() => console.log('Exclude')}
-            onBetter={() => console.log('Better')}
-            onAsk={() => console.log('Ask')}
+            onInclude={(reason, justification) => {
+              decisionMutation.mutate({
+                candidateId: selectedCandidate.id,
+                action: 'include',
+                reason,
+                justification,
+                stage: 'title_abstract'
+              });
+            }}
+            onExclude={(reason, justification) => {
+              decisionMutation.mutate({
+                candidateId: selectedCandidate.id,
+                action: 'exclude',
+                reason,
+                justification,
+                stage: 'title_abstract'
+              });
+            }}
+            onBetter={(reason) => {
+              decisionMutation.mutate({
+                candidateId: selectedCandidate.id,
+                action: 'better',
+                reason,
+                stage: 'title_abstract'
+              });
+            }}
+            onAsk={(question) => {
+              decisionMutation.mutate({
+                candidateId: selectedCandidate.id,
+                action: 'ask',
+                reason: question,
+                stage: 'title_abstract'
+              });
+            }}
           />
         ) : (
           <div className="p-6 text-center text-gray-500">
@@ -163,11 +200,11 @@ export function Project() {
   const renderRightContent = () => {
     switch (activeStep) {
       case 'screen':
-        return <PrismaWidget counters={mockPrismaCounters} />;
+        return <PrismaWidget counters={prismaCounters} />;
       case 'ledger':
         return <AuditLog entries={mockAuditEntries} />;
       default:
-        return <PrismaWidget counters={mockPrismaCounters} />;
+        return <PrismaWidget counters={prismaCounters} />;
     }
   };
 

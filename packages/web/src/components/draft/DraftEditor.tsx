@@ -17,7 +17,7 @@ export function DraftEditor({
   content, 
   citations = [], 
   onChange, 
-  onInsertCitation 
+  onInsertCitation: _onInsertCitation 
 }: DraftEditorProps) {
   const [selectedText, setSelectedText] = useState('');
 

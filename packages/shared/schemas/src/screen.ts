@@ -31,7 +31,7 @@ export const DecideBodySchema = z.object({
 }, {
   message: "Reason is required when action is 'exclude'",
   path: ["reason"]
-}).strict();
+});
 
 export const SupportCreateSchema = z.object({
   claimId: UUIDSchema,
