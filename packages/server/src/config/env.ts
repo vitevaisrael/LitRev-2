@@ -14,8 +14,8 @@ const envSchema = z.object({
   S3_BUCKET: z.string().min(1),
   OPENAI_API_KEY: z.string().optional(),
   UNPAYWALL_EMAIL: z.string().email(),
-  FEATURE_EXPLORER: z.preprocess((v) => v === 'true', z.boolean()).default(false),
-  FEATURE_CHAT_REVIEW: z.preprocess((v) => v === 'true', z.boolean()).default(false),
+  FEATURE_EXPLORER: z.preprocess((v: unknown) => v === 'true', z.boolean()).default(false),
+  FEATURE_CHAT_REVIEW: z.preprocess((v: unknown) => v === 'true', z.boolean()).default(false),
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development')
 });
