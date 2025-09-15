@@ -1,225 +1,154 @@
-import { FastifyRequest } from 'fastify';
 import { MultipartFile } from '@fastify/multipart';
+import { env } from '../config/env';
+
+export interface UploadValidationResult {
+  valid: boolean;
+  errors: string[];
+  sanitizedFilename?: string;
+}
 
 export interface UploadValidationOptions {
-  maxFileSize?: number; // in bytes
+  maxSize?: number;
   allowedMimeTypes?: string[];
   allowedExtensions?: string[];
   requireVirusScan?: boolean;
 }
 
-export interface UploadValidationResult {
-  valid: boolean;
-  error?: string;
-  sanitizedFilename?: string;
-  fileSize?: number;
-  mimeType?: string;
-}
-
-// Default validation options
-const DEFAULT_OPTIONS: Required<UploadValidationOptions> = {
-  maxFileSize: 25 * 1024 * 1024, // 25 MB
-  allowedMimeTypes: ['application/pdf'],
-  allowedExtensions: ['.pdf'],
-  requireVirusScan: true
-};
-
 /**
- * Validate uploaded file for security and size constraints
+ * Validate file upload
  */
 export async function validateUpload(
   file: MultipartFile,
   options: UploadValidationOptions = {}
 ): Promise<UploadValidationResult> {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-  
-  try {
-    // Check file size
-    if (file.file.bytesRead > opts.maxFileSize) {
-      return {
-        valid: false,
-        error: `File size exceeds maximum allowed size of ${opts.maxFileSize / (1024 * 1024)} MB`
-      };
-    }
+  const {
+    maxSize = 10 * 1024 * 1024, // 10MB default
+    allowedMimeTypes = ['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    allowedExtensions = ['.pdf', '.txt', '.doc', '.docx'],
+    requireVirusScan = env.CLAMAV_ENABLED
+  } = options;
 
-    // Check MIME type
-    if (opts.allowedMimeTypes.length > 0 && !opts.allowedMimeTypes.includes(file.mimetype)) {
-      return {
-        valid: false,
-        error: `File type ${file.mimetype} is not allowed. Allowed types: ${opts.allowedMimeTypes.join(', ')}`
-      };
-    }
+  const errors: string[] = [];
 
-    // Check file extension
-    if (opts.allowedExtensions.length > 0) {
-      const extension = getFileExtension(file.filename);
-      if (!opts.allowedExtensions.includes(extension.toLowerCase())) {
-        return {
-          valid: false,
-          error: `File extension ${extension} is not allowed. Allowed extensions: ${opts.allowedExtensions.join(', ')}`
-        };
-      }
-    }
-
-    // Generate sanitized filename
-    const sanitizedFilename = generateSanitizedFilename(file.filename);
-
-    // Perform virus scan if required
-    if (opts.requireVirusScan) {
-      const virusScanResult = await performVirusScan(file);
-      if (!virusScanResult.clean) {
-        return {
-          valid: false,
-          error: `File failed virus scan: ${virusScanResult.reason}`
-        };
-      }
-    }
-
-    return {
-      valid: true,
-      sanitizedFilename,
-      fileSize: file.file.bytesRead,
-      mimeType: file.mimetype
-    };
-
-  } catch (error) {
-    return {
-      valid: false,
-      error: `Upload validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    };
+  // Check file size
+  if (file.file.bytesRead > maxSize) {
+    errors.push(`File size exceeds maximum allowed size of ${maxSize} bytes`);
   }
+
+  // Check MIME type
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    errors.push(`File type ${file.mimetype} is not allowed`);
+  }
+
+  // Check file extension
+  const extension = getFileExtension(file.filename);
+  if (!allowedExtensions.includes(extension)) {
+    errors.push(`File extension ${extension} is not allowed`);
+  }
+
+  // Sanitize filename
+  const sanitizedFilename = sanitizeFilename(file.filename);
+
+  // Virus scan (if enabled)
+  if (requireVirusScan) {
+    try {
+      const virusScanResult = await scanForVirus(file);
+      if (!virusScanResult.clean) {
+        errors.push(`Virus detected: ${virusScanResult.threat}`);
+      }
+    } catch (error) {
+      console.error('Virus scan failed:', error);
+      errors.push('Virus scan failed');
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    sanitizedFilename
+  };
 }
 
 /**
- * Generate a sanitized filename to prevent path traversal and other security issues
+ * Validate upload request
  */
-function generateSanitizedFilename(originalFilename: string): string {
-  // Remove path traversal attempts
-  const sanitized = originalFilename
-    .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
-    .replace(/\.{2,}/g, '.') // Replace multiple dots with single dot
-    .replace(/^\.+/, '') // Remove leading dots
-    .replace(/\.+$/, ''); // Remove trailing dots
+export async function validateUploadRequest(
+  files: MultipartFile[],
+  options: UploadValidationOptions = {}
+): Promise<UploadValidationResult> {
+  const errors: string[] = [];
 
-  // Add timestamp and random suffix to prevent conflicts
-  const timestamp = Date.now();
-  const randomSuffix = Math.random().toString(36).substring(2, 8);
-  const extension = getFileExtension(originalFilename);
-  
-  return `${timestamp}_${randomSuffix}${extension}`;
+  if (files.length === 0) {
+    errors.push('No files provided');
+    return { valid: false, errors };
+  }
+
+  if (files.length > 10) {
+    errors.push('Too many files (maximum 10 allowed)');
+  }
+
+  // Validate each file
+  for (const file of files) {
+    const result = await validateUpload(file, options);
+    if (!result.valid) {
+      errors.push(...result.errors.map(error => `${file.filename}: ${error}`));
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
 }
 
 /**
- * Extract file extension from filename
+ * Get file extension
  */
 function getFileExtension(filename: string): string {
   const lastDot = filename.lastIndexOf('.');
-  return lastDot === -1 ? '' : filename.substring(lastDot);
+  if (lastDot === -1) return '';
+  return filename.substring(lastDot).toLowerCase();
 }
 
 /**
- * Perform virus scan on uploaded file
- * This is a stub implementation - in production, integrate with ClamAV or similar
+ * Sanitize filename
  */
-async function performVirusScan(file: MultipartFile): Promise<{ clean: boolean; reason?: string }> {
-  try {
-    // Attempt to read buffer if available (all envs)
-    const toBufferFn =
-      typeof (file as any).toBuffer === 'function'
-        ? (file as any).toBuffer.bind(file)
-        : typeof (file as any).file?.toBuffer === 'function'
-          ? (file as any).file.toBuffer.bind((file as any).file)
-          : null;
-
-    if (toBufferFn) {
-      const buffer = await toBufferFn();
-      const content = buffer.toString('utf8');
-
-      // In development, check for EICAR test string
-      if (process.env.NODE_ENV === 'development') {
-        const eicarString = 'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
-        if (content.includes(eicarString)) {
-          return {
-            clean: false,
-            reason: 'EICAR test string detected'
-          };
-        }
-      }
-    }
-
-    // In production, integrate with ClamAV daemon
-    if (process.env.NODE_ENV === 'production' && process.env.CLAMAV_ENABLED === 'true') {
-      // TODO: Implement ClamAV integration
-      // const clamav = require('clamav');
-      // const result = await clamav.scanBuffer(await file.toBuffer());
-      // return { clean: result.isClean, reason: result.reason };
-      
-      // For now, log warning and allow
-      console.warn('ClamAV integration not implemented - allowing file upload');
-    }
-
-    return { clean: true };
-  } catch (error) {
-    console.error('Virus scan failed:', error);
-    // Propagate error so caller can handle and fail validation gracefully
-    throw (error instanceof Error ? error : new Error('Virus scan failed'));
-  }
-}
-
-/**
- * Validate request for upload security
- */
-export function validateUploadRequest(request: FastifyRequest): { valid: boolean; error?: string } {
-  // Check for suspicious patterns in request
-  const userAgent = request.headers['user-agent'];
-  const contentType = request.headers['content-type'];
+function sanitizeFilename(filename: string): string {
+  // Remove path traversal attempts
+  let sanitized = filename.replace(/\.\./g, '');
   
-  // Basic bot detection
-  if (userAgent && (
-    userAgent.includes('bot') ||
-    userAgent.includes('crawler') ||
-    userAgent.includes('spider') ||
-    userAgent.length < 10
-  )) {
-    return {
-      valid: false,
-      error: 'Suspicious user agent detected'
-    };
+  // Remove special characters
+  sanitized = sanitized.replace(/[^a-zA-Z0-9._-]/g, '_');
+  
+  // Limit length
+  if (sanitized.length > 255) {
+    const extension = getFileExtension(sanitized);
+    const nameWithoutExt = sanitized.substring(0, 255 - extension.length);
+    sanitized = nameWithoutExt + extension;
   }
-
-  // Check content type
-  if (contentType && !contentType.includes('multipart/form-data')) {
-    return {
-      valid: false,
-      error: 'Invalid content type for file upload'
-    };
-  }
-
-  return { valid: true };
+  
+  return sanitized;
 }
 
 /**
- * Get upload limits based on user tier or configuration
+ * Scan file for viruses (stub implementation)
  */
-export function getUploadLimits(userTier?: string): UploadValidationOptions {
-  switch (userTier) {
-    case 'premium':
-      return {
-        maxFileSize: 100 * 1024 * 1024, // 100 MB
-        allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-        allowedExtensions: ['.pdf', '.doc', '.docx']
-      };
-    case 'pro':
-      return {
-        maxFileSize: 50 * 1024 * 1024, // 50 MB
-        allowedMimeTypes: ['application/pdf'],
-        allowedExtensions: ['.pdf']
-      };
-    default: // free tier
-      return {
-        maxFileSize: 25 * 1024 * 1024, // 25 MB
-        allowedMimeTypes: ['application/pdf'],
-        allowedExtensions: ['.pdf']
-      };
+async function scanForVirus(file: MultipartFile): Promise<{ clean: boolean; threat?: string }> {
+  // This is a stub implementation
+  // In a real implementation, you would:
+  // 1. Connect to ClamAV daemon
+  // 2. Send file data for scanning
+  // 3. Return scan results
+  
+  // For development, we'll simulate a scan
+  if (env.NODE_ENV === 'development') {
+    // Check for EICAR test string
+    const buffer = await file.toBuffer();
+    const content = buffer.toString();
+    if (content.includes('EICAR-STANDARD-ANTIVIRUS-TEST-FILE')) {
+      return { clean: false, threat: 'EICAR test file' };
+    }
   }
+  
+  return { clean: true };
 }

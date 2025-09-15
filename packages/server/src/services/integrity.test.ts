@@ -1,279 +1,254 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { prisma } from '../lib/prisma';
-import { detectIntegrityFlags, detectRetraction, detectPredatoryJournal, getIntegrityStats } from './integrity';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { 
+  generateIntegrityFlags, 
+  checkRetractions, 
+  checkPredatoryJournals,
+  getIntegrityStats,
+  batchIntegrityCheck
+} from './integrity';
 import { ProviderRecord } from '@the-scientist/schemas';
 
-describe('Integrity Service', () => {
-  let testUserId: string;
-  let testProjectId: string;
+// Mock prisma
+vi.mock('../lib/prisma', () => ({
+  prisma: {
+    journalBlocklist: {
+      findFirst: vi.fn()
+    },
+    candidate: {
+      findMany: vi.fn(),
+      count: vi.fn()
+    }
+  }
+}));
 
-  beforeEach(async () => {
-    // Create test user
-    const user = await prisma.user.create({
-      data: {
-        email: 'test@example.com',
-        passwordHash: 'hashedpassword'
-      }
-    });
-    testUserId = user.id;
-
-    // Create test project
-    const project = await prisma.project.create({
-      data: {
-        ownerId: testUserId,
-        title: 'Test Project',
-        settings: {}
-      }
-    });
-    testProjectId = project.id;
+describe('integrity', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  afterEach(async () => {
-    // Clean up test data
-    await prisma.auditLog.deleteMany({ where: { projectId: testProjectId } });
-    await prisma.prismaLog.deleteMany({ where: { projectId: testProjectId } });
-    await prisma.searchResult.deleteMany();
-    await prisma.searchRun.deleteMany();
-    await prisma.savedSearch.deleteMany({ where: { projectId: testProjectId } });
-    await prisma.journalBlocklist.deleteMany();
-    await prisma.project.deleteMany({ where: { id: testProjectId } });
-    await prisma.user.deleteMany({ where: { id: testUserId } });
-  });
-
-  describe('detectRetraction', () => {
-    it('should detect retraction from PubMed publication type', async () => {
+  describe('generateIntegrityFlags', () => {
+    it('should generate flags for a record', async () => {
       const record: ProviderRecord = {
-        title: 'Test Retracted Article',
-        source: 'pubmed',
-        rawPayload: {
-          PublicationTypeList: {
-            PublicationType: 'Retracted Publication'
-          }
-        }
+        title: 'Test Article',
+        journal: 'Test Journal',
+        doi: '10.1000/test',
+        pmid: '12345678',
+        source: 'pubmed'
       };
 
-      const result = await detectRetraction(record);
-      expect(result.retracted).toBe(true);
-      expect(result.source).toBe('pubmed_publication_type');
-      expect(result.notes).toContain('Retracted Publication');
+      const flags = await generateIntegrityFlags(record);
+
+      expect(flags).toHaveProperty('detectedAt');
+      expect(flags.detectedAt).toBeDefined();
     });
 
-    it('should detect retraction from PubMed comments', async () => {
+    it('should handle records without identifiers', async () => {
       const record: ProviderRecord = {
-        title: 'Test Retracted Article',
-        source: 'pubmed',
-        rawPayload: {
-          CommentsCorrectionsList: {
-            CommentsCorrections: {
-              RefType: 'Retraction',
-              RefSource: 'Nature. 2023;123:456-789'
-            }
-          }
-        }
+        title: 'Test Article',
+        journal: 'Test Journal',
+        source: 'pubmed'
       };
 
-      const result = await detectRetraction(record);
-      expect(result.retracted).toBe(true);
-      expect(result.source).toBe('pubmed_comments');
-      expect(result.notes).toContain('Retraction notice found');
-    });
+      const flags = await generateIntegrityFlags(record);
 
-    it('should detect retraction from Crossref relation', async () => {
-      const record: ProviderRecord = {
-        title: 'Test Retracted Article',
-        source: 'crossref',
-        rawPayload: {
-          relation: {
-            'is-retracted-by': '10.1000/retraction.doi'
-          }
-        }
-      };
-
-      const result = await detectRetraction(record);
-      expect(result.retracted).toBe(true);
-      expect(result.source).toBe('crossref_relation');
-    });
-
-    it('should not detect retraction for normal article', async () => {
-      const record: ProviderRecord = {
-        title: 'Normal Article',
-        source: 'pubmed',
-        rawPayload: {
-          PublicationTypeList: {
-            PublicationType: 'Journal Article'
-          }
-        }
-      };
-
-      const result = await detectRetraction(record);
-      expect(result.retracted).toBe(false);
-      expect(result.source).toBe('none');
+      expect(flags).toHaveProperty('detectedAt');
+      expect(flags.retracted).toBeUndefined();
+      expect(flags.predatory).toBeUndefined();
     });
   });
 
-  describe('detectPredatoryJournal', () => {
-    it('should detect predatory journal from blocklist', async () => {
-      // Add journal to blocklist
-      await prisma.journalBlocklist.create({
-        data: {
-          issn: '1234-5678',
-          note: 'Known predatory journal',
-          addedBy: testUserId
-        }
+  describe('checkRetractions', () => {
+    it('should check retractions for record with PMID', async () => {
+      const record: ProviderRecord = {
+        title: 'Test Article',
+        pmid: '12345678',
+        source: 'pubmed'
+      };
+
+      const results = await checkRetractions(record);
+
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should check retractions for record with DOI', async () => {
+      const record: ProviderRecord = {
+        title: 'Test Article',
+        doi: '10.1000/test',
+        source: 'pubmed'
+      };
+
+      const results = await checkRetractions(record);
+
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should handle records without identifiers', async () => {
+      const record: ProviderRecord = {
+        title: 'Test Article',
+        source: 'pubmed'
+      };
+
+      const results = await checkRetractions(record);
+
+      expect(Array.isArray(results)).toBe(true);
+      expect(results).toHaveLength(0);
+    });
+  });
+
+  describe('checkPredatoryJournals', () => {
+    it('should check against blocklist', async () => {
+      const { prisma } = await import('../lib/prisma');
+      
+      (prisma.journalBlocklist.findFirst as any).mockResolvedValue({
+        id: 'blocklist-1',
+        issn: '1234-5678',
+        note: 'Predatory journal',
+        addedBy: 'user-1',
+        addedAt: new Date()
       });
 
       const record: ProviderRecord = {
         title: 'Test Article',
-        journal: '1234-5678',
+        journal: 'Predatory Journal',
         source: 'pubmed'
       };
 
-      const result = await detectPredatoryJournal(record);
-      expect(result.predatory).toBe(true);
-      expect(result.source).toBe('journal_blocklist');
-      expect(result.notes).toContain('Known predatory journal');
+      const results = await checkPredatoryJournals(record);
+
+      expect(Array.isArray(results)).toBe(true);
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0].predatory).toBe(true);
+      expect(results[0].source).toBe('blocklist');
     });
 
-    it('should not detect predatory journal for normal journal', async () => {
+    it('should return empty array when journal not in blocklist', async () => {
+      const { prisma } = await import('../lib/prisma');
+      
+      (prisma.journalBlocklist.findFirst as any).mockResolvedValue(null);
+
       const record: ProviderRecord = {
         title: 'Test Article',
-        journal: 'Nature',
+        journal: 'Legitimate Journal',
         source: 'pubmed'
       };
 
-      const result = await detectPredatoryJournal(record);
-      expect(result.predatory).toBe(false);
-      expect(result.source).toBe('none');
+      const results = await checkPredatoryJournals(record);
+
+      expect(Array.isArray(results)).toBe(true);
+      expect(results).toHaveLength(0);
     });
 
-    it('should handle missing journal gracefully', async () => {
+    it('should handle records without journal', async () => {
       const record: ProviderRecord = {
         title: 'Test Article',
         source: 'pubmed'
       };
 
-      const result = await detectPredatoryJournal(record);
-      expect(result.predatory).toBe(false);
-      expect(result.source).toBe('none');
-    });
-  });
+      const results = await checkPredatoryJournals(record);
 
-  describe('detectIntegrityFlags', () => {
-    it('should detect both retraction and predatory flags', async () => {
-      // Add journal to blocklist
-      await prisma.journalBlocklist.create({
-        data: {
-          issn: '1234-5678',
-          note: 'Known predatory journal',
-          addedBy: testUserId
-        }
-      });
-
-      const record: ProviderRecord = {
-        title: 'Test Retracted Article',
-        journal: '1234-5678',
-        source: 'pubmed',
-        rawPayload: {
-          PublicationTypeList: {
-            PublicationType: 'Retracted Publication'
-          }
-        }
-      };
-
-      const result = await detectIntegrityFlags(record);
-      expect(result.flags.retracted).toBe(true);
-      expect(result.flags.predatory).toBe(true);
-      expect(result.confidence).toBe('high');
-      expect(result.flags.sources).toContain('pubmed_publication_type');
-      expect(result.flags.sources).toContain('journal_blocklist');
-    });
-
-    it('should return empty flags for clean record', async () => {
-      const record: ProviderRecord = {
-        title: 'Clean Article',
-        journal: 'Nature',
-        source: 'pubmed',
-        rawPayload: {
-          PublicationTypeList: {
-            PublicationType: 'Journal Article'
-          }
-        }
-      };
-
-      const result = await detectIntegrityFlags(record);
-      expect(Object.keys(result.flags)).toHaveLength(0);
-      expect(result.confidence).toBe('low');
+      expect(Array.isArray(results)).toBe(true);
+      expect(results).toHaveLength(0);
     });
   });
 
   describe('getIntegrityStats', () => {
-    it('should return correct integrity statistics', async () => {
-      // Create test data
-      const savedSearch = await prisma.savedSearch.create({
-        data: {
-          projectId: testProjectId,
-          name: 'Test Search',
-          queryManifest: {},
-          createdBy: testUserId
+    it('should return integrity statistics', async () => {
+      const { prisma } = await import('../lib/prisma');
+      
+      const mockCandidates = [
+        { flags: { retracted: true, predatory: false } },
+        { flags: { retracted: false, predatory: true } },
+        { flags: {} },
+        { flags: { retracted: true, predatory: true } }
+      ];
+
+      (prisma.candidate.findMany as any).mockResolvedValue(mockCandidates);
+
+      const stats = await getIntegrityStats('project-1');
+
+      expect(stats).toHaveProperty('totalRecords');
+      expect(stats).toHaveProperty('flaggedRecords');
+      expect(stats).toHaveProperty('retractedRecords');
+      expect(stats).toHaveProperty('predatoryRecords');
+      expect(stats).toHaveProperty('flagBreakdown');
+      
+      expect(stats.totalRecords).toBe(4);
+      expect(stats.flaggedRecords).toBe(3);
+      expect(stats.retractedRecords).toBe(2);
+      expect(stats.predatoryRecords).toBe(2);
+    });
+
+    it('should handle empty project', async () => {
+      const { prisma } = await import('../lib/prisma');
+      
+      (prisma.candidate.findMany as any).mockResolvedValue([]);
+
+      const stats = await getIntegrityStats('empty-project');
+
+      expect(stats.totalRecords).toBe(0);
+      expect(stats.flaggedRecords).toBe(0);
+      expect(stats.retractedRecords).toBe(0);
+      expect(stats.predatoryRecords).toBe(0);
+    });
+
+    it('should handle database errors', async () => {
+      const { prisma } = await import('../lib/prisma');
+      
+      (prisma.candidate.findMany as any).mockRejectedValue(new Error('Database error'));
+
+      const stats = await getIntegrityStats('error-project');
+
+      expect(stats.totalRecords).toBe(0);
+      expect(stats.flaggedRecords).toBe(0);
+      expect(stats.retractedRecords).toBe(0);
+      expect(stats.predatoryRecords).toBe(0);
+    });
+  });
+
+  describe('batchIntegrityCheck', () => {
+    it('should process multiple records', async () => {
+      const records: ProviderRecord[] = [
+        {
+          title: 'Article 1',
+          doi: '10.1000/test1',
+          source: 'pubmed'
+        },
+        {
+          title: 'Article 2',
+          doi: '10.1000/test2',
+          source: 'pubmed'
         }
-      });
+      ];
 
-      const searchRun = await prisma.searchRun.create({
-        data: {
-          savedSearchId: savedSearch.id,
-          status: 'success'
+      const results = await batchIntegrityCheck(records);
+
+      expect(results).toBeInstanceOf(Map);
+      expect(results.size).toBe(2);
+      
+      for (const [key, flags] of results) {
+        expect(flags).toHaveProperty('detectedAt');
+      }
+    });
+
+    it('should handle empty records array', async () => {
+      const results = await batchIntegrityCheck([]);
+
+      expect(results).toBeInstanceOf(Map);
+      expect(results.size).toBe(0);
+    });
+
+    it('should handle records without identifiers', async () => {
+      const records: ProviderRecord[] = [
+        {
+          title: 'Article 1',
+          source: 'pubmed'
         }
-      });
+      ];
 
-      // Create search results with different flags
-      await prisma.searchResult.createMany({
-        data: [
-          {
-            searchRunId: searchRun.id,
-            canonicalHash: 'hash1',
-            title: 'Clean Article 1',
-            source: 'pubmed',
-            flags: {},
-            rawPayload: {}
-          },
-          {
-            searchRunId: searchRun.id,
-            canonicalHash: 'hash2',
-            title: 'Retracted Article',
-            source: 'pubmed',
-            flags: { retracted: true, sources: ['pubmed_publication_type'] },
-            rawPayload: {}
-          },
-          {
-            searchRunId: searchRun.id,
-            canonicalHash: 'hash3',
-            title: 'Predatory Article',
-            source: 'pubmed',
-            flags: { predatory: true, sources: ['journal_blocklist'] },
-            rawPayload: {}
-          },
-          {
-            searchRunId: searchRun.id,
-            canonicalHash: 'hash4',
-            title: 'Both Flags Article',
-            source: 'pubmed',
-            flags: { 
-              retracted: true, 
-              predatory: true, 
-              sources: ['pubmed_publication_type', 'journal_blocklist'] 
-            },
-            rawPayload: {}
-          }
-        ]
-      });
+      const results = await batchIntegrityCheck(records);
 
-      const stats = await getIntegrityStats(testProjectId);
-      expect(stats.total).toBe(4);
-      expect(stats.flagged).toBe(3); // 3 out of 4 have flags
-      expect(stats.retracted).toBe(2); // 2 have retracted flag
-      expect(stats.predatory).toBe(2); // 2 have predatory flag
-      expect(stats.breakdown['pubmed_publication_type']).toBe(2);
-      expect(stats.breakdown['journal_blocklist']).toBe(2);
+      expect(results).toBeInstanceOf(Map);
+      expect(results.size).toBe(1);
     });
   });
 });

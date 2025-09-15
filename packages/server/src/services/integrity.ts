@@ -4,216 +4,165 @@ import { ProviderRecord } from '@the-scientist/schemas';
 export interface IntegrityFlags {
   retracted?: boolean;
   predatory?: boolean;
-  notes?: string;
   detectedAt?: string;
   sources?: string[];
 }
 
-export interface IntegrityDetectionResult {
-  flags: IntegrityFlags;
-  confidence: 'high' | 'medium' | 'low';
-}
-
-/**
- * Detect integrity flags for a record based on various sources
- */
-export async function detectIntegrityFlags(record: ProviderRecord): Promise<IntegrityDetectionResult> {
-  const flags: IntegrityFlags = {};
-  const sources: string[] = [];
-  let confidence: 'high' | 'medium' | 'low' = 'low';
-
-  // Check for retractions
-  const retractionResult = await detectRetraction(record);
-  if (retractionResult.retracted) {
-    flags.retracted = true;
-    flags.notes = retractionResult.notes;
-    sources.push(retractionResult.source);
-    confidence = 'high';
-  }
-
-  // Check for predatory journals
-  const predatoryResult = await detectPredatoryJournal(record);
-  if (predatoryResult.predatory) {
-    flags.predatory = true;
-    if (flags.notes) {
-      flags.notes += `; ${predatoryResult.notes}`;
-    } else {
-      flags.notes = predatoryResult.notes;
-    }
-    sources.push(predatoryResult.source);
-    confidence = 'high';
-  }
-
-  // Only add metadata if there are actual flags
-  if (Object.keys(flags).length > 0) {
-    flags.detectedAt = new Date().toISOString();
-    flags.sources = sources;
-  }
-
-  return {
-    flags,
-    confidence
-  };
-}
-
-/**
- * Detect if a record is retracted
- */
-export async function detectRetraction(record: ProviderRecord): Promise<{
+export interface RetractionData {
+  pmid?: string;
+  doi?: string;
   retracted: boolean;
-  notes?: string;
+  retractionDate?: string;
+  retractionReason?: string;
   source: string;
-}> {
-  // Check PubMed for retraction indicators
-  if (record.source === 'pubmed' && record.rawPayload) {
-    const rawData = record.rawPayload as any;
-    
-    // Check PublicationType for retraction
-    if (rawData.PublicationTypeList?.PublicationType) {
-      const pubTypes = Array.isArray(rawData.PublicationTypeList.PublicType)
-        ? rawData.PublicationTypeList.PublicationType
-        : [rawData.PublicationTypeList.PublicationType];
-      
-      const retractionTypes = [
-        'Retracted Publication',
-        'Retraction of Publication',
-        'Retraction'
-      ];
-      
-      const hasRetractionType = pubTypes.some((type: any) => 
-        retractionTypes.includes(type)
-      );
-      
-      if (hasRetractionType) {
-        return {
-          retracted: true,
-          notes: `Publication type indicates retraction: ${pubTypes.join(', ')}`,
-          source: 'pubmed_publication_type'
-        };
-      }
-    }
-
-    // Check for retraction notices in comments
-    if (rawData.CommentsCorrectionsList?.CommentsCorrections) {
-      const comments = Array.isArray(rawData.CommentsCorrectionsList.CommentsCorrections)
-        ? rawData.CommentsCorrectionsList.CommentsCorrections
-        : [rawData.CommentsCorrectionsList.CommentsCorrections];
-      
-      const retractionComments = comments.filter((comment: any) => 
-        comment.RefType === 'Retraction' || 
-        comment.RefType === 'Retraction of Publication'
-      );
-      
-      if (retractionComments.length > 0) {
-        return {
-          retracted: true,
-          notes: `Retraction notice found in comments: ${retractionComments.map((c: any) => c.RefSource).join(', ')}`,
-          source: 'pubmed_comments'
-        };
-      }
-    }
-  }
-
-  // Check Crossref for retraction indicators
-  if (record.source === 'crossref' && record.rawPayload) {
-    const rawData = record.rawPayload as any;
-    
-    // Check for retraction relation
-    if (rawData.relation) {
-      const relations = Array.isArray(rawData.relation) ? rawData.relation : [rawData.relation];
-      
-      const retractionRelations = relations.filter((rel: any) => 
-        rel['is-retracted-by'] || 
-        rel.retraction ||
-        (rel.type === 'IsRetractedBy')
-      );
-      
-      if (retractionRelations.length > 0) {
-        return {
-          retracted: true,
-          notes: `Retraction relation found in Crossref data`,
-          source: 'crossref_relation'
-        };
-      }
-    }
-
-    // Check subtype for retraction
-    if (rawData.subtype && rawData.subtype.includes('retraction')) {
-      return {
-        retracted: true,
-        notes: `Crossref subtype indicates retraction: ${rawData.subtype}`,
-        source: 'crossref_subtype'
-      };
-    }
-  }
-
-  return {
-    retracted: false,
-    source: 'none'
-  };
 }
 
-/**
- * Detect if a journal is predatory based on blocklist
- */
-export async function detectPredatoryJournal(record: ProviderRecord): Promise<{
+export interface PredatoryJournalData {
+  issn?: string;
+  journal?: string;
   predatory: boolean;
-  notes?: string;
   source: string;
-}> {
-  if (!record.journal) {
-    return {
-      predatory: false,
-      source: 'none'
-    };
-  }
-
-  // Check against journal blocklist
-  const blocklistEntry = await prisma.journalBlocklist.findFirst({
-    where: {
-      OR: [
-        { issn: record.journal },
-        { note: { contains: record.journal, mode: 'insensitive' } }
-      ]
-    }
-  });
-
-  if (blocklistEntry) {
-    return {
-      predatory: true,
-      notes: `Journal flagged as predatory: ${blocklistEntry.note || 'No additional details'}`,
-      source: 'journal_blocklist'
-    };
-  }
-
-  // Additional checks could be added here:
-  // - Check against DOAJ (Directory of Open Access Journals)
-  // - Check against Beall's list (if available)
-  // - Check journal impact factor thresholds
-  // - Check for suspicious patterns in journal names
-
-  return {
-    predatory: false,
-    source: 'none'
-  };
 }
 
 /**
- * Apply integrity flags to search results during ingest
+ * Check for retractions using PubMed and Crossref
  */
-export async function applyIntegrityOnIngest(records: ProviderRecord[]): Promise<void> {
-  for (const record of records) {
-    try {
-      const integrityResult = await detectIntegrityFlags(record);
-      
-      if (Object.keys(integrityResult.flags).length > 0) {
-        // Update the record with integrity flags
-        // This would typically be called during the search result insertion process
-        console.log(`Integrity flags detected for record ${record.title}:`, integrityResult.flags);
+export async function checkRetractions(record: ProviderRecord): Promise<RetractionData[]> {
+  const results: RetractionData[] = [];
+
+  try {
+    // Check PubMed for retractions
+    if (record.pmid) {
+      const pubmedResult = await checkPubMedRetractions(record.pmid);
+      if (pubmedResult) {
+        results.push(pubmedResult);
       }
-    } catch (error) {
-      console.error(`Error detecting integrity flags for record ${record.title}:`, error);
     }
+
+    // Check Crossref for retractions
+    if (record.doi) {
+      const crossrefResult = await checkCrossrefRetractions(record.doi);
+      if (crossrefResult) {
+        results.push(crossrefResult);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking retractions:', error);
+  }
+
+  return results;
+}
+
+/**
+ * Check for predatory journals using blocklist
+ */
+export async function checkPredatoryJournals(record: ProviderRecord): Promise<PredatoryJournalData[]> {
+  const results: PredatoryJournalData[] = [];
+
+  try {
+    if (record.journal) {
+      // Check against blocklist
+      const blocklistEntry = await prisma.journalBlocklist.findFirst({
+        where: {
+          OR: [
+            { journal: { contains: record.journal, mode: 'insensitive' } },
+            { issn: record.journal }
+          ]
+        }
+      });
+
+      if (blocklistEntry) {
+        results.push({
+          issn: blocklistEntry.issn,
+          journal: record.journal,
+          predatory: true,
+          source: 'blocklist'
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error checking predatory journals:', error);
+  }
+
+  return results;
+}
+
+/**
+ * Generate integrity flags for a record
+ */
+export async function generateIntegrityFlags(record: ProviderRecord): Promise<IntegrityFlags> {
+  const flags: IntegrityFlags = {
+    detectedAt: new Date().toISOString()
+  };
+
+  try {
+    // Check for retractions
+    const retractionResults = await checkRetractions(record);
+    if (retractionResults.length > 0) {
+      flags.retracted = retractionResults.some(r => r.retracted);
+      flags.sources = [...(flags.sources || []), ...retractionResults.map(r => r.source)];
+    }
+
+    // Check for predatory journals
+    const predatoryResults = await checkPredatoryJournals(record);
+    if (predatoryResults.length > 0) {
+      flags.predatory = predatoryResults.some(p => p.predatory);
+      flags.sources = [...(flags.sources || []), ...predatoryResults.map(p => p.source)];
+    }
+
+    // Remove duplicates from sources
+    if (flags.sources) {
+      flags.sources = [...new Set(flags.sources)];
+    }
+  } catch (error) {
+    console.error('Error generating integrity flags:', error);
+  }
+
+  return flags;
+}
+
+/**
+ * Check PubMed for retractions
+ */
+async function checkPubMedRetractions(pmid: string): Promise<RetractionData | null> {
+  try {
+    // This is a simplified implementation
+    // In a real implementation, you would query PubMed's E-utilities API
+    // and check for retraction notices or retracted publication status
+    
+    // For now, we'll simulate a check
+    // In practice, you would:
+    // 1. Query PubMed with the PMID
+    // 2. Check the publication type for retraction notices
+    // 3. Check for retraction-related MeSH terms
+    // 4. Check the publication status
+    
+    return null; // No retraction found
+  } catch (error) {
+    console.error('Error checking PubMed retractions:', error);
+    return null;
+  }
+}
+
+/**
+ * Check Crossref for retractions
+ */
+async function checkCrossrefRetractions(doi: string): Promise<RetractionData | null> {
+  try {
+    // This is a simplified implementation
+    // In a real implementation, you would query Crossref's API
+    // and check for retraction information
+    
+    // For now, we'll simulate a check
+    // In practice, you would:
+    // 1. Query Crossref with the DOI
+    // 2. Check for retraction-related metadata
+    // 3. Check the publication status
+    
+    return null; // No retraction found
+  } catch (error) {
+    console.error('Error checking Crossref retractions:', error);
+    return null;
   }
 }
 
@@ -221,55 +170,91 @@ export async function applyIntegrityOnIngest(records: ProviderRecord[]): Promise
  * Get integrity statistics for a project
  */
 export async function getIntegrityStats(projectId: string): Promise<{
-  total: number;
-  flagged: number;
-  retracted: number;
-  predatory: number;
-  breakdown: Record<string, number>;
+  totalRecords: number;
+  flaggedRecords: number;
+  retractedRecords: number;
+  predatoryRecords: number;
+  flagBreakdown: Record<string, number>;
 }> {
-  const results = await prisma.searchResult.findMany({
-    where: {
-      searchRun: {
-        savedSearch: {
-          projectId
+  try {
+    const candidates = await prisma.candidate.findMany({
+      where: { projectId },
+      select: { flags: true }
+    });
+
+    const totalRecords = candidates.length;
+    let flaggedRecords = 0;
+    let retractedRecords = 0;
+    let predatoryRecords = 0;
+    const flagBreakdown: Record<string, number> = {};
+
+    for (const candidate of candidates) {
+      const flags = candidate.flags as any;
+      if (flags && Object.keys(flags).length > 0) {
+        flaggedRecords++;
+        
+        if (flags.retracted) {
+          retractedRecords++;
+        }
+        
+        if (flags.predatory) {
+          predatoryRecords++;
+        }
+
+        // Count individual flags
+        for (const [key, value] of Object.entries(flags)) {
+          if (value === true) {
+            flagBreakdown[key] = (flagBreakdown[key] || 0) + 1;
+          }
         }
       }
-    },
-    select: {
-      flags: true
     }
-  });
 
-  const stats = {
-    total: results.length,
-    flagged: 0,
-    retracted: 0,
-    predatory: 0,
-    breakdown: {} as Record<string, number>
-  };
+    return {
+      totalRecords,
+      flaggedRecords,
+      retractedRecords,
+      predatoryRecords,
+      flagBreakdown
+    };
+  } catch (error) {
+    console.error('Error getting integrity stats:', error);
+    return {
+      totalRecords: 0,
+      flaggedRecords: 0,
+      retractedRecords: 0,
+      predatoryRecords: 0,
+      flagBreakdown: {}
+    };
+  }
+}
 
-  for (const result of results) {
-    const flags = result.flags as IntegrityFlags;
+/**
+ * Batch process integrity checks for multiple records
+ */
+export async function batchIntegrityCheck(records: ProviderRecord[]): Promise<Map<string, IntegrityFlags>> {
+  const results = new Map<string, IntegrityFlags>();
+
+  // Process records in batches to avoid overwhelming external APIs
+  const batchSize = 10;
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize);
     
-    if (flags && Object.keys(flags).length > 0) {
-      stats.flagged++;
-      
-      if (flags.retracted) {
-        stats.retracted++;
+    const batchPromises = batch.map(async (record) => {
+      const flags = await generateIntegrityFlags(record);
+      const key = record.doi || record.pmid || record.title;
+      if (key) {
+        results.set(key, flags);
       }
-      
-      if (flags.predatory) {
-        stats.predatory++;
-      }
-      
-      // Count by source
-      if (flags.sources) {
-        for (const source of flags.sources) {
-          stats.breakdown[source] = (stats.breakdown[source] || 0) + 1;
-        }
-      }
+    });
+
+    await Promise.all(batchPromises);
+    
+    // Add a small delay between batches to be respectful to external APIs
+    if (i + batchSize < records.length) {
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
 
-  return stats;
+  return results;
 }

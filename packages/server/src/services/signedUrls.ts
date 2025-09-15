@@ -1,271 +1,112 @@
-import { createHmac, randomBytes } from 'crypto';
-import { FastifyRequest } from 'fastify';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { env } from '../config/env';
 
-export interface SignedUrlOptions {
-  expiresIn?: number; // seconds, default 600 (10 minutes)
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  contentType?: string;
-  maxFileSize?: number;
-}
-
-export interface SignedUrlResult {
-  url: string;
-  expiresAt: Date;
-  signature: string;
-}
+let s3Client: S3Client | null = null;
 
 /**
- * Generate a signed URL for secure file access
+ * Get S3 client instance
  */
-export function generateSignedUrl(
-  baseUrl: string,
-  path: string,
-  secret: string,
-  options: SignedUrlOptions = {}
-): SignedUrlResult {
-  const {
-    expiresIn = 600, // 10 minutes default
-    method = 'GET',
-    contentType,
-    maxFileSize
-  } = options;
-
-  const expiresAt = new Date(Date.now() + expiresIn * 1000);
-  const expires = Math.floor(expiresAt.getTime() / 1000);
-
-  // Create query parameters
-  const params = new URLSearchParams({
-    expires: expires.toString(),
-    method,
-    path
-  });
-
-  if (contentType) {
-    params.set('contentType', contentType);
+function getS3Client(): S3Client | null {
+  if (!s3Client && env.S3_ENDPOINT && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY && env.S3_REGION) {
+    s3Client = new S3Client({
+      endpoint: env.S3_ENDPOINT,
+      region: env.S3_REGION,
+      credentials: {
+        accessKeyId: env.S3_ACCESS_KEY_ID,
+        secretAccessKey: env.S3_SECRET_ACCESS_KEY
+      }
+    });
   }
-
-  if (maxFileSize) {
-    params.set('maxFileSize', maxFileSize.toString());
-  }
-
-  // Generate signature
-  const signature = generateSignature(secret, path, expires, method, contentType, maxFileSize);
-  params.set('signature', signature);
-
-  const url = `${baseUrl}${path}?${params.toString()}`;
-
-  return {
-    url,
-    expiresAt,
-    signature
-  };
+  return s3Client;
 }
 
 /**
- * Verify a signed URL
+ * Generate signed URL for private asset
  */
-export function verifySignedUrl(
-  request: FastifyRequest,
-  secret: string
-): { valid: boolean; error?: string; expiresAt?: Date } {
-  try {
-    const { expires, method, path, contentType, maxFileSize, signature } = request.query as any;
-
-    if (!expires || !method || !path || !signature) {
-      return {
-        valid: false,
-        error: 'Missing required parameters'
-      };
-    }
-
-    // Check expiration
-    const expiresAt = new Date(parseInt(expires) * 1000);
-    if (expiresAt < new Date()) {
-      return {
-        valid: false,
-        error: 'URL has expired'
-      };
-    }
-
-    // Verify signature
-    const expectedSignature = generateSignature(
-      secret,
-      path,
-      parseInt(expires),
-      method,
-      contentType,
-      maxFileSize ? parseInt(maxFileSize) : undefined
-    );
-
-    if (signature !== expectedSignature) {
-      return {
-        valid: false,
-        error: 'Invalid signature'
-      };
-    }
-
-    // Verify method matches
-    if (request.method !== method) {
-      return {
-        valid: false,
-        error: 'HTTP method mismatch'
-      };
-    }
-
-    // Verify path matches
-    if (request.url.split('?')[0] !== path) {
-      return {
-        valid: false,
-        error: 'Path mismatch'
-      };
-    }
-
-    return {
-      valid: true,
-      expiresAt
-    };
-
-  } catch (error) {
-    return {
-      valid: false,
-      error: `Verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    };
-  }
-}
-
-/**
- * Generate HMAC signature for URL parameters
- */
-function generateSignature(
-  secret: string,
-  path: string,
-  expires: number,
-  method: string,
-  contentType?: string,
-  maxFileSize?: number
-): string {
-  const payload = [
-    path,
-    expires.toString(),
-    method,
-    contentType || '',
-    maxFileSize?.toString() || ''
-  ].join('|');
-
-  return createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
-}
-
-/**
- * Generate a secure random token for file access
- */
-export function generateSecureToken(length: number = 32): string {
-  return randomBytes(length).toString('hex');
-}
-
-/**
- * Create a time-limited access token for file downloads
- */
-export function createAccessToken(
-  fileId: string,
-  userId: string,
-  secret: string,
-  expiresIn: number = 600
-): { token: string; expiresAt: Date } {
-  const expiresAt = new Date(Date.now() + expiresIn * 1000);
-  const payload = {
-    fileId,
-    userId,
-    expires: Math.floor(expiresAt.getTime() / 1000)
-  };
-
-  const token = Buffer.from(JSON.stringify(payload)).toString('base64');
-  const signature = createHmac('sha256', secret)
-    .update(token)
-    .digest('hex');
-
-  return {
-    token: `${token}.${signature}`,
-    expiresAt
-  };
-}
-
-/**
- * Verify and decode an access token
- */
-export function verifyAccessToken(
-  token: string,
-  secret: string
-): { valid: boolean; payload?: any; error?: string } {
-  try {
-    const [encodedPayload, signature] = token.split('.');
-    
-    if (!encodedPayload || !signature) {
-      return {
-        valid: false,
-        error: 'Invalid token format'
-      };
-    }
-
-    // Verify signature
-    const expectedSignature = createHmac('sha256', secret)
-      .update(encodedPayload)
-      .digest('hex');
-
-    if (signature !== expectedSignature) {
-      return {
-        valid: false,
-        error: 'Invalid signature'
-      };
-    }
-
-    // Decode payload
-    const payload = JSON.parse(Buffer.from(encodedPayload, 'base64').toString('utf8'));
-
-    // Check expiration
-    if (payload.expires < Math.floor(Date.now() / 1000)) {
-      return {
-        valid: false,
-        error: 'Token has expired'
-      };
-    }
-
-    return {
-      valid: true,
-      payload
-    };
-
-  } catch (error) {
-    return {
-      valid: false,
-      error: `Token verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    };
-  }
-}
-
-/**
- * Sanitize file path to prevent directory traversal
- */
-export function sanitizeFilePath(path: string): string {
-  return path
-    .replace(/\.\./g, '') // Remove parent directory references
-    .replace(/\/+/g, '/') // Collapse multiple slashes
-    .replace(/^\/+/, '') // Remove leading slashes
-    .replace(/\/+$/, ''); // Remove trailing slashes
-}
-
-/**
- * Generate secure file storage key
- */
-export function generateFileStorageKey(
-  userId: string,
-  projectId: string,
-  filename: string
-): string {
-  const timestamp = Date.now();
-  const randomSuffix = randomBytes(8).toString('hex');
-  const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+export async function generateSignedUrl(
+  key: string,
+  expirationSeconds: number = 3600
+): Promise<string> {
+  const client = getS3Client();
   
-  return `uploads/${userId}/${projectId}/${timestamp}_${randomSuffix}_${sanitizedFilename}`;
+  if (!client || !env.S3_BUCKET) {
+    // Return placeholder URL if S3 is not configured
+    return `https://example.com/placeholder/${key}`;
+  }
+
+  try {
+    const command = new GetObjectCommand({
+      Bucket: env.S3_BUCKET,
+      Key: key
+    });
+
+    const signedUrl = await getSignedUrl(client, command, {
+      expiresIn: expirationSeconds
+    });
+
+    return signedUrl;
+  } catch (error) {
+    console.error('Error generating signed URL:', error);
+    throw new Error('Failed to generate signed URL');
+  }
+}
+
+/**
+ * Validate signed URL
+ */
+export function validateSignedUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    
+    // Check if it's a valid URL
+    if (!urlObj.protocol.startsWith('http')) {
+      return false;
+    }
+    
+    // Check if it has required query parameters for signed URLs
+    const hasSignature = urlObj.searchParams.has('X-Amz-Signature') || 
+                        urlObj.searchParams.has('signature');
+    
+    return hasSignature;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Generate signed URL for document download
+ */
+export async function generateDocumentSignedUrl(
+  documentId: string,
+  filename: string,
+  expirationSeconds: number = 3600
+): Promise<string> {
+  const key = `documents/${documentId}/${filename}`;
+  return generateSignedUrl(key, expirationSeconds);
+}
+
+/**
+ * Generate signed URL for project export
+ */
+export async function generateExportSignedUrl(
+  projectId: string,
+  exportId: string,
+  filename: string,
+  expirationSeconds: number = 7200 // 2 hours for exports
+): Promise<string> {
+  const key = `exports/${projectId}/${exportId}/${filename}`;
+  return generateSignedUrl(key, expirationSeconds);
+}
+
+/**
+ * Generate signed URL for user upload
+ */
+export async function generateUploadSignedUrl(
+  userId: string,
+  filename: string,
+  expirationSeconds: number = 1800 // 30 minutes for uploads
+): Promise<string> {
+  const key = `uploads/${userId}/${filename}`;
+  return generateSignedUrl(key, expirationSeconds);
 }

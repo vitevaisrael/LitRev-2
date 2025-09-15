@@ -14,6 +14,7 @@ model User {
   name         String?
   createdAt    DateTime @default(now())
   projects     Project[]
+  journalBlocklists JournalBlocklist[]
 }
 
 model Project {
@@ -36,7 +37,6 @@ model Project {
   auditLogs    AuditLog[]
   jobStatuses  JobStatus[]
   savedSearches SavedSearch[]
-  prismaLogs   PrismaLog[]
 }
 
 model ProblemProfile {
@@ -218,60 +218,70 @@ model ChatMessage {
   @@index([sessionId, createdAt])
 }
 
-// Journals blocklist used by integrity checks
-model JournalBlocklist {
-  id       String   @id @default(uuid())
-  issn     String?
-  note     String?
-  addedBy  String
-  createdAt DateTime @default(now())
-}
-
-// Saved search configuration for a project
 model SavedSearch {
-  id            String   @id @default(uuid())
-  projectId     String
-  project       Project  @relation(fields: [projectId], references: [id])
-  name          String
-  queryManifest Json
-  createdBy     String
-  createdAt     DateTime @default(now())
-  runs          SearchRun[]
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  manifest    Json     // QueryManifest
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  searchRuns  SearchRun[]
   @@index([projectId])
+  @@index([createdBy])
 }
 
-// A single execution of a saved search
 model SearchRun {
-  id            String       @id @default(uuid())
+  id            String   @id @default(uuid())
   savedSearchId String
-  savedSearch   SavedSearch  @relation(fields: [savedSearchId], references: [id])
-  status        String
-  createdAt     DateTime     @default(now())
-  results       SearchResult[]
+  status        String   // pending|running|completed|failed
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  savedSearch   SavedSearch @relation(fields: [savedSearchId], references: [id], onDelete: Cascade)
+  searchResults SearchResult[]
   @@index([savedSearchId])
+  @@index([status])
+  @@index([createdAt])
 }
 
-// Results captured for a search run
 model SearchResult {
-  id            String    @id @default(uuid())
+  id            String   @id @default(uuid())
   searchRunId   String
-  searchRun     SearchRun @relation(fields: [searchRunId], references: [id])
   canonicalHash String
   title         String
+  year          Int?
+  doi           String?
+  pmid          String?
+  pmcid         String?
   source        String
-  flags         Json
-  rawPayload    Json
-  createdAt     DateTime  @default(now())
+  authors       Json     @default("[]")
+  journal       String?
+  volume        String?
+  issue         String?
+  pages         String?
+  abstract      String?
+  meshTerms     Json     @default("[]")
+  flags         Json     @default("{}")
+  rawPayload    Json     @default("{}")
+  createdAt     DateTime @default(now())
+  searchRun     SearchRun @relation(fields: [searchRunId], references: [id], onDelete: Cascade)
   @@index([searchRunId])
   @@index([canonicalHash])
+  @@index([doi])
+  @@index([pmid])
+  @@index([title, year])
+  @@index([flags], type: Gin)
 }
 
-// Generic log records for PRISMA (flow) updates per project
-model PrismaLog {
+model JournalBlocklist {
   id        String   @id @default(uuid())
-  projectId String
-  message   String?
-  createdAt DateTime @default(now())
-  project   Project  @relation(fields: [projectId], references: [id])
-  @@index([projectId, createdAt])
+  issn      String   @unique
+  note      String?
+  addedBy   String
+  addedAt   DateTime @default(now())
+  addedByUser User   @relation(fields: [addedBy], references: [id], onDelete: Cascade)
+  @@index([issn])
 }

@@ -1,16 +1,6 @@
 import { z } from 'zod';
 import { UUIDSchema, DOISchema, PMIDSchema, TimestampSchema } from './common';
 
-export const FlagsSchema = z.object({
-  retracted: z.boolean().optional(),
-  predatory: z.boolean().optional(),
-  notes: z.string().optional(),
-  detectedAt: z.string().optional(),
-  sources: z.array(z.string()).optional()
-}).strict();
-
-export type Flags = z.infer<typeof FlagsSchema>;
-
 export const CandidateSchema = z.object({
   id: UUIDSchema,
   projectId: UUIDSchema,
@@ -26,7 +16,10 @@ export const CandidateSchema = z.object({
     publisherUrl: z.string().url().optional(),
     pubmedUrl: z.string().url().optional()
   }).optional(),
-  flags: FlagsSchema.optional(),
+  flags: z.object({
+    retracted: z.boolean().optional(),
+    predatory: z.boolean().optional()
+  }).optional(),
   score: z.object({
     design: z.number().min(0).max(40),
     directness: z.number().min(0).max(10),
@@ -39,7 +32,17 @@ export const CandidateSchema = z.object({
 
 export type Candidate = z.infer<typeof CandidateSchema>;
 
-// Provider record types for search pipeline
+// Search pipeline schemas
+export const QueryManifestSchema = z.object({
+  projectId: UUIDSchema,
+  userId: UUIDSchema,
+  providers: z.array(z.object({
+    name: z.string(),
+    query: z.string(),
+    config: z.any().optional()
+  }))
+}).strict();
+
 export const ProviderRecordSchema = z.object({
   title: z.string(),
   year: z.number().int().optional(),
@@ -57,42 +60,33 @@ export const ProviderRecordSchema = z.object({
   rawPayload: z.any()
 }).strict();
 
-export type ProviderRecord = z.infer<typeof ProviderRecordSchema>;
-
-export const CanonicalRecordSchema = ProviderRecordSchema.extend({
-  canonicalHash: z.string(),
-  mergedSources: z.array(z.string()).optional()
-}).strict();
-
-export type CanonicalRecord = z.infer<typeof CanonicalRecordSchema>;
-
-export const QueryManifestSchema = z.object({
-  terms: z.array(z.string()),
-  booleanLogic: z.string().optional(),
-  filters: z.record(z.any()).optional(),
-  dateRange: z.object({
-    from: z.string().optional(),
-    to: z.string().optional()
-  }).optional(),
+export const FlagsSchema = z.object({
+  retracted: z.boolean().optional(),
+  predatory: z.boolean().optional(),
+  detectedAt: z.string().optional(),
   sources: z.array(z.string()).optional()
 }).strict();
 
-export type QueryManifest = z.infer<typeof QueryManifestSchema>;
-
 export const PrismaCountsSchema = z.object({
-  identified: z.number().int(),
-  deduped: z.number().int(),
-  screenedIn: z.number().int(),
-  excluded: z.record(z.number().int()),
-  included: z.number().int()
+  identified: z.number().int().min(0),
+  deduped: z.number().int().min(0),
+  screened: z.number().int().min(0),
+  included: z.number().int().min(0),
+  excluded: z.number().int().min(0)
 }).strict();
-
-export type PrismaCounts = z.infer<typeof PrismaCountsSchema>;
 
 export const ExportPayloadSchema = z.object({
   projectId: UUIDSchema,
-  includeAppendix: z.boolean().optional(),
-  includePrisma: z.boolean().optional()
+  format: z.enum(['markdown', 'bibtex', 'docx', 'json']),
+  options: z.any().optional()
 }).strict();
 
+export type QueryManifest = z.infer<typeof QueryManifestSchema>;
+export type ProviderRecord = z.infer<typeof ProviderRecordSchema>;
+export type Flags = z.infer<typeof FlagsSchema>;
+export type PrismaCounts = z.infer<typeof PrismaCountsSchema>;
 export type ExportPayload = z.infer<typeof ExportPayloadSchema>;
+
+// Search run status
+export const SearchRunStatusSchema = z.enum(['pending', 'running', 'completed', 'failed']);
+export type SearchRunStatus = z.infer<typeof SearchRunStatusSchema>;

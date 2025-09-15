@@ -1,303 +1,261 @@
-# Threat Model - Literature Review Platform
+# Threat Model
 
 ## Overview
 
-This document provides a STRIDE-based threat model for the Literature Review Platform, identifying potential security threats and corresponding mitigation strategies.
+This document outlines the threat model for the LitRev-2 application using the STRIDE methodology (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege).
 
 ## System Architecture
 
-The platform consists of:
-- **Frontend**: React-based web application
-- **Backend**: Fastify-based API server
+### Components
+- **Frontend (Web)**: React-based SPA
+- **Backend (Server)**: Fastify API server
 - **Database**: PostgreSQL with Prisma ORM
-- **File Storage**: S3-compatible storage for PDFs
-- **Background Jobs**: Redis-based job queue
-- **Authentication**: JWT-based session management
+- **Cache/Queue**: Redis with BullMQ
+- **Storage**: S3-compatible object storage
+- **External APIs**: PubMed, Crossref, OpenAI
 
-## STRIDE Analysis
+### Data Flow
+1. Users authenticate via JWT tokens
+2. API requests are rate-limited and validated
+3. Data is stored in PostgreSQL with audit logging
+4. Background jobs are processed via Redis queues
+5. Files are stored in S3 with signed URLs
 
-### 1. Spoofing (Identity Threats)
+## Threat Analysis
 
-**Threat**: Attackers impersonate legitimate users or services.
+### 1. Spoofing (Authentication)
 
-**Vulnerabilities**:
-- Weak authentication mechanisms
-- Session hijacking
-- JWT token compromise
-- Email spoofing
+**Threat**: Unauthorized access through credential theft or session hijacking
 
-**Mitigations**:
-- ✅ **JWT Validation**: Strong JWT validation with proper secret management
-- ✅ **Session TTL**: Short-lived sessions with automatic expiration
-- ✅ **Email Verification**: Required email verification for account creation
-- ✅ **Password Requirements**: Strong password policies with bcrypt hashing
-- ✅ **Rate Limiting**: Prevent brute force attacks on authentication endpoints
-- 🔄 **2FA Support**: Multi-factor authentication (planned)
-- 🔄 **OAuth Integration**: Social login providers (planned)
-
-**Implementation**:
-```typescript
-// JWT validation with proper error handling
-const token = request.headers.authorization?.replace('Bearer ', '');
-const decoded = jwt.verify(token, env.JWT_SECRET);
-```
-
-### 2. Tampering (Data Integrity Threats)
-
-**Threat**: Attackers modify data in transit or at rest.
-
-**Vulnerabilities**:
-- Unencrypted data transmission
-- File upload tampering
-- Database injection attacks
-- Man-in-the-middle attacks
+**Assets at Risk**:
+- User accounts and sessions
+- Admin privileges
+- API access tokens
 
 **Mitigations**:
-- ✅ **TLS Everywhere**: HTTPS enforcement in production
-- ✅ **Signed URLs**: Presigned URLs with expiration for file access
-- ✅ **Input Validation**: Comprehensive input validation with Zod schemas
-- ✅ **SQL Injection Prevention**: Prisma ORM with parameterized queries
-- ✅ **File Integrity**: Virus scanning and file type validation
-- ✅ **Immutable Audit Logs**: Tamper-evident audit trail
-- 🔄 **Content Security Policy**: CSP headers (planned)
+- JWT tokens with expiration
+- Secure cookie handling
+- Rate limiting on authentication endpoints
+- Password hashing with bcrypt
+- Session timeout mechanisms
 
-**Implementation**:
-```typescript
-// Signed URL generation with expiration
-const signedUrl = generateSignedUrl(baseUrl, path, secret, {
-  expiresIn: 600, // 10 minutes
-  method: 'GET'
-});
-```
+**Risk Level**: Medium
 
-### 3. Repudiation (Non-repudiation Threats)
+### 2. Tampering (Data Integrity)
 
-**Threat**: Users deny performing actions or receiving data.
+**Threat**: Unauthorized modification of data
 
-**Vulnerabilities**:
-- Lack of audit trails
-- Missing request logging
-- Insufficient evidence collection
+**Assets at Risk**:
+- Research data and citations
+- User profiles and projects
+- System configuration
+- Audit logs
 
 **Mitigations**:
-- ✅ **Audit Logs**: Comprehensive audit logging for all user actions
-- ✅ **Request IDs**: Unique request identifiers for tracing
-- ✅ **Timestamp Logging**: Precise timestamps for all operations
-- ✅ **User Attribution**: All actions tied to authenticated users
-- ✅ **Immutable Logs**: Audit logs cannot be modified
-- 🔄 **Digital Signatures**: Cryptographic signatures for critical operations (planned)
+- Input validation and sanitization
+- SQL injection prevention via Prisma ORM
+- File upload validation and virus scanning
+- Immutable audit logs
+- Data integrity checks
+- CSRF protection
 
-**Implementation**:
-```typescript
-// Audit log creation
-await prisma.auditLog.create({
-  data: {
-    projectId,
-    userId,
-    action: 'candidate_imported',
-    details: { candidateId, source, title }
-  }
-});
-```
+**Risk Level**: High
 
-### 4. Information Disclosure (Confidentiality Threats)
+### 3. Repudiation (Non-repudiation)
 
-**Threat**: Sensitive data exposed to unauthorized parties.
+**Threat**: Users denying actions they performed
 
-**Vulnerabilities**:
-- Insecure data storage
-- Weak access controls
-- Information leakage in logs
-- Cross-user data access
+**Assets at Risk**:
+- User actions and decisions
+- Data modifications
+- System access
 
 **Mitigations**:
-- ✅ **Row-Level Security**: Database-level access controls
-- ✅ **JWT Authorization**: Proper authorization checks on all endpoints
-- ✅ **PII Minimization**: Minimal collection of personally identifiable information
-- ✅ **Log Redaction**: Sensitive data redacted from logs
-- ✅ **Environment Variables**: Secrets stored in environment variables
-- ✅ **Database Encryption**: Encrypted database connections
-- 🔄 **Field-Level Encryption**: Sensitive fields encrypted at rest (planned)
+- Comprehensive audit logging
+- User action tracking
+- Timestamped records
+- Immutable log storage
+- User session tracking
 
-**Implementation**:
-```typescript
-// Authorization check
-const project = await prisma.project.findFirst({
-  where: { id: projectId, ownerId: userId }
-});
-if (!project) {
-  return sendError(reply, 'NOT_FOUND', 'Project not found or access denied', 404);
-}
-```
+**Risk Level**: Low
 
-### 5. Denial of Service (Availability Threats)
+### 4. Information Disclosure (Confidentiality)
 
-**Threat**: Attackers prevent legitimate users from accessing the system.
+**Threat**: Unauthorized access to sensitive information
 
-**Vulnerabilities**:
-- Resource exhaustion
-- Unbounded queries
-- Lack of rate limiting
-- DDoS attacks
+**Assets at Risk**:
+- User research data
+- Personal information
+- System internals
+- API keys and secrets
 
 **Mitigations**:
-- ✅ **Rate Limiting**: Global and per-route rate limits
-- ✅ **Query Limits**: Pagination and query result limits
-- ✅ **Async Processing**: Background job processing for heavy operations
-- ✅ **Provider Timeouts**: Timeout limits for external API calls
-- ✅ **Resource Monitoring**: System resource monitoring and alerting
-- 🔄 **CDN Integration**: Content delivery network for static assets (planned)
-- 🔄 **Load Balancing**: Multiple server instances (planned)
+- Role-based access control (RBAC)
+- Data encryption at rest and in transit
+- Secure API endpoints
+- Environment variable protection
+- Input/output validation
+- Error message sanitization
 
-**Implementation**:
-```typescript
-// Rate limiting configuration
-fastify.register(require('@fastify/rate-limit'), {
-  global: true,
-  max: 100,
-  timeWindow: '1 minute'
-});
-```
+**Risk Level**: High
 
-### 6. Elevation of Privilege (Authorization Threats)
+### 5. Denial of Service (Availability)
 
-**Threat**: Attackers gain unauthorized access to administrative functions.
+**Threat**: System unavailability or performance degradation
 
-**Vulnerabilities**:
-- Weak authorization checks
-- Privilege escalation bugs
-- Admin interface exposure
-- Insufficient role separation
+**Assets at Risk**:
+- API availability
+- Database performance
+- External service dependencies
+- Storage access
 
 **Mitigations**:
-- ✅ **RBAC**: Role-based access control implementation
-- ✅ **Admin Route Protection**: Admin endpoints require elevated privileges
-- ✅ **Dependency Updates**: Regular security updates for dependencies
-- ✅ **Input Sanitization**: All inputs sanitized and validated
-- ✅ **Principle of Least Privilege**: Minimal required permissions
-- 🔄 **API Key Management**: Separate API keys for different access levels (planned)
+- Rate limiting and throttling
+- Database connection pooling
+- Redis caching
+- Graceful error handling
+- Health checks and monitoring
+- Resource quotas
 
-**Implementation**:
-```typescript
-// Admin route protection
-fastify.addHook('preHandler', async (request, reply) => {
-  const user = await authenticateUser(request);
-  if (!user.isAdmin) {
-    return sendError(reply, 'FORBIDDEN', 'Admin access required', 403);
-  }
-});
-```
+**Risk Level**: Medium
 
-## Security Controls Summary
+### 6. Elevation of Privilege (Authorization)
 
-### Implemented Controls
+**Threat**: Unauthorized access to higher privilege levels
 
-1. **Authentication & Authorization**
-   - JWT-based authentication with proper validation
-   - Row-level security in database queries
-   - Admin route protection
+**Assets at Risk**:
+- Admin functions
+- System configuration
+- Other users' data
+- External service access
 
-2. **Data Protection**
-   - TLS encryption in transit
-   - Signed URLs for file access
-   - Input validation and sanitization
+**Mitigations**:
+- Role-based access control
+- Principle of least privilege
+- Input validation
+- Authorization checks on all endpoints
+- Admin action logging
+- Regular privilege audits
 
-3. **Audit & Monitoring**
-   - Comprehensive audit logging
-   - Request ID tracking
-   - Error logging and monitoring
+**Risk Level**: Medium
 
-4. **Rate Limiting & DoS Protection**
-   - Global rate limiting
-   - Per-route rate limits
-   - Query result pagination
+## Security Controls
 
-5. **File Security**
-   - Upload validation and virus scanning
-   - Secure file storage with signed URLs
-   - File type and size restrictions
+### Authentication & Authorization
+- JWT-based authentication
+- Role-based access control (RBAC)
+- Session management with expiration
+- Multi-factor authentication (future)
 
-### Planned Controls
+### Data Protection
+- Encryption at rest (database)
+- Encryption in transit (HTTPS/TLS)
+- Input validation and sanitization
+- Output encoding
+- Secure file handling
 
-1. **Enhanced Authentication**
-   - Multi-factor authentication (2FA)
-   - OAuth integration with social providers
-   - API key management
+### Network Security
+- HTTPS enforcement
+- CORS configuration
+- Rate limiting
+- Request validation
+- Error handling
 
-2. **Advanced Security**
-   - Content Security Policy (CSP) headers
-   - Field-level encryption for sensitive data
-   - Digital signatures for critical operations
+### Monitoring & Logging
+- Comprehensive audit logging
+- Security event monitoring
+- Performance monitoring
+- Error tracking
+- Access logging
 
-3. **Infrastructure Security**
-   - CDN integration for static assets
-   - Load balancing across multiple instances
-   - Advanced monitoring and alerting
+### Infrastructure Security
+- Environment variable protection
+- Secure configuration management
+- Regular security updates
+- Dependency vulnerability scanning
+- Container security (if applicable)
 
 ## Risk Assessment
 
 ### High Risk
-- **SQL Injection**: Mitigated by Prisma ORM
-- **Authentication Bypass**: Mitigated by JWT validation
-- **Data Exposure**: Mitigated by row-level security
+- Data tampering and information disclosure
+- External API dependencies
+- File upload security
 
 ### Medium Risk
-- **File Upload Attacks**: Mitigated by validation and virus scanning
-- **Rate Limit Bypass**: Mitigated by multiple rate limiting layers
-- **Session Hijacking**: Mitigated by short session TTL
+- Authentication bypass
+- Denial of service attacks
+- Privilege escalation
 
 ### Low Risk
-- **Information Disclosure**: Mitigated by log redaction
-- **DoS Attacks**: Mitigated by rate limiting and async processing
+- Repudiation attacks
+- System availability
 
 ## Security Testing
 
 ### Automated Testing
 - Unit tests for security functions
-- Integration tests for authentication flows
-- Rate limiting tests
-- File upload validation tests
+- Integration tests for API endpoints
+- Vulnerability scanning
+- Dependency checking
 
 ### Manual Testing
-- Penetration testing of authentication flows
-- File upload security testing
-- Rate limiting effectiveness testing
-- Admin interface security testing
+- Penetration testing
+- Security code review
+- Configuration review
+- User acceptance testing
 
 ## Incident Response
 
-### Security Incident Procedures
-1. **Detection**: Automated monitoring and alerting
-2. **Assessment**: Impact and scope evaluation
-3. **Containment**: Immediate threat isolation
-4. **Eradication**: Remove threat and vulnerabilities
-5. **Recovery**: Restore normal operations
-6. **Lessons Learned**: Post-incident review and improvements
+### Detection
+- Automated monitoring alerts
+- User reports
+- Security scanning results
+- Performance anomalies
 
-### Contact Information
-- **Security Team**: security@litrev.com
-- **Emergency Contact**: +1-XXX-XXX-XXXX
-- **Bug Bounty**: security@litrev.com
+### Response
+1. Immediate containment
+2. Impact assessment
+3. Evidence preservation
+4. User notification
+5. System restoration
+6. Post-incident review
+
+### Recovery
+- Data backup and restoration
+- System hardening
+- Security updates
+- Process improvements
 
 ## Compliance
 
 ### Data Protection
-- **GDPR**: User data protection and right to deletion
-- **CCPA**: California Consumer Privacy Act compliance
-- **HIPAA**: Healthcare data protection (if applicable)
+- GDPR compliance for EU users
+- Data minimization principles
+- User consent management
+- Right to deletion
 
 ### Security Standards
-- **OWASP Top 10**: Protection against common web vulnerabilities
-- **NIST Cybersecurity Framework**: Comprehensive security controls
-- **ISO 27001**: Information security management system
+- OWASP Top 10 compliance
+- Secure coding practices
+- Regular security assessments
+- Documentation maintenance
 
-## Review and Updates
+## Future Improvements
 
-This threat model should be reviewed and updated:
-- **Quarterly**: Regular security assessment
-- **After Major Changes**: System architecture modifications
-- **After Security Incidents**: Lessons learned integration
-- **Annually**: Comprehensive security review
+### Short Term
+- Enhanced input validation
+- Improved error handling
+- Security headers implementation
+- Rate limiting refinement
 
-**Last Updated**: January 2025
-**Next Review**: April 2025
+### Long Term
+- Multi-factor authentication
+- Advanced threat detection
+- Security automation
+- Compliance monitoring
+- Zero-trust architecture
+
+## Contact
+
+For security concerns or to report vulnerabilities, please contact the development team through the appropriate channels.

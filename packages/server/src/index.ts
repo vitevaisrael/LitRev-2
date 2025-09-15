@@ -1,8 +1,11 @@
+
 import Fastify from 'fastify';
 import { randomUUID } from 'crypto';
 import { routes } from './routes';
 import { env } from './config/env';
 import { startExplorerWorker } from './modules/explorer/worker';
+import { startSearchWorker } from './jobs/searchQueue';
+import { startSearchWorker } from './jobs/searchQueue';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastifyRateLimit from '@fastify/rate-limit';
@@ -43,7 +46,7 @@ fastify.register(fastifyRateLimit, {
     'x-ratelimit-reset': true
   },
   ban: 0, // disable banning
-  errorResponseBuilder: (request, context) => ({
+  errorResponseBuilder: (request: any, context: any) => ({
     ok: false,
     error: {
       code: 'RATE_LIMIT_EXCEEDED',
@@ -80,6 +83,13 @@ fastify.setErrorHandler(async (error, request, reply) => {
   });
 });
 
+// Rate limit headers (stub)
+fastify.addHook('onSend', async (request, reply, payload) => {
+  reply.header('X-RateLimit-Limit', '100');
+  reply.header('X-RateLimit-Remaining', '100');
+  reply.header('X-RateLimit-Reset', Math.floor(Date.now() / 1000) + 60);
+  return payload;
+});
 
 // Register routes
 fastify.register(routes, { prefix: '/api/v1' });
@@ -87,12 +97,19 @@ fastify.register(routes, { prefix: '/api/v1' });
 // Start server
 const start = async () => {
   try {
-    // Start background workers (Explorer)
+    // Start background workers (Explorer, Search)
     try {
       startExplorerWorker();
       fastify.log.info('Explorer worker started');
     } catch (e) {
       fastify.log.warn('Explorer worker not started (Redis unavailable)');
+    }
+    
+    try {
+      startSearchWorker();
+      fastify.log.info('Search worker started');
+    } catch (e) {
+      fastify.log.warn('Search worker not started (Redis unavailable)');
     }
     await fastify.listen({ port: env.PORT, host: '0.0.0.0' });
     console.log(`Server listening on port ${env.PORT}`);

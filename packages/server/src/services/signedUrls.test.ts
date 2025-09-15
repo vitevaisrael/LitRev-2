@@ -1,271 +1,205 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  generateSignedUrl,
-  verifySignedUrl,
-  generateSecureToken,
-  createAccessToken,
-  verifyAccessToken,
-  sanitizeFilePath,
-  generateFileStorageKey
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { 
+  generateSignedUrl, 
+  validateSignedUrl,
+  generateDocumentSignedUrl,
+  generateExportSignedUrl,
+  generateUploadSignedUrl
 } from './signedUrls';
-import { FastifyRequest } from 'fastify';
 
-describe('Signed URLs Service', () => {
-  const secret = 'test-secret-key';
-  const baseUrl = 'https://api.example.com';
+// Mock AWS SDK
+vi.mock('@aws-sdk/client-s3', () => ({
+  S3Client: vi.fn().mockImplementation(() => ({
+    send: vi.fn()
+  })),
+  GetObjectCommand: vi.fn()
+}));
+
+vi.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: vi.fn()
+}));
+
+// Mock environment
+vi.mock('../config/env', () => ({
+  env: {
+    S3_ENDPOINT: 'https://s3.example.com',
+    S3_ACCESS_KEY_ID: 'test-access-key',
+    S3_SECRET_ACCESS_KEY: 'test-secret-key',
+    S3_REGION: 'us-east-1',
+    S3_BUCKET: 'test-bucket'
+  }
+}));
+
+describe('signedUrls', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('generateSignedUrl', () => {
-    it('should generate a valid signed URL', () => {
-      const path = '/files/document.pdf';
-      const result = generateSignedUrl(baseUrl, path, secret);
+    it('should generate a signed URL', async () => {
+      const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+      (getSignedUrl as any).mockResolvedValue('https://s3.example.com/test-bucket/test-key?signature=abc123');
 
-      expect(result.url).toContain(baseUrl);
-      expect(result.url).toContain(path);
-      expect(result.url).toContain('expires=');
-      expect(result.url).toContain('signature=');
-      expect(result.expiresAt).toBeInstanceOf(Date);
-      expect(result.signature).toBeDefined();
+      const url = await generateSignedUrl('test-key', 3600);
+
+      expect(url).toBe('https://s3.example.com/test-bucket/test-key?signature=abc123');
+      expect(getSignedUrl).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+        { expiresIn: 3600 }
+      );
     });
 
-    it('should generate URL with custom expiration', () => {
-      const path = '/files/document.pdf';
-      const result = generateSignedUrl(baseUrl, path, secret, { expiresIn: 300 }); // 5 minutes
+    it('should generate a signed URL with custom expiration', async () => {
+      const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+      (getSignedUrl as any).mockResolvedValue('https://s3.example.com/test-bucket/test-key?signature=abc123');
 
-      const expiresAt = new Date(Date.now() + 300 * 1000);
-      expect(result.expiresAt.getTime()).toBeCloseTo(expiresAt.getTime(), -2);
+      const url = await generateSignedUrl('test-key', 7200);
+
+      expect(url).toBe('https://s3.example.com/test-bucket/test-key?signature=abc123');
+      expect(getSignedUrl).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+        { expiresIn: 7200 }
+      );
     });
 
-    it('should generate URL with custom method', () => {
-      const path = '/files/document.pdf';
-      const result = generateSignedUrl(baseUrl, path, secret, { method: 'POST' });
+    it('should handle missing S3 configuration gracefully', async () => {
+      vi.doMock('../config/env', () => ({
+        env: {
+          S3_ENDPOINT: undefined,
+          S3_ACCESS_KEY_ID: undefined,
+          S3_SECRET_ACCESS_KEY: undefined,
+          S3_REGION: undefined,
+          S3_BUCKET: undefined
+        }
+      }));
 
-      expect(result.url).toContain('method=POST');
+      // Re-import to get the mocked environment
+      const { generateSignedUrl: generateSignedUrlMocked } = await import('./signedUrls');
+      
+      const url = await generateSignedUrlMocked('test-key');
+
+      expect(url).toBe('https://example.com/placeholder/test-key');
     });
 
-    it('should generate URL with content type', () => {
-      const path = '/files/document.pdf';
-      const result = generateSignedUrl(baseUrl, path, secret, { contentType: 'application/pdf' });
+    it('should handle S3 errors', async () => {
+      const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+      (getSignedUrl as any).mockRejectedValue(new Error('S3 error'));
 
-      expect(result.url).toContain('contentType=application%2Fpdf');
-    });
-
-    it('should generate URL with max file size', () => {
-      const path = '/files/document.pdf';
-      const result = generateSignedUrl(baseUrl, path, secret, { maxFileSize: 1024 * 1024 });
-
-      expect(result.url).toContain('maxFileSize=1048576');
-    });
-  });
-
-  describe('verifySignedUrl', () => {
-    it('should verify a valid signed URL', () => {
-      const path = '/files/document.pdf';
-      const result = generateSignedUrl(baseUrl, path, secret, { expiresIn: 600 });
-
-      // Extract query parameters from URL
-      const url = new URL(result.url);
-      const queryParams = Object.fromEntries(url.searchParams);
-
-      const request = {
-        method: 'GET',
-        url: `${path}?${url.search}`,
-        query: queryParams
-      } as FastifyRequest;
-
-      const verification = verifySignedUrl(request, secret);
-
-      expect(verification.valid).toBe(true);
-      expect(verification.expiresAt).toBeInstanceOf(Date);
-    });
-
-    it('should reject expired URL', () => {
-      const path = '/files/document.pdf';
-      const result = generateSignedUrl(baseUrl, path, secret, { expiresIn: -1 }); // Already expired
-
-      const url = new URL(result.url);
-      const queryParams = Object.fromEntries(url.searchParams);
-
-      const request = {
-        method: 'GET',
-        url: `${path}?${url.search}`,
-        query: queryParams
-      } as FastifyRequest;
-
-      const verification = verifySignedUrl(request, secret);
-
-      expect(verification.valid).toBe(false);
-      expect(verification.error).toContain('URL has expired');
-    });
-
-    it('should reject URL with invalid signature', () => {
-      const path = '/files/document.pdf';
-      const result = generateSignedUrl(baseUrl, path, secret);
-
-      const url = new URL(result.url);
-      const queryParams = Object.fromEntries(url.searchParams);
-      queryParams.signature = 'invalid-signature';
-
-      const request = {
-        method: 'GET',
-        url: `${path}?${new URLSearchParams(queryParams).toString()}`,
-        query: queryParams
-      } as FastifyRequest;
-
-      const verification = verifySignedUrl(request, secret);
-
-      expect(verification.valid).toBe(false);
-      expect(verification.error).toContain('Invalid signature');
-    });
-
-    it('should reject URL with method mismatch', () => {
-      const path = '/files/document.pdf';
-      const result = generateSignedUrl(baseUrl, path, secret, { method: 'GET' });
-
-      const url = new URL(result.url);
-      const queryParams = Object.fromEntries(url.searchParams);
-
-      const request = {
-        method: 'POST', // Different method
-        url: `${path}?${url.search}`,
-        query: queryParams
-      } as FastifyRequest;
-
-      const verification = verifySignedUrl(request, secret);
-
-      expect(verification.valid).toBe(false);
-      expect(verification.error).toContain('HTTP method mismatch');
-    });
-
-    it('should reject URL with missing parameters', () => {
-      const request = {
-        method: 'GET',
-        url: '/files/document.pdf',
-        query: {}
-      } as FastifyRequest;
-
-      const verification = verifySignedUrl(request, secret);
-
-      expect(verification.valid).toBe(false);
-      expect(verification.error).toContain('Missing required parameters');
+      await expect(generateSignedUrl('test-key')).rejects.toThrow('Failed to generate signed URL');
     });
   });
 
-  describe('generateSecureToken', () => {
-    it('should generate a token of specified length', () => {
-      const token = generateSecureToken(16);
-      expect(token).toHaveLength(32); // 16 bytes = 32 hex characters
+  describe('validateSignedUrl', () => {
+    it('should validate a valid signed URL', () => {
+      const validUrl = 'https://s3.example.com/bucket/key?X-Amz-Signature=abc123&X-Amz-Expires=3600';
+      
+      expect(validateSignedUrl(validUrl)).toBe(true);
     });
 
-    it('should generate different tokens each time', () => {
-      const token1 = generateSecureToken(16);
-      const token2 = generateSecureToken(16);
-      expect(token1).not.toBe(token2);
+    it('should validate a URL with signature parameter', () => {
+      const validUrl = 'https://s3.example.com/bucket/key?signature=abc123&expires=3600';
+      
+      expect(validateSignedUrl(validUrl)).toBe(true);
     });
 
-    it('should generate token with default length', () => {
-      const token = generateSecureToken();
-      expect(token).toHaveLength(64); // 32 bytes = 64 hex characters
-    });
-  });
-
-  describe('createAccessToken', () => {
-    it('should create a valid access token', () => {
-      const result = createAccessToken('file123', 'user456', secret);
-
-      expect(result.token).toBeDefined();
-      expect(result.expiresAt).toBeInstanceOf(Date);
-      expect(result.expiresAt.getTime()).toBeGreaterThan(Date.now());
+    it('should reject invalid URLs', () => {
+      expect(validateSignedUrl('not-a-url')).toBe(false);
+      expect(validateSignedUrl('ftp://example.com/file')).toBe(false);
     });
 
-    it('should create token with custom expiration', () => {
-      const result = createAccessToken('file123', 'user456', secret, 300); // 5 minutes
-
-      const expectedExpiry = new Date(Date.now() + 300 * 1000);
-      expect(result.expiresAt.getTime()).toBeCloseTo(expectedExpiry.getTime(), -2);
+    it('should reject URLs without signature', () => {
+      const invalidUrl = 'https://s3.example.com/bucket/key?other=param';
+      
+      expect(validateSignedUrl(invalidUrl)).toBe(false);
     });
   });
 
-  describe('verifyAccessToken', () => {
-    it('should verify a valid access token', () => {
-      const { token } = createAccessToken('file123', 'user456', secret);
-      const result = verifyAccessToken(token, secret);
+  describe('generateDocumentSignedUrl', () => {
+    it('should generate document signed URL', async () => {
+      const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+      (getSignedUrl as any).mockResolvedValue('https://s3.example.com/test-bucket/documents/doc1/file.pdf?signature=abc123');
 
-      expect(result.valid).toBe(true);
-      expect(result.payload).toBeDefined();
-      expect(result.payload?.fileId).toBe('file123');
-      expect(result.payload?.userId).toBe('user456');
+      const url = await generateDocumentSignedUrl('doc1', 'file.pdf', 3600);
+
+      expect(url).toBe('https://s3.example.com/test-bucket/documents/doc1/file.pdf?signature=abc123');
+      expect(getSignedUrl).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+        { expiresIn: 3600 }
+      );
     });
 
-    it('should reject expired token', () => {
-      const { token } = createAccessToken('file123', 'user456', secret, -1); // Already expired
-      const result = verifyAccessToken(token, secret);
+    it('should use default expiration', async () => {
+      const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+      (getSignedUrl as any).mockResolvedValue('https://s3.example.com/test-bucket/documents/doc1/file.pdf?signature=abc123');
 
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('Token has expired');
-    });
+      await generateDocumentSignedUrl('doc1', 'file.pdf');
 
-    it('should reject token with invalid signature', () => {
-      const { token } = createAccessToken('file123', 'user456', secret);
-      const invalidToken = token.replace(/\.(.*)$/, '.invalid-signature');
-      const result = verifyAccessToken(invalidToken, secret);
-
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('Invalid signature');
-    });
-
-    it('should reject malformed token', () => {
-      const result = verifyAccessToken('invalid-token', secret);
-
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('Invalid token format');
+      expect(getSignedUrl).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+        { expiresIn: 3600 }
+      );
     });
   });
 
-  describe('sanitizeFilePath', () => {
-    it('should remove directory traversal attempts', () => {
-      const result = sanitizeFilePath('../../../etc/passwd');
-      expect(result).toBe('etc/passwd');
+  describe('generateExportSignedUrl', () => {
+    it('should generate export signed URL', async () => {
+      const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+      (getSignedUrl as any).mockResolvedValue('https://s3.example.com/test-bucket/exports/proj1/exp1/file.docx?signature=abc123');
+
+      const url = await generateExportSignedUrl('proj1', 'exp1', 'file.docx', 7200);
+
+      expect(url).toBe('https://s3.example.com/test-bucket/exports/proj1/exp1/file.docx?signature=abc123');
+      expect(getSignedUrl).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+        { expiresIn: 7200 }
+      );
     });
 
-    it('should collapse multiple slashes', () => {
-      const result = sanitizeFilePath('path//to///file');
-      expect(result).toBe('path/to/file');
-    });
+    it('should use default expiration for exports', async () => {
+      const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+      (getSignedUrl as any).mockResolvedValue('https://s3.example.com/test-bucket/exports/proj1/exp1/file.docx?signature=abc123');
 
-    it('should remove leading slashes', () => {
-      const result = sanitizeFilePath('/path/to/file');
-      expect(result).toBe('path/to/file');
-    });
+      await generateExportSignedUrl('proj1', 'exp1', 'file.docx');
 
-    it('should remove trailing slashes', () => {
-      const result = sanitizeFilePath('path/to/file/');
-      expect(result).toBe('path/to/file');
-    });
-
-    it('should handle complex path traversal', () => {
-      const result = sanitizeFilePath('../../../path/../to/../../file');
-      expect(result).toBe('path/to/file');
+      expect(getSignedUrl).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+        { expiresIn: 7200 }
+      );
     });
   });
 
-  describe('generateFileStorageKey', () => {
-    it('should generate a valid storage key', () => {
-      const key = generateFileStorageKey('user123', 'project456', 'document.pdf');
+  describe('generateUploadSignedUrl', () => {
+    it('should generate upload signed URL', async () => {
+      const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+      (getSignedUrl as any).mockResolvedValue('https://s3.example.com/test-bucket/uploads/user1/file.pdf?signature=abc123');
 
-      expect(key).toMatch(/^uploads\/user123\/project456\/\d+_[a-f0-9]+_document\.pdf$/);
+      const url = await generateUploadSignedUrl('user1', 'file.pdf', 1800);
+
+      expect(url).toBe('https://s3.example.com/test-bucket/uploads/user1/file.pdf?signature=abc123');
+      expect(getSignedUrl).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+        { expiresIn: 1800 }
+      );
     });
 
-    it('should sanitize filename in storage key', () => {
-      const key = generateFileStorageKey('user123', 'project456', 'document with spaces & symbols!.pdf');
+    it('should use default expiration for uploads', async () => {
+      const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+      (getSignedUrl as any).mockResolvedValue('https://s3.example.com/test-bucket/uploads/user1/file.pdf?signature=abc123');
 
-      expect(key).toMatch(/^uploads\/user123\/project456\/\d+_[a-f0-9]+_document_with_spaces___symbols_\.pdf$/);
-    });
+      await generateUploadSignedUrl('user1', 'file.pdf');
 
-    it('should generate different keys for same inputs', () => {
-      const key1 = generateFileStorageKey('user123', 'project456', 'document.pdf');
-      const key2 = generateFileStorageKey('user123', 'project456', 'document.pdf');
-
-      expect(key1).not.toBe(key2);
+      expect(getSignedUrl).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+        { expiresIn: 1800 }
+      );
     });
   });
 });
