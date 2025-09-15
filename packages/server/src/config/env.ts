@@ -14,7 +14,7 @@ const envSchema = z.object({
   S3_BUCKET: z.string().min(1),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().optional(),
-  OPENAI_TEMPERATURE: z.coerce.number().optional(),
+  OPENAI_TEMPERATURE: z.coerce.number().min(0).max(2).optional(),
   UNPAYWALL_EMAIL: z.string().email(),
   FEATURE_EXPLORER: z.preprocess((v) => v === 'true', z.boolean()).default(false),
   FEATURE_CHAT_REVIEW: z.preprocess((v) => v === 'true', z.boolean()).default(false),
