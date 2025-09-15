@@ -20,7 +20,7 @@ const fastify = Fastify({
 
 // Register cookie support
 fastify.register(require('@fastify/cookie'), {
-  secret: env.JWT_SECRET,
+  secret: env.COOKIE_SECRET,
   parseOptions: {}
 });
 

@@ -6,6 +6,7 @@ export const env = {
   DATABASE_URL: process.env.DATABASE_URL!,
   REDIS_URL: process.env.REDIS_URL!,
   JWT_SECRET: process.env.JWT_SECRET!,
+  COOKIE_SECRET: process.env.COOKIE_SECRET!,
   S3_ENDPOINT: process.env.S3_ENDPOINT!,
   S3_ACCESS_KEY: process.env.S3_ACCESS_KEY!,
   S3_SECRET_KEY: process.env.S3_SECRET_KEY!,
