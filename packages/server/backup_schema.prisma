@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String             @id @default(uuid())
+  email             String             @unique
+  passwordHash      String
+  createdAt         DateTime           @default(now())
+  name              String?
+  journalBlocklists JournalBlocklist[]
+  projects          Project[]
+  SavedSearch       SavedSearch[]
+}
+
+model Project {
+  id             String          @id @default(uuid())
+  ownerId        String
+  title          String
+  settings       Json
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  auditLogs      AuditLog[]
+  candidates     Candidate[]
+  claims         Claim[]
+  decisions      Decision[]
+  drafts         Draft[]
+  explorerRuns   ExplorerRun[]
+  jobStatuses    JobStatus[]
+  parsedDocs     ParsedDoc[]
+  PrismaData     PrismaData?
+  PrismaLog      PrismaLog[]
+  problemProfile ProblemProfile?
+  owner          User            @relation(fields: [ownerId], references: [id])
+  savedSearches  SavedSearch[]
+  supports       Support[]
+}
+
+model ProblemProfile {
+  id         String   @id @default(uuid())
+  projectId  String   @unique
+  version    String
+  population Json
+  exposure   Json
+  comparator Json
+  outcomes   Json
+  timeframe  Json
+  mesh       Json
+  include    Json
+  exclude    Json
+  notes      String?
+  createdAt  DateTime @default(now())
+  project    Project  @relation(fields: [projectId], references: [id])
+}
+
+model Candidate {
+  id        String     @id @default(uuid())
+  projectId String
+  doi       String?    @db.VarChar(255)
+  pmid      String?    @db.VarChar(32)
+  title     String
+  journal   String
+  year      Int
+  authors   Json?
+  abstract  String?
+  links     Json?
+  flags     Json?
+  score     Json?
+  createdAt DateTime   @default(now())
+  project   Project    @relation(fields: [projectId], references: [id])
+  decisions Decision[]
+  parsedDoc ParsedDoc?
+  supports  Support[]
+
+  @@index([projectId])
+  @@index([doi])
+  @@index([pmid])
+  @@index([title, year])
+  @@index([projectId, createdAt])
+}
+
+model Decision {
+  id            String    @id @default(uuid())
+  projectId     String
+  candidateId   String
+  action        String
+  reason        String?
+  justification String?
+  stage         String
+  userId        String
+  ts            DateTime  @default(now())
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  project       Project   @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([candidateId])
+  @@index([projectId, ts])
+}
+
+model ParsedDoc {
+  id          String    @id @default(uuid())
+  projectId   String
+  candidateId String    @unique
+  storageKey  String
+  textJson    Json
+  createdAt   DateTime  @default(now())
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  project     Project   @relation(fields: [projectId], references: [id])
+}
+
+model Claim {
+  id        String    @id @default(uuid())
+  projectId String
+  text      String
+  section   String?
+  createdAt DateTime  @default(now())
+  project   Project   @relation(fields: [projectId], references: [id])
+  supports  Support[]
+
+  @@index([projectId])
+}
+
+model Support {
+  id           String    @id @default(uuid())
+  projectId    String
+  claimId      String
+  candidateId  String
+  quote        String
+  locator      Json
+  evidenceType String?
+  createdAt    DateTime  @default(now())
+  candidate    Candidate @relation(fields: [candidateId], references: [id])
+  claim        Claim     @relation(fields: [claimId], references: [id])
+  project      Project   @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([claimId])
+  @@index([candidateId])
+  @@index([projectId, candidateId])
+}
+
+model Draft {
+  id        String   @id @default(uuid())
+  projectId String
+  section   String
+  content   String
+  citations Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+model ExplorerRun {
+  runId     String   @id @default(uuid())
+  projectId String
+  prompt    String
+  model     String
+  output    Json
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  action    String
+  details   Json
+  timestamp DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId, timestamp])
+}
+
+model JobStatus {
+  jobId     String   @id
+  projectId String
+  type      String
+  status    String
+  progress  Json?
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId, updatedAt])
+}
+
+model ChatSession {
+  id        String        @id @default(uuid())
+  projectId String?
+  topic     String
+  findings  String?
+  status    String        @default("pending")
+  runId     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+
+  @@index([createdAt])
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  sessionId String
+  role      String
+  content   String
+  payload   Json?
+  createdAt DateTime    @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+model SavedSearch {
+  id            String      @id @default(uuid())
+  projectId     String
+  name          String
+  queryManifest Json
+  createdBy     String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  User          User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  searchRuns    SearchRun[]
+
+  @@index([projectId])
+  @@index([createdBy])
+}
+
+model SearchRun {
+  id            String         @id @default(uuid())
+  savedSearchId String
+  startedAt     DateTime       @default(now())
+  finishedAt    DateTime?
+  status        String         @default("queued")
+  providerStats Json           @default("{}")
+  PrismaLog     PrismaLog[]
+  searchResults SearchResult[]
+  savedSearch   SavedSearch    @relation(fields: [savedSearchId], references: [id], onDelete: Cascade)
+
+  @@index([savedSearchId])
+  @@index([status])
+}
+
+model SearchResult {
+  id            String    @id @default(uuid())
+  searchRunId   String
+  canonicalHash String    @unique(map: "uq_search_results_hash")
+  title         String
+  year          Int?
+  doi           String?   @unique(map: "uq_search_results_doi")
+  pmid          String?   @unique(map: "uq_search_results_pmid")
+  pmcid         String?
+  source        String
+  authors       Json      @default("[]")
+  journal       String?
+  volume        String?
+  issue         String?
+  pages         String?
+  abstract      String?
+  meshTerms     Json?
+  rawPayload    Json
+  createdAt     DateTime  @default(now())
+  flags         Json      @default("{}")
+  searchRun     SearchRun @relation(fields: [searchRunId], references: [id], onDelete: Cascade)
+
+  @@index([searchRunId])
+  @@index([flags], type: Gin)
+  @@index([source])
+}
+
+model JournalBlocklist {
+  id          String   @id @default(uuid())
+  issn        String   @unique
+  note        String?
+  addedBy     String
+  addedAt     DateTime @default(now())
+  addedByUser User     @relation(fields: [addedBy], references: [id], onDelete: Cascade)
+
+  @@index([issn])
+}
+
+model PrismaData {
+  projectId  String  @id
+  identified Int     @default(0)
+  duplicates Int     @default(0)
+  screened   Int     @default(0)
+  included   Int     @default(0)
+  excluded   Int     @default(0)
+  Project    Project @relation(fields: [projectId], references: [id])
+}
+
+model PrismaLog {
+  id          String     @id
+  projectId   String
+  searchRunId String?
+  createdAt   DateTime   @default(now())
+  counters    Json
+  Project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  SearchRun   SearchRun? @relation(fields: [searchRunId], references: [id])
+
+  @@index([projectId])
+}
+
+

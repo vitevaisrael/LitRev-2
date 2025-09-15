@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app.local/schemas/evidence-decision-card.schema.json",
+  "title": "EvidenceDecisionCard",
+  "description": "Triage decision for a source with rationale and journal signal.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "sourceCitation": {
+      "$ref": "https://app.local/schemas/source-citation.schema.json"
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["Keep", "Exclude", "Ask", "BetterOption"]
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "journalSignal": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "Capped ordinal signal (0–3)."
+    },
+    "studyType": { "type": "string" },
+    "outcomes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0
+    },
+    "biasNotes": { "type": "string" },
+    "strengthGrade": {
+      "type": "string",
+      "enum": ["very-low", "low", "moderate", "high"],
+      "description": "Optional strength of evidence grade."
+    },
+    "nextAction": { "type": "string" }
+  },
+  "required": ["sourceCitation", "decision", "rationale", "journalSignal"]
+}
+

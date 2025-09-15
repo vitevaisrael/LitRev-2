@@ -1,0 +1,38 @@
+{
+  "researchQuestion": "In adults with IgA nephropathy (IgAN), what therapies improve renal outcomes compared to standard care?",
+  "miniAbstract": "This review aligns scope for evaluating therapeutic options in IgAN and related uveitis contexts. We outline key anchors, inclusion/exclusion criteria, and an OA-first search plan to prioritize accessible, high-quality evidence.",
+  "outline": [
+    "Background",
+    "Population & Interventions",
+    "Outcomes & Measures",
+    "Evidence Summary",
+    "Limitations"
+  ],
+  "topAnchors": [
+    "Renal survival endpoints",
+    "Proteinuria reduction",
+    "Immunomodulatory effects",
+    "Adverse event profile",
+    "OA-first sourcing"
+  ],
+  "inclusionCriteria": [
+    "Human studies",
+    "Comparative or single-arm with robust methods",
+    "Adult population with IgAN"
+  ],
+  "exclusionCriteria": [
+    "Non-English with no translation",
+    "Animal-only studies",
+    "Case reports only without synthesis"
+  ],
+  "oaSources": [
+    "PubMed",
+    "OpenAlex",
+    "Crossref",
+    "ClinicalTrials.gov",
+    "Europe PMC",
+    "Unpaywall"
+  ],
+  "searchPlanSummary": "Run OA-first queries across PubMed, OpenAlex/Crossref, ClinicalTrials.gov, and Europe PMC/Unpaywall; apply inclusion/exclusion criteria and log PRISMA counts."
+}
+
