@@ -32,6 +32,12 @@ A desktop-first web application for comprehensive medical literature reviews wit
    pnpm dev
    ```
 
+5. **Check code quality**:
+   ```bash
+   pnpm lint
+   pnpm test
+   ```
+
 ## Features
 
 - **Intake**: Problem Profile (PICO/MeSH) with AI-generated anchors
