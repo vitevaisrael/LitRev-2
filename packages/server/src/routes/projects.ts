@@ -101,7 +101,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
 
       // Build history from audit logs
       const history = [];
-      let currentCounts = {
+      const currentCounts = {
         identified: 0,
         duplicates: 0,
         screened: 0,

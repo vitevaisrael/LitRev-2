@@ -44,8 +44,11 @@ export async function detectIntegrityFlags(record: ProviderRecord): Promise<Inte
     confidence = 'high';
   }
 
-  flags.detectedAt = new Date().toISOString();
-  flags.sources = sources;
+  // Only add metadata if there are actual flags
+  if (Object.keys(flags).length > 0) {
+    flags.detectedAt = new Date().toISOString();
+    flags.sources = sources;
+  }
 
   return {
     flags,
