@@ -66,6 +66,7 @@ shared/schemas/      Zod validators + shared types
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/thescientist
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=change_me
+COOKIE_SECRET=change_me
 S3_ENDPOINT=http://localhost:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
