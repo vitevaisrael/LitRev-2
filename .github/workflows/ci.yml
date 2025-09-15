@@ -9,6 +9,22 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" \
+          --health-interval 10s \
+          --health-timeout 5s \
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb?schema=public
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -20,6 +36,20 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            if pg_isready -h localhost -U postgres -d testdb; then
+              echo "Postgres is ready"; break; fi; sleep 2; done
+      - name: Generate Prisma Client
+        run: pnpm -F @the-scientist/server prisma:generate
+      - name: Apply DB migrations
+        run: |
+          cd packages/server
+          npx prisma migrate deploy
+          cd -
       - name: Typecheck
         run: pnpm -r typecheck
       - name: Lint

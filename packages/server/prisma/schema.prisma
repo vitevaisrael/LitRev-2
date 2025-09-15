@@ -35,6 +35,8 @@ model Project {
   explorerRuns ExplorerRun[]
   auditLogs    AuditLog[]
   jobStatuses  JobStatus[]
+  savedSearches SavedSearch[]
+  prismaLogs   PrismaLog[]
 }
 
 model ProblemProfile {
@@ -214,4 +216,62 @@ model ChatMessage {
   createdAt   DateTime @default(now())
   session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   @@index([sessionId, createdAt])
+}
+
+// Journals blocklist used by integrity checks
+model JournalBlocklist {
+  id       String   @id @default(uuid())
+  issn     String?
+  note     String?
+  addedBy  String
+  createdAt DateTime @default(now())
+}
+
+// Saved search configuration for a project
+model SavedSearch {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id])
+  name          String
+  queryManifest Json
+  createdBy     String
+  createdAt     DateTime @default(now())
+  runs          SearchRun[]
+  @@index([projectId])
+}
+
+// A single execution of a saved search
+model SearchRun {
+  id            String       @id @default(uuid())
+  savedSearchId String
+  savedSearch   SavedSearch  @relation(fields: [savedSearchId], references: [id])
+  status        String
+  createdAt     DateTime     @default(now())
+  results       SearchResult[]
+  @@index([savedSearchId])
+}
+
+// Results captured for a search run
+model SearchResult {
+  id            String    @id @default(uuid())
+  searchRunId   String
+  searchRun     SearchRun @relation(fields: [searchRunId], references: [id])
+  canonicalHash String
+  title         String
+  source        String
+  flags         Json
+  rawPayload    Json
+  createdAt     DateTime  @default(now())
+  @@index([searchRunId])
+  @@index([canonicalHash])
+}
+
+// Generic log records for PRISMA (flow) updates per project
+model PrismaLog {
+  id        String   @id @default(uuid())
+  projectId String
+  message   String?
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id])
+  @@index([projectId, createdAt])
 }
