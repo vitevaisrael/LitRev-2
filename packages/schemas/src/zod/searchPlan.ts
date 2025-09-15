@@ -11,7 +11,7 @@ const sourceEnum = z.enum([
 
 export const searchPlan = z
   .object({
-    sources: z.array(sourceEnum).min(1),
+    sources: z.array(sourceEnum).min(1).refine((items) => new Set(items).size === items.length, { message: 'Sources must be unique.' }),
     queries: z.array(z.string().min(1)).min(1),
     dateRange: z.object({
       from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
