@@ -4,6 +4,10 @@ import { randomUUID } from 'crypto';
 import { routes } from './routes';
 import { env } from './config/env';
 import { startExplorerWorker } from './modules/explorer/worker';
+import { startSearchWorker } from './jobs/searchQueue';
+import fastifyCookie from '@fastify/cookie';
+import fastifyCors from '@fastify/cors';
+import fastifyRateLimit from '@fastify/rate-limit';
 
 const fastify = Fastify({
   logger: {
@@ -19,15 +23,36 @@ const fastify = Fastify({
 });
 
 // Register cookie support
-fastify.register(require('@fastify/cookie'), {
+fastify.register(fastifyCookie, {
   secret: env.JWT_SECRET,
   parseOptions: {}
 });
 
 // Register CORS support
-fastify.register(require('@fastify/cors'), {
+fastify.register(fastifyCors, {
   origin: env.NODE_ENV === 'production' ? false : ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true
+});
+
+// Register rate limiting
+fastify.register(fastifyRateLimit, {
+  global: true,
+  max: 100, // requests per timeWindow
+  timeWindow: '1 minute',
+  addHeaders: {
+    'x-ratelimit-limit': true,
+    'x-ratelimit-remaining': true,
+    'x-ratelimit-reset': true
+  },
+  ban: 0, // disable banning
+  errorResponseBuilder: (request: any, context: any) => ({
+    ok: false,
+    error: {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: `Rate limit exceeded, retry in ${Math.round(context.ttl / 1000)} seconds`,
+      requestId: request.id
+    }
+  })
 });
 
 // Request ID and logging
@@ -71,12 +96,19 @@ fastify.register(routes, { prefix: '/api/v1' });
 // Start server
 const start = async () => {
   try {
-    // Start background workers (Explorer)
+    // Start background workers (Explorer, Search)
     try {
       startExplorerWorker();
       fastify.log.info('Explorer worker started');
     } catch (e) {
       fastify.log.warn('Explorer worker not started (Redis unavailable)');
+    }
+    
+    try {
+      startSearchWorker();
+      fastify.log.info('Search worker started');
+    } catch (e) {
+      fastify.log.warn('Search worker not started (Redis unavailable)');
     }
     await fastify.listen({ port: env.PORT, host: '0.0.0.0' });
     console.log(`Server listening on port ${env.PORT}`);

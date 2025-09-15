@@ -20,6 +20,19 @@ const envSchema = z.object({
   FEATURE_CHAT_REVIEW: z.preprocess((v) => v === 'true', z.boolean()).default(false),
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  
+  // Search pipeline
+  PUBMED_API_KEY: z.string().optional(),
+  MAX_RESULTS_PER_RUN: z.coerce.number().default(1000),
+  SEARCH_QUEUE_CONCURRENCY: z.coerce.number().default(2),
+  
+  // Security & Storage
+  S3_ENDPOINT: z.string().url().optional(),
+  S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+  S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  S3_REGION: z.string().min(1).optional(),
+  S3_BUCKET: z.string().min(1).optional(),
+  CLAMAV_ENABLED: z.preprocess((v) => v === 'true', z.boolean()).default(false),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -13,6 +13,10 @@ import { draftRoutes } from './draft';
 import { exportsRoutes } from './exports';
 import { importRoutes } from './import';
 import { chatRoutes } from './chat';
+import { savedSearchesRoutes } from './saved-searches';
+import { searchRunsRoutes } from './search-runs';
+import { resultsRoutes } from './results';
+import { adminRoutes } from './admin';
 import { env } from '../config/env';
 
 export async function routes(fastify: FastifyInstance) {
@@ -28,6 +32,10 @@ export async function routes(fastify: FastifyInstance) {
   await fastify.register(draftRoutes);
   await fastify.register(exportsRoutes);
   await fastify.register(importRoutes);
+  await fastify.register(savedSearchesRoutes);
+  await fastify.register(searchRunsRoutes);
+  await fastify.register(resultsRoutes);
+  await fastify.register(adminRoutes);
   
   // Register explorer routes only if feature is enabled
   if (env.FEATURE_EXPLORER) {
