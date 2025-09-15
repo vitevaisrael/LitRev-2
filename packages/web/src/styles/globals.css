@@ -67,4 +67,14 @@
   .separator {
     @apply border-t border-border;
   }
+
+  /* Only mask password fields; allow normal inputs to show text */
+  input,
+  textarea {
+    -webkit-text-security: none;
+  }
+
+  input[type='password'] {
+    -webkit-text-security: disc;
+  }
 }
