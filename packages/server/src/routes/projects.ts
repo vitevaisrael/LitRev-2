@@ -43,7 +43,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
     try {
       const { title } = request.body as { title: string };
       
-      const project = await prisma.$transaction(async (tx) => {
+      const project = await prisma.$transaction(async (tx: any) => {
         const newProject = await tx.project.create({
           data: {
             title,

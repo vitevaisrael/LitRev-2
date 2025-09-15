@@ -81,7 +81,7 @@ export async function deduplicateReferences(
     
     // Check for exact DOI match
     if (ref.doi) {
-      const doiMatch = existingCandidates.find(c => c.doi === ref.doi);
+      const doiMatch = existingCandidates.find((c: any) => c.doi === ref.doi);
       if (doiMatch) {
         isDuplicate = true;
       }
@@ -89,7 +89,7 @@ export async function deduplicateReferences(
     
     // Check for exact PMID match
     if (!isDuplicate && ref.pmid) {
-      const pmidMatch = existingCandidates.find(c => c.pmid === ref.pmid);
+      const pmidMatch = existingCandidates.find((c: any) => c.pmid === ref.pmid);
       if (pmidMatch) {
         isDuplicate = true;
       }
@@ -97,7 +97,7 @@ export async function deduplicateReferences(
     
     // Check for fuzzy title match + same year
     if (!isDuplicate) {
-      const titleMatch = existingCandidates.find(c => 
+      const titleMatch = existingCandidates.find((c: any) => 
         c.year === ref.year && isTitleSimilar(c.title, ref.title)
       );
       if (titleMatch) {

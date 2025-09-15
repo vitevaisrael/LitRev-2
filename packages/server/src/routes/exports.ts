@@ -256,10 +256,10 @@ export async function exportsRoutes(fastify: FastifyInstance) {
           title: project.title,
           createdAt: project.createdAt
         },
-        claims: claims.map(claim => ({
+        claims: claims.map((claim: any) => ({
           id: claim.id,
           text: (claim as any).text,
-          supports: claim.supports.map(support => ({
+          supports: claim.supports.map((support: any) => ({
             id: support.id,
             quote: support.quote,
             locator: support.locator,
