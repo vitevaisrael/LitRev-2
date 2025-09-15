@@ -51,7 +51,7 @@ This document explains how the Explorer feature is implemented so contributors c
 
 ## Configuration & Ops
 - Redis required for BullMQ (`REDIS_URL`). Worker start is attempted at server boot; logs a warning if Redis is unavailable (server still runs).
-- OpenAI is optional (`OPENAI_API_KEY`); mock provider is used if missing.
+- OpenAI is optional (`OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_TEMPERATURE`); mock provider is used if missing.
 - PubMed E-utilities are accessed over HTTPS (no key required); failures degrade gracefully to empty refs.
 
 ## Failure Modes & Retries
