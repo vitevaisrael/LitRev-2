@@ -11,6 +11,8 @@ export const env = {
   S3_SECRET_KEY: process.env.S3_SECRET_KEY!,
   S3_BUCKET: process.env.S3_BUCKET!,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  OPENAI_MODEL: process.env.OPENAI_MODEL,
+  OPENAI_TEMPERATURE: process.env.OPENAI_TEMPERATURE,
   UNPAYWALL_EMAIL: process.env.UNPAYWALL_EMAIL!,
   FEATURE_EXPLORER: process.env.FEATURE_EXPLORER === 'true',
   FEATURE_CHAT_REVIEW: process.env.FEATURE_CHAT_REVIEW === 'true',
