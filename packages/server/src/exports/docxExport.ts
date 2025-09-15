@@ -39,8 +39,8 @@ export async function exportToDocx(
     includeIntegrityFlags = true
   } = options;
 
-  // Get project and candidates
-  const [project, candidates, prismaData] = await Promise.all([
+  // Get project, candidates, prisma data, and draft sections
+  const [project, candidates, prismaData, draftSections] = await Promise.all([
     prisma.project.findUnique({
       where: { id: projectId },
       select: { id: true, title: true, description: true }
@@ -51,6 +51,10 @@ export async function exportToDocx(
     }),
     prisma.prismaData.findUnique({
       where: { projectId }
+    }),
+    prisma.draft.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'asc' }
     })
   ]);
 
@@ -140,6 +144,72 @@ export async function exportToDocx(
         spacing: { after: 400 }
       })
     );
+  }
+
+  // Draft sections (if any)
+  if (draftSections.length > 0) {
+    sections.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'Draft Sections',
+            bold: true,
+            size: 28
+          })
+        ],
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 }
+      })
+    );
+
+    for (const draft of draftSections) {
+      // Draft section title
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: draft.section,
+              bold: true,
+              size: 24
+            })
+          ],
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 300, after: 100 }
+        })
+      );
+
+      // Draft content
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: draft.content,
+              size: 22
+            })
+          ],
+          spacing: { after: 200 }
+        })
+      );
+
+      // Citations for this section (if any)
+      if (draft.citations && Array.isArray(draft.citations) && draft.citations.length > 0) {
+        sections.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: 'Citations: ',
+                bold: true
+              }),
+              new TextRun({
+                text: draft.citations.join(', '),
+                size: 20
+              })
+            ],
+            spacing: { after: 200 }
+          })
+        );
+      }
+    }
   }
 
   // Included studies section

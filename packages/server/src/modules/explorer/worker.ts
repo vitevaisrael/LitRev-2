@@ -5,6 +5,7 @@ import { env } from '../../config/env';
 import { PubMedAdapter } from '../search/pubmedAdapter';
 import { OpenAIProvider } from '../llm/openai';
 import { MockProvider } from '../llm/mock';
+import { JobStatusUpdate, SearchResult } from '../../types/api';
 
 interface ExplorerJobData {
   projectId: string;
@@ -13,6 +14,9 @@ interface ExplorerJobData {
 }
 
 export function startExplorerWorker() {
+  if (!env.REDIS_URL) {
+    throw new Error('Redis URL not configured');
+  }
   const connection = new IORedis(env.REDIS_URL);
 
   const worker = new Worker<ExplorerJobData>(
@@ -20,7 +24,7 @@ export function startExplorerWorker() {
     async (job: Job<ExplorerJobData>) => {
       const { projectId, prompt, model } = job.data;
 
-      const updateStatus = async (data: any) => {
+      const updateStatus = async (data: JobStatusUpdate) => {
         await prisma.jobStatus.update({
           where: { jobId: job.id as string },
           data: { status: 'running', progress: data }
@@ -36,7 +40,7 @@ export function startExplorerWorker() {
       // Step 2: browsing (PubMed)
       await updateStatus({ step: 'browsing', count: 2, total: 4 });
       const pubmed = new PubMedAdapter();
-      let refs = [] as any[];
+      let refs: SearchResult[] = [];
       try {
         refs = await pubmed.search(String(topic), 10);
       } catch (e) {

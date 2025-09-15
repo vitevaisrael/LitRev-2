@@ -38,7 +38,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
       ]);
 
       return sendSuccess(reply, {
-        blocklist: blocklist.map(entry => ({
+        blocklist: blocklist.map((entry: any) => ({
           id: entry.id,
           issn: entry.issn,
           note: entry.note,

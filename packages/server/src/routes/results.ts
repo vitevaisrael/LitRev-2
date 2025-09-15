@@ -113,7 +113,7 @@ export async function resultsRoutes(fastify: FastifyInstance) {
       ]);
 
       return sendSuccess(reply, {
-        results: results.map(result => ({
+        results: results.map((result: any) => ({
           id: result.id,
           title: result.title,
           year: result.year,

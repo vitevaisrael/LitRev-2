@@ -1,28 +1,16 @@
-import { Client } from 'minio';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { env } from '../../config/env';
 
-// Initialize MinIO client
-const minioClient = new Client({
-  endPoint: new URL(env.S3_ENDPOINT).hostname,
-  port: parseInt(new URL(env.S3_ENDPOINT).port) || 9000,
-  useSSL: new URL(env.S3_ENDPOINT).protocol === 'https:',
-  accessKey: env.S3_ACCESS_KEY,
-  secretKey: env.S3_SECRET_KEY,
+// One client to rule them all (AWS SDK v3 with MinIO support)
+export const s3 = new S3Client({
+  endpoint: env.S3_ENDPOINT,
+  region: env.S3_REGION,
+  credentials: {
+    accessKeyId: env.S3_ACCESS_KEY,
+    secretAccessKey: env.S3_SECRET_KEY
+  },
+  forcePathStyle: true // MinIO compatibility
 });
-
-// Ensure bucket exists
-async function ensureBucketExists(bucketName: string): Promise<void> {
-  try {
-    const exists = await minioClient.bucketExists(bucketName);
-    if (!exists) {
-      await minioClient.makeBucket(bucketName, 'us-east-1');
-      console.log(`Created bucket: ${bucketName}`);
-    }
-  } catch (error) {
-    console.error(`Failed to ensure bucket ${bucketName} exists:`, error);
-    throw error;
-  }
-}
 
 // Upload file to S3
 export async function uploadFile(
@@ -32,12 +20,14 @@ export async function uploadFile(
   contentType: string = 'application/octet-stream'
 ): Promise<string> {
   try {
-    await ensureBucketExists(bucketName);
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: objectName,
+      Body: buffer,
+      ContentType: contentType,
+    });
     
-    await minioClient.putObject(bucketName, objectName, buffer, {
-      'Content-Type': contentType,
-    } as any);
-    
+    await s3.send(command);
     return `${env.S3_ENDPOINT}/${bucketName}/${objectName}`;
   } catch (error) {
     console.error(`Failed to upload file ${objectName}:`, error);
@@ -48,13 +38,27 @@ export async function uploadFile(
 // Get file from S3
 export async function getFile(bucketName: string, objectName: string): Promise<Buffer> {
   try {
-    const stream = await minioClient.getObject(bucketName, objectName);
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: objectName,
+    });
+    
+    const response = await s3.send(command);
     const chunks: Buffer[] = [];
     
+    if (!response.Body) {
+      throw new Error('No body in response');
+    }
+    
     return new Promise((resolve, reject) => {
-      stream.on('data', (chunk) => chunks.push(chunk));
-      stream.on('end', () => resolve(Buffer.concat(chunks)));
-      stream.on('error', reject);
+      if (response.Body && 'on' in response.Body) {
+        const stream = response.Body as NodeJS.ReadableStream;
+        stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+        stream.on('end', () => resolve(Buffer.concat(chunks)));
+        stream.on('error', reject);
+      } else {
+        reject(new Error('Invalid response body type'));
+      }
     });
   } catch (error) {
     console.error(`Failed to get file ${objectName}:`, error);
@@ -65,7 +69,12 @@ export async function getFile(bucketName: string, objectName: string): Promise<B
 // Delete file from S3
 export async function deleteFile(bucketName: string, objectName: string): Promise<void> {
   try {
-    await minioClient.removeObject(bucketName, objectName);
+    const command = new DeleteObjectCommand({
+      Bucket: bucketName,
+      Key: objectName,
+    });
+    
+    await s3.send(command);
   } catch (error) {
     console.error(`Failed to delete file ${objectName}:`, error);
     throw error;
@@ -75,7 +84,12 @@ export async function deleteFile(bucketName: string, objectName: string): Promis
 // Check if file exists
 export async function fileExists(bucketName: string, objectName: string): Promise<boolean> {
   try {
-    await minioClient.statObject(bucketName, objectName);
+    const command = new HeadObjectCommand({
+      Bucket: bucketName,
+      Key: objectName,
+    });
+    
+    await s3.send(command);
     return true;
   } catch (error) {
     return false;

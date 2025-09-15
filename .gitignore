@@ -107,3 +107,10 @@ Thumbs.db
 
 # Prisma
 prisma/migrations/
+
+# Never commit these
+**/cookies*.txt
+**/.env
+**/dist/
+*.log
+.DS_Store

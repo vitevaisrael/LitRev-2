@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           String   @id @default(dbgenerated("uuid_generate_v4()"))
   email        String   @unique
   passwordHash String
   name         String?
@@ -18,7 +18,7 @@ model User {
 }
 
 model Project {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("uuid_generate_v4()"))
   ownerId    String
   owner      User     @relation(fields: [ownerId], references: [id])
   title      String
@@ -41,7 +41,7 @@ model Project {
 }
 
 model ProblemProfile {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId  String   @unique
   project    Project  @relation(fields: [projectId], references: [id])
   version    String
@@ -58,7 +58,7 @@ model ProblemProfile {
 }
 
 model Candidate {
-  id          String   @id @default(uuid())
+  id          String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId   String
   project     Project  @relation(fields: [projectId], references: [id])
   doi         String?  @db.VarChar(255)
@@ -84,7 +84,7 @@ model Candidate {
 }
 
 model Decision {
-  id            String   @id @default(uuid())
+  id            String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId     String
   candidateId   String
   action        String   // include|exclude|better|ask
@@ -113,7 +113,7 @@ model PrismaData {
 }
 
 model ParsedDoc {
-  id          String   @id @default(uuid())
+  id          String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId   String
   candidateId String   @unique
   storageKey  String   // S3 key to PDF
@@ -124,7 +124,7 @@ model ParsedDoc {
 }
 
 model Claim {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId  String
   text       String
   section    String?
@@ -135,7 +135,7 @@ model Claim {
 }
 
 model Support {
-  id          String   @id @default(uuid())
+  id          String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId   String
   claimId     String
   candidateId String
@@ -153,7 +153,7 @@ model Support {
 }
 
 model Draft {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId  String
   section    String
   content    String
@@ -175,7 +175,7 @@ model ExplorerRun {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId String
   userId    String
   action    String   // "project_created" | "decision_made" | "export_run" | ...
@@ -199,7 +199,7 @@ model JobStatus {
 }
 
 model ChatSession {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId  String?  // Assigned once the review is generated
   topic      String
   findings   String?
@@ -212,7 +212,7 @@ model ChatSession {
 }
 
 model ChatMessage {
-  id          String   @id @default(uuid())
+  id          String   @id @default(dbgenerated("uuid_generate_v4()"))
   sessionId   String
   role        String   // user|assistant|tool|system
   content     String   // markdown/plaintext
@@ -223,7 +223,7 @@ model ChatMessage {
 }
 
 model SavedSearch {
-  id          String   @id @default(uuid())
+  id          String   @id @default(dbgenerated("uuid_generate_v4()"))
   projectId   String
   name        String
   description String?
@@ -238,7 +238,7 @@ model SavedSearch {
 }
 
 model SearchRun {
-  id            String   @id @default(uuid())
+  id            String   @id @default(dbgenerated("uuid_generate_v4()"))
   savedSearchId String
   status        String   // pending|running|completed|failed
   metadata      Json     @default("{}")
@@ -252,7 +252,7 @@ model SearchRun {
 }
 
 model SearchResult {
-  id            String   @id @default(uuid())
+  id            String   @id @default(dbgenerated("uuid_generate_v4()"))
   searchRunId   String
   canonicalHash String
   title         String
@@ -281,7 +281,7 @@ model SearchResult {
 }
 
 model JournalBlocklist {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("uuid_generate_v4()"))
   issn      String   @unique
   note      String?
   addedBy   String

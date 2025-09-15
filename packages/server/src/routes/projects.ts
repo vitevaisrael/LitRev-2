@@ -81,12 +81,22 @@ export async function projectsRoutes(fastify: FastifyInstance) {
     try {
       const { id: projectId } = request.params as { id: string };
       
-      const prismaData = await prisma.prismaData.findUnique({
+      let prismaData = await prisma.prismaData.findUnique({
         where: { projectId }
       });
       
+      // Create default PRISMA data if it doesn't exist
       if (!prismaData) {
-        return sendError(reply, 'NOT_FOUND', 'PRISMA data not found', 404);
+        prismaData = await prisma.prismaData.create({
+          data: {
+            projectId,
+            identified: 0,
+            deduped: 0,
+            screened: 0,
+            included: 0,
+            excluded: 0
+          }
+        });
       }
 
       // Get audit logs to build history
@@ -103,7 +113,8 @@ export async function projectsRoutes(fastify: FastifyInstance) {
       const history: any[] = [];
       const currentCounts: any = {
         identified: 0,
-        duplicates: 0,
+        duplicates: 0, // Legacy field name
+        deduped: 0,    // New field name
         screened: 0,
         included: 0,
         excluded: 0
@@ -129,6 +140,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
           const dups = Number((log as any).details?.duplicates || 0);
           currentCounts.identified += added;
           currentCounts.duplicates += dups;
+          currentCounts.deduped += dups; // Also update new field name
         } else if (log.action === 'decision_made') {
           // Decision - increment screened and include/exclude
           currentCounts.screened += 1;
@@ -150,7 +162,8 @@ export async function projectsRoutes(fastify: FastifyInstance) {
         history[0] = {
           timestamp: new Date().toISOString(),
           identified: prismaData.identified,
-          duplicates: (prismaData as any).deduped ?? 0,
+          duplicates: prismaData.deduped, // Use deduped field
+          deduped: prismaData.deduped,
           screened: prismaData.screened,
           included: prismaData.included,
           excluded: prismaData.excluded

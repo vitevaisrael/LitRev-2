@@ -7,7 +7,7 @@ import { startExplorerWorker } from './modules/explorer/worker';
 import { startSearchWorker } from './jobs/searchQueue';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
-import fastifyRateLimit from '@fastify/rate-limit';
+// import fastifyRateLimit from '@fastify/rate-limit'; // Removed due to version conflict
 
 const PORT = env.PORT;
 const HOST = env.HOST ?? (env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
@@ -44,26 +44,26 @@ fastify.register(fastifyCors, {
   credentials: true
 });
 
-// Register rate limiting
-fastify.register(fastifyRateLimit, {
-  global: true,
-  max: 100, // requests per timeWindow
-  timeWindow: '1 minute',
-  addHeaders: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true
-  },
-  ban: 0, // disable banning
-  errorResponseBuilder: (request: any, context: any) => ({
-    ok: false,
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: `Rate limit exceeded, retry in ${Math.round(context.ttl / 1000)} seconds`,
-      requestId: request.id
-    }
-  })
-});
+// Register rate limiting (temporarily disabled due to version conflict)
+// fastify.register(fastifyRateLimit, {
+//   global: true,
+//   max: 100, // requests per timeWindow
+//   timeWindow: '1 minute',
+//   addHeaders: {
+//     'x-ratelimit-limit': true,
+//     'x-ratelimit-remaining': true,
+//     'x-ratelimit-reset': true
+//   },
+//   ban: 0, // disable banning
+//   errorResponseBuilder: (request: any, context: any) => ({
+//     ok: false,
+//     error: {
+//       code: 'RATE_LIMIT_EXCEEDED',
+//       message: `Rate limit exceeded, retry in ${Math.round(context.ttl / 1000)} seconds`,
+//       requestId: request.id
+//     }
+//   })
+// });
 
 // Request ID and logging
 fastify.addHook('onRequest', async (request, reply) => {

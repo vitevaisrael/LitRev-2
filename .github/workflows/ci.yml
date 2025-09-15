@@ -1,117 +1,51 @@
 name: CI
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-
+on: [push, pull_request]
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-
-  typecheck:
-    name: Type Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Generate Prisma Client
-        run: pnpm -F @the-scientist/server prisma:generate
-      - run: pnpm typecheck
-
-  test:
-    name: Test
+  validate:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:15
         env:
-          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test
-      redis:
-        image: redis:7
+          POSTGRES_DB: thescientist
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
         with:
-          version: 9
+          version: 8
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Install clients (psql, redis-cli)
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client redis-tools
-      - name: Wait for Postgres
-        run: |
-          for i in {1..60}; do
-            if pg_isready -h postgres -U postgres -d test; then
-              echo "Postgres is ready"; break; fi; sleep 2; done
-          # Final sanity check
-          PGPASSWORD=postgres psql -h postgres -U postgres -d test -c "SELECT 1;"
-      - name: Wait for Redis
-        run: |
-          for i in {1..60}; do
-            if redis-cli -h redis ping | grep -q PONG; then echo "Redis is ready"; break; fi; sleep 2; done
-      - name: Generate Prisma Client
-        run: pnpm -F @the-scientist/server prisma:generate
-      - name: Apply DB migrations
-        run: |
-          cd packages/server
-          npx prisma migrate deploy
-          cd -
+          node-version: 20
+          cache: pnpm
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build all packages
+        run: pnpm -r build
+      
+      - name: Type check all packages
+        run: pnpm -r typecheck
+      
+      - name: Lint all packages
+        run: pnpm -r lint
+      
+      - name: Test all packages
+        run: pnpm -r test
         env:
-          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/test
-      - name: Prisma migrate status
-        run: |
-          cd packages/server
-          npx prisma migrate status
-          cd -
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/test
-      - name: Run tests
-        run: pnpm test
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/test
-          REDIS_URL: redis://redis:6379
-          JWT_SECRET: test-secret
-          COOKIE_SECRET: test-cookie-secret
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/thescientist
+          JWT_SECRET: test-jwt-secret-32-characters-long
+          COOKIE_SECRET: test-cookie-secret-32-characters-long
+          S3_ENDPOINT: http://localhost:9000
+          S3_ACCESS_KEY: minioadmin
+          S3_SECRET_KEY: minioadmin
+          S3_BUCKET: test-bucket
           UNPAYWALL_EMAIL: test@example.com
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Generate Prisma Client
-        run: pnpm -F @the-scientist/server prisma:generate
-      - run: pnpm build

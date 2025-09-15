@@ -27,6 +27,7 @@ export async function healthRoutes(fastify: FastifyInstance) {
 
     const redisProbe = (async () => {
       try {
+        if (!env.REDIS_URL) return false;
         const redis = new Redis(env.REDIS_URL, { lazyConnect: true });
         await withTimeout(redis.connect(), 1000).catch(() => {});
         const pong = await withTimeout(redis.ping(), 1000);
