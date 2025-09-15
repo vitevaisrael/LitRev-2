@@ -39,7 +39,7 @@ export class OpenAIProvider implements LLMProvider {
     });
     this.config = {
       model: config.model || env.OPENAI_MODEL || 'gpt-5',
-      temperature: config.temperature ?? (env.OPENAI_TEMPERATURE ? parseFloat(env.OPENAI_TEMPERATURE) : 0),
+      temperature: config.temperature ?? env.OPENAI_TEMPERATURE ?? 0,
       maxTokens: config.maxTokens
     };
   }
