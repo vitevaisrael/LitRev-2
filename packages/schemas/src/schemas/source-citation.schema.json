@@ -2,20 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://app.local/schemas/source-citation.schema.json",
   "title": "SourceCitation",
-  "description": "Normalized citation for a research source, including identifiers, OA flag, license, and bibliographic metadata.",
+  "description": "Normalized citation for a research source: identifiers, OA flag, license, and core metadata.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "doi": {
-      "type": "string",
-      "description": "Digital Object Identifier (if available)",
-      "pattern": "^10\\.\\d{4,9}/[-._;()/:A-Za-z0-9]+$"
-    },
-    "pmid": {
-      "type": "string",
-      "description": "PubMed identifier (if available)",
-      "pattern": "^\\d+$"
-    },
+    "doi": { "type": "string", "pattern": "^10\\.\\d{4,9}/[-._;()/:A-Za-z0-9]+$" },
+    "pmid": { "type": "string", "pattern": "^\\d+$" },
     "url": {
       "type": "string",
       "format": "uri",
@@ -25,10 +17,7 @@
       "type": "boolean",
       "description": "True if the source is open access."
     },
-    "license": {
-      "type": "string",
-      "description": "License name or code (e.g., CC-BY-4.0)."
-    },
+    "license": { "type": "string" },
     "title": {
       "type": "string",
       "minLength": 1
@@ -44,8 +33,9 @@
     },
     "authors": {
       "type": "array",
-      "items": { "$ref": "#/$defs/Author" },
-      "minItems": 1
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "description": "Author list as formatted names (e.g., 'Jane Doe')."
     }
   },
   "required": ["openAccess", "title", "journal", "year", "authors"],
@@ -53,26 +43,5 @@
     { "required": ["doi"] },
     { "required": ["pmid"] },
     { "required": ["url"] }
-  ],
-  "$defs": {
-    "Author": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "given": { "type": "string" },
-        "family": { "type": "string" },
-        "full": { "type": "string" },
-        "orcid": {
-          "type": "string",
-          "pattern": "^\\d{4}-\\d{4}-\\d{4}-\\d{4}$",
-          "description": "ORCID iD without url prefix."
-        }
-      },
-      "anyOf": [
-        { "required": ["full"] },
-        { "required": ["given", "family"] }
-      ]
-    }
-  }
+  ]
 }
-
