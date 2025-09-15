@@ -37,7 +37,6 @@ fastify.register(fastifyRateLimit, {
   global: true,
   max: 100, // requests per timeWindow
   timeWindow: '1 minute',
-  hook: 'onSend',
   addHeaders: {
     'x-ratelimit-limit': true,
     'x-ratelimit-remaining': true,
