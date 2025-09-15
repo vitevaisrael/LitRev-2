@@ -8,8 +8,8 @@
       "journal": "Journal of Renal Medicine",
       "year": 2023,
       "authors": [
-        { "given": "Alex", "family": "Chen" },
-        { "full": "Morgan Patel" }
+        "Alex Chen",
+        "Morgan Patel"
       ]
     },
     "decision": "Keep",
