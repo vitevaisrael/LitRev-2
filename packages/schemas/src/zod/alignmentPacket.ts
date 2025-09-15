@@ -18,7 +18,7 @@ export const alignmentPacket = z.object({
         "Unpaywall",
       ])
     )
-    .min(1),
+    .min(1).refine((items) => new Set(items).size === items.length, { message: "OA sources must be unique." }),
   searchPlanSummary: z.string(),
 });
 export type AlignmentPacket = z.infer<typeof alignmentPacket>;
