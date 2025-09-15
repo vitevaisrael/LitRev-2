@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
 import { searchQueue } from '../jobs/searchQueue';
+import { AuthenticatedRequest } from '../types/api';
 import { QueryManifest } from '@the-scientist/schemas';
 
 export async function savedSearchesRoutes(fastify: FastifyInstance) {
@@ -15,7 +16,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
         manifest: QueryManifest;
       };
 
-      const userId = (request as any).user?.id;
+      const userId = (request as AuthenticatedRequest).user?.id;
       if (!userId) {
         return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
       }
@@ -35,7 +36,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
           projectId,
           name,
           description,
-          manifest: manifest as any,
+          manifest: manifest,
           createdBy: userId
         }
       });
@@ -51,7 +52,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
   fastify.post('/saved-searches/:id/run', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const userId = (request as any).user?.id;
+      const userId = (request as AuthenticatedRequest).user?.id;
 
       if (!userId) {
         return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
@@ -98,7 +99,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
   fastify.get('/saved-searches', async (request, reply) => {
     try {
       const { projectId } = request.query as { projectId?: string };
-      const userId = (request as any).user?.id;
+      const userId = (request as AuthenticatedRequest).user?.id;
 
       if (!userId) {
         return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
@@ -150,7 +151,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
   fastify.get('/saved-searches/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const userId = (request as any).user?.id;
+      const userId = (request as AuthenticatedRequest).user?.id;
 
       if (!userId) {
         return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
@@ -187,7 +188,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
   fastify.delete('/saved-searches/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const userId = (request as any).user?.id;
+      const userId = (request as AuthenticatedRequest).user?.id;
 
       if (!userId) {
         return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);

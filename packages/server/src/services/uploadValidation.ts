@@ -1,5 +1,7 @@
 import { MultipartFile } from '@fastify/multipart';
+import { resolve, relative, isAbsolute } from 'path';
 import { env } from '../config/env';
+import { getUploadLimits, validateFileSize, validateFileType } from '../utils/tierLimits';
 
 export interface UploadValidationResult {
   valid: boolean;
@@ -12,6 +14,7 @@ export interface UploadValidationOptions {
   allowedMimeTypes?: string[];
   allowedExtensions?: string[];
   requireVirusScan?: boolean;
+  tier?: string;
 }
 
 /**
@@ -22,17 +25,23 @@ export async function validateUpload(
   options: UploadValidationOptions = {}
 ): Promise<UploadValidationResult> {
   const {
-    maxSize = 10 * 1024 * 1024, // 10MB default
+    maxSize,
     allowedMimeTypes = ['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-    allowedExtensions = ['.pdf', '.txt', '.doc', '.docx'],
-    requireVirusScan = env.CLAMAV_ENABLED
+    allowedExtensions,
+    requireVirusScan = env.CLAMAV_ENABLED,
+    tier
   } = options;
+
+  // Use tier limits if no explicit limits provided
+  const tierLimits = getUploadLimits(tier);
+  const effectiveMaxSize = maxSize || tierLimits.size;
+  const effectiveAllowedExtensions = allowedExtensions || tierLimits.types;
 
   const errors: string[] = [];
 
   // Check file size
-  if (file.file.bytesRead > maxSize) {
-    errors.push(`File size exceeds maximum allowed size of ${maxSize} bytes`);
+  if (file.file.bytesRead > effectiveMaxSize) {
+    errors.push(`File size exceeds maximum allowed size of ${effectiveMaxSize} bytes`);
   }
 
   // Check MIME type
@@ -42,7 +51,7 @@ export async function validateUpload(
 
   // Check file extension
   const extension = getFileExtension(file.filename);
-  if (!allowedExtensions.includes(extension)) {
+  if (!effectiveAllowedExtensions.includes(extension)) {
     errors.push(`File extension ${extension} is not allowed`);
   }
 
@@ -108,6 +117,19 @@ function getFileExtension(filename: string): string {
   const lastDot = filename.lastIndexOf('.');
   if (lastDot === -1) return '';
   return filename.substring(lastDot).toLowerCase();
+}
+
+/**
+ * Sanitize file path properly
+ */
+export function sanitizeFilePath(userPath: string, baseDir: string): string {
+  const resolved = resolve(baseDir, userPath);
+  const rel = relative(baseDir, resolved);
+  
+  if (isAbsolute(rel) || rel.startsWith('..')) {
+    throw new Error('Path traversal attempt detected');
+  }
+  return resolved;
 }
 
 /**

@@ -8,13 +8,13 @@ let s3Client: S3Client | null = null;
  * Get S3 client instance
  */
 function getS3Client(): S3Client | null {
-  if (!s3Client && env.S3_ENDPOINT && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY && env.S3_REGION) {
+  if (!s3Client && env.S3_ENDPOINT && env.S3_ACCESS_KEY && env.S3_SECRET_KEY && env.S3_REGION) {
     s3Client = new S3Client({
       endpoint: env.S3_ENDPOINT,
       region: env.S3_REGION,
       credentials: {
-        accessKeyId: env.S3_ACCESS_KEY_ID,
-        secretAccessKey: env.S3_SECRET_ACCESS_KEY
+        accessKeyId: env.S3_ACCESS_KEY,
+        secretAccessKey: env.S3_SECRET_KEY
       }
     });
   }

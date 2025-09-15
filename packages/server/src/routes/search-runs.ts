@@ -1,13 +1,14 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { AuthenticatedRequest, SearchMetadata, SearchRunFilter } from '../types/api';
 
 export async function searchRunsRoutes(fastify: FastifyInstance) {
   // GET /api/v1/search-runs/:runId
   fastify.get('/search-runs/:runId', async (request, reply) => {
     try {
       const { runId } = request.params as { runId: string };
-      const userId = (request as any).user?.id;
+      const userId = (request as AuthenticatedRequest).user?.id;
 
       if (!userId) {
         return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
@@ -45,7 +46,7 @@ export async function searchRunsRoutes(fastify: FastifyInstance) {
       }
 
       // Get provider stats from metadata
-      const md: any = searchRun.metadata as any;
+      const md: SearchMetadata = searchRun.metadata as SearchMetadata;
       const providerStats = md?.providerStats || {};
       const dedupeStats = md?.dedupeStats || {};
 
@@ -83,7 +84,7 @@ export async function searchRunsRoutes(fastify: FastifyInstance) {
         offset?: number;
       };
 
-      const userId = (request as any).user?.id;
+      const userId = (request as AuthenticatedRequest).user?.id;
 
       if (!userId) {
         return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
@@ -130,12 +131,12 @@ export async function searchRunsRoutes(fastify: FastifyInstance) {
       });
 
       // Filter out runs from projects not owned by user
-      const filteredRuns = searchRuns.filter((run: any) => 
+      const filteredRuns = searchRuns.filter((run) => 
         run.savedSearch.project.ownerId === userId
       );
 
       return sendSuccess(reply, {
-        searchRuns: filteredRuns.map((run: any) => ({
+        searchRuns: filteredRuns.map((run) => ({
           id: run.id,
           status: run.status,
           createdAt: run.createdAt,
@@ -164,7 +165,7 @@ export async function searchRunsRoutes(fastify: FastifyInstance) {
   fastify.delete('/search-runs/:runId', async (request, reply) => {
     try {
       const { runId } = request.params as { runId: string };
-      const userId = (request as any).user?.id;
+      const userId = (request as AuthenticatedRequest).user?.id;
 
       if (!userId) {
         return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);

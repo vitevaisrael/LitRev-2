@@ -3,6 +3,13 @@ import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
 import { generatePrismaSvg } from '../modules/exports/prismaSvg';
 import { exportToDocx } from '../exports/docxExport';
+import { buildProjectDocx } from '../modules/exports/docx.js';
+import { authenticate } from '../middleware/auth';
+import { 
+  ExportParamsSchema, 
+  ExportDocxOptionsSchema,
+  type ExportDocxOptions 
+} from "@the-scientist/schemas";
 
 export async function exportsRoutes(fastify: FastifyInstance) {
   // POST /api/v1/projects/:id/exports/markdown
@@ -187,19 +194,28 @@ export async function exportsRoutes(fastify: FastifyInstance) {
         return sendError(reply, 'NOT_FOUND', 'Project not found', 404);
       }
       
-      // Get PRISMA data
-      const prismaData = await prisma.prismaData.findUnique({
+      // Get PRISMA data (create if doesn't exist)
+      let prismaData = await prisma.prismaData.findUnique({
         where: { projectId }
       });
       
       if (!prismaData) {
-        return sendError(reply, 'NOT_FOUND', 'PRISMA data not found', 404);
+        prismaData = await prisma.prismaData.create({
+          data: {
+            projectId,
+            identified: 0,
+            deduped: 0,
+            screened: 0,
+            included: 0,
+            excluded: 0
+          }
+        });
       }
       
       // Generate PRISMA SVG (simplified version)
       const svg = generatePrismaSvg({
         identified: prismaData.identified,
-        deduped: (prismaData as any).deduped ?? 0,
+        deduped: prismaData.deduped,
         screened: prismaData.screened,
         included: prismaData.included,
         excluded: prismaData.excluded
@@ -306,47 +322,83 @@ export async function exportsRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // POST /api/v1/projects/:id/exports/docx
-  fastify.post('/projects/:id/exports/docx', async (request, reply) => {
-    try {
-      const { id: projectId } = request.params as { id: string };
-      const options = request.body as any || {};
-      
-      // Get project details
-      const project = await prisma.project.findUnique({
-        where: { id: projectId }
-      });
-      
-      if (!project) {
-        return sendError(reply, 'NOT_FOUND', 'Project not found', 404);
+  // POST /api/v1/projects/:id/exports/docx - Enhanced DOCX Export
+  fastify.post<{
+    Params: { id: string };
+    Body: ExportDocxOptions;
+  }>(
+    "/projects/:id/exports/docx",
+    {
+      preValidation: [authenticate],
+      schema: {
+        params: ExportParamsSchema,
+        body: ExportDocxOptionsSchema
       }
+    },
+    async (request, reply) => {
+      const { id: projectId } = request.params;
+      const options = request.body;
       
-      // Export to DOCX
-      const result = await exportToDocx(projectId, options);
-      
-      // Create audit log
-      await prisma.auditLog.create({
-        data: {
-          projectId,
-          userId: projectId, // Using projectId as userId for now
-          action: 'export_run',
-          details: {
-            type: 'docx',
-            metadata: result.metadata
+      try {
+        // Verify project ownership
+        const project = await prisma.project.findFirst({
+          where: {
+            id: projectId,
+            ownerId: (request as any).user.id
+          },
+          select: {
+            id: true,
+            title: true
           }
+        });
+
+        if (!project) {
+          return sendError(reply, "PROJECT_NOT_FOUND", "Project not found or access denied", 404);
         }
-      });
-      
-      // Set headers for file download
-      reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-      reply.header('Content-Disposition', `attachment; filename="${result.filename}"`);
-      
-      return result.buffer;
-    } catch (error) {
-      if (error instanceof Error) {
-        return sendError(reply, 'EXPORT_ERROR', error.message, 500);
+
+        // Generate DOCX using enhanced builder
+        const buffer = await buildProjectDocx(projectId, options);
+
+        // Create audit log entry
+        await prisma.auditLog.create({
+          data: {
+            projectId,
+            userId: (request as any).user.id,
+            action: "export_docx",
+            details: {
+              format: (options as any).format || "academic",
+              includeSupports: (options as any).includeSupports,
+              includePrisma: (options as any).includePrisma,
+              includeProfile: (options as any).includeProfile,
+              size: buffer.length,
+              timestamp: new Date().toISOString()
+            }
+          }
+        });
+
+        // Sanitize filename
+        const safeTitle = project.title
+          .replace(/[^a-z0-9\s-]/gi, '')
+          .replace(/\s+/g, '_')
+          .substring(0, 50);
+        const filename = `${safeTitle}_${new Date().toISOString().split('T')[0]}.docx`;
+
+        // Send file
+        return reply
+          .type("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+          .header("Content-Disposition", `attachment; filename="${filename}"`)
+          .header("Content-Length", String(buffer.length))
+          .send(buffer);
+          
+      } catch (error) {
+        request.log.error({ error, projectId }, "DOCX export failed");
+        return sendError(
+          reply, 
+          "EXPORT_FAILED", 
+          error instanceof Error ? error.message : "Failed to generate DOCX export",
+          500
+        );
       }
-      return sendError(reply, 'EXPORT_ERROR', 'Failed to generate DOCX export', 500);
     }
-  });
+  );
 }

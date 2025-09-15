@@ -15,25 +15,6 @@ importers:
         specifier: ^5.0.0
         version: 5.9.2
 
-  packages/schemas:
-    dependencies:
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.30
-        version: 20.19.14
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.2
-      vitest:
-        specifier: ^1.6.0
-        version: 1.6.1(@types/node@20.19.14)(jsdom@23.2.0(canvas@2.11.2))
-      zod-to-json-schema:
-        specifier: ^3.22.5
-        version: 3.24.6(zod@3.25.76)
-
   packages/server:
     dependencies:
       '@aws-sdk/client-s3':
@@ -51,9 +32,6 @@ importers:
       '@fastify/multipart':
         specifier: ^7.7.3
         version: 7.7.3
-      '@fastify/rate-limit':
-        specifier: ^10.3.0
-        version: 10.3.0
       '@prisma/client':
         specifier: ^5.0.0
         version: 5.22.0(prisma@5.22.0)
@@ -1111,9 +1089,6 @@ packages:
 
   '@fastify/multipart@7.7.3':
     resolution: {integrity: sha512-MG4Gd9FNEXc8qx0OgqoXM10EGO/dN/0iVQ8SrpFMU3d6F6KUfcqD2ZyoQhkm9LWrbiMgdHv5a43x78lASdn5GA==}
-
-  '@fastify/rate-limit@10.3.0':
-    resolution: {integrity: sha512-eIGkG9XKQs0nyynatApA3EVrojHOuq4l6fhB4eeCk4PIOeadvOJz9/4w3vGI44Go17uaXOWEcPkaD8kuKm7g6Q==}
 
   '@fastify/send@2.1.0':
     resolution: {integrity: sha512-yNYiY6sDkexoJR0D8IDy3aRP3+L4wdqCpvx5WP+VtEU58sn7USmKynBzDQex5X42Zzvw2gNzzYgP90UfWShLFA==}
@@ -3379,9 +3354,6 @@ packages:
 
   fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
-
-  fastify-plugin@5.0.1:
-    resolution: {integrity: sha512-HCxs+YnRaWzCl+cWRYFnHmeRFyR5GVnJTAaCJQiYzQSDwK9MgJdyAsuL3nh0EWRCYMgQ5MeziymvmAhUHYHDUQ==}
 
   fastify@4.29.1:
     resolution: {integrity: sha512-m2kMNHIG92tSNWv+Z3UeTR9AWLLuo7KctC7mlFPtMEVrfjIhmQhkQnT9v15qA/BfVq3vvj134Y0jl9SBje3jXQ==}
@@ -6205,11 +6177,6 @@ packages:
     resolution: {integrity: sha512-AyeEbWOu/TAXdxlV9wmGcR0+yh2j3vYPGOECcIj2S7MkrLyC7ne+oye2BKTItt0ii2PHk4cDy+95+LshzbXnGg==}
     engines: {node: '>=12.20'}
 
-  zod-to-json-schema@3.24.6:
-    resolution: {integrity: sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==}
-    peerDependencies:
-      zod: ^3.24.1
-
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
@@ -7207,12 +7174,6 @@ snapshots:
       stream-wormhole: 1.1.0
     transitivePeerDependencies:
       - supports-color
-
-  '@fastify/rate-limit@10.3.0':
-    dependencies:
-      '@lukeed/ms': 2.0.2
-      fastify-plugin: 5.0.1
-      toad-cache: 3.7.0
 
   '@fastify/send@2.1.0':
     dependencies:
@@ -10228,8 +10189,6 @@ snapshots:
       strnum: 2.1.1
 
   fastify-plugin@4.5.1: {}
-
-  fastify-plugin@5.0.1: {}
 
   fastify@4.29.1:
     dependencies:
@@ -13337,9 +13296,5 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yocto-queue@1.2.1: {}
-
-  zod-to-json-schema@3.24.6(zod@3.25.76):
-    dependencies:
-      zod: 3.25.76
 
   zod@3.25.76: {}

@@ -1,6 +1,6 @@
 -- CreateTable: JournalBlocklist
 CREATE TABLE "JournalBlocklist" (
-    "id" TEXT NOT NULL DEFAULT uuid(),
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
     "issn" TEXT NOT NULL,
     "note" TEXT,
     "addedBy" TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE UNIQUE INDEX "JournalBlocklist_issn_key" ON "JournalBlocklist"("issn");
 
 -- CreateTable: SavedSearch
 CREATE TABLE "SavedSearch" (
-    "id" TEXT NOT NULL DEFAULT uuid(),
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
     "projectId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -26,7 +26,7 @@ CREATE INDEX "SavedSearch_createdBy_idx" ON "SavedSearch"("createdBy");
 
 -- CreateTable: SearchRun
 CREATE TABLE "SearchRun" (
-    "id" TEXT NOT NULL DEFAULT uuid(),
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
     "savedSearchId" TEXT NOT NULL,
     "status" TEXT NOT NULL,
     "metadata" JSONB NOT NULL DEFAULT '{}',
@@ -40,7 +40,7 @@ CREATE INDEX "SearchRun_createdAt_idx" ON "SearchRun"("createdAt");
 
 -- CreateTable: SearchResult
 CREATE TABLE "SearchResult" (
-    "id" TEXT NOT NULL DEFAULT uuid(),
+    "id" TEXT NOT NULL DEFAULT uuid_generate_v4(),
     "searchRunId" TEXT NOT NULL,
     "canonicalHash" TEXT NOT NULL,
     "title" TEXT NOT NULL,
