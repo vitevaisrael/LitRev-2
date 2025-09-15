@@ -1,0 +1,37 @@
+[
+  {
+    "sourceCitation": {
+      "doi": "10.1000/example.igan.001",
+      "openAccess": true,
+      "license": "CC-BY-4.0",
+      "title": "Therapeutic approaches in IgA nephropathy: a comparative analysis",
+      "journal": "Journal of Renal Medicine",
+      "year": 2023,
+      "authors": ["Alex Chen", "Morgan Patel"]
+    },
+    "decision": "Keep",
+    "rationale": "Matches PICO and reports renal survival outcomes with adequate follow-up.",
+    "journalSignal": 2,
+    "studyType": "Comparative cohort",
+    "outcomes": ["Proteinuria", "eGFR"],
+    "biasNotes": "Some confounding risk mitigated by adjustment.",
+    "strengthGrade": "moderate",
+    "nextAction": "Synthesize into evidence table"
+  },
+  {
+    "sourceCitation": {
+      "pmid": "38900123",
+      "openAccess": false,
+      "license": "All rights reserved",
+      "title": "Small case series in unrelated population",
+      "journal": "Clinical Observations",
+      "year": 2019,
+      "authors": ["Jamie Rivera"]
+    },
+    "decision": "Exclude",
+    "rationale": "Population mismatch and insufficient outcomes for scope.",
+    "journalSignal": 1,
+    "studyType": "Case series",
+    "nextAction": "Log exclusion reason"
+  }
+]
