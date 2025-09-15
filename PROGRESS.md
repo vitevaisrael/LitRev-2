@@ -821,3 +821,24 @@ curl -X GET "http://localhost:3000/api/v1/projects/{projectId}/results?predatory
 - ✅ All tests pass (24/24) and TypeScript compilation successful
 - ✅ Security hardening complete and ready for production deployment
 
+## [2025-01-15] - Development Environment Stabilization
+
+### Changes
+- Enforced Node 20 and pnpm package manager
+- Fixed IPv4 host binding (127.0.0.1 for dev, 0.0.0.0 for prod)
+- Fixed Vite proxy port mismatch (3001 → 3000)
+- Made CORS origins environment-based (simple allowlist approach)
+- Added development scripts and documentation
+
+### Files Modified
+- Root: .nvmrc, package.json, .npmrc, .env.example, DEV_SETUP.md, PROGRESS.md
+- packages/web: vite.config.ts
+- packages/server: src/index.ts, env.example
+
+### Verification
+- [ ] Web loads at http://127.0.0.1:5173
+- [ ] API calls work through Vite proxy
+- [ ] No CORS errors
+- [ ] Port management scripts work
+- [ ] Node/pnpm version enforcement
+

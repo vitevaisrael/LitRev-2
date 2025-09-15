@@ -2,6 +2,10 @@
   "name": "the-scientist",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20 <25"
+  },
+  "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "pnpm --parallel -r dev",
     "build": "pnpm -r build",
@@ -11,7 +15,15 @@
     "db:migrate": "cd packages/server && pnpm db:migrate",
     "db:seed": "cd packages/server && pnpm db:seed",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "preinstall": "npx only-allow pnpm",
+    "doctor": "node -v && pnpm -v",
+    "ports:check": "lsof -nP -iTCP:3000 -sTCP:LISTEN || true && lsof -nP -iTCP:5173 -sTCP:LISTEN || true",
+    "ports:kill": "lsof -ti:3000 | xargs kill -9 2>/dev/null || true && lsof -ti:5173 | xargs kill -9 2>/dev/null || true",
+    "clean:modules": "rm -rf node_modules **/node_modules pnpm-lock.yaml && pnpm store prune && pnpm install",
+    "clean:cache": "pnpm store prune && rm -rf node_modules/.cache",
+    "setup": "pnpm install && echo 'Run: pnpm -C packages/server dev & pnpm -C packages/web dev'",
+    "docker:check": "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep -E '(postgres|redis|minio)' || echo 'No services running'"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

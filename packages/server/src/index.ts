@@ -9,6 +9,9 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastifyRateLimit from '@fastify/rate-limit';
 
+const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST ?? (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
+
 const fastify = Fastify({
   logger: {
     level: 'info',
@@ -30,7 +33,14 @@ fastify.register(fastifyCookie, {
 
 // Register CORS support
 fastify.register(fastifyCors, {
-  origin: env.NODE_ENV === 'production' ? false : ['http://localhost:5173', 'http://localhost:5174'],
+  origin: (origin, cb) => {
+    const allowed = (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+    if (!origin || allowed.includes(origin)) return cb(null, true);
+    return cb(new Error(`CORS: Origin ${origin} not allowed`), false);
+  },
   credentials: true
 });
 
@@ -110,8 +120,8 @@ const start = async () => {
     } catch (e) {
       fastify.log.warn('Search worker not started (Redis unavailable)');
     }
-    await fastify.listen({ port: env.PORT, host: '0.0.0.0' });
-    console.log(`Server listening on port ${env.PORT}`);
+    await fastify.listen({ host: HOST, port: PORT });
+    console.log(`Server listening on ${HOST}:${PORT}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
