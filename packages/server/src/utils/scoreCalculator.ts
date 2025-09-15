@@ -85,7 +85,7 @@ function calculateDirectnessScore(
     .map(term => term.trim());
   
   let matches = 0;
-  let totalTerms = profileTerms.length;
+  const totalTerms = profileTerms.length;
   
   for (const term of profileTerms) {
     if (text.includes(term)) {

@@ -4,6 +4,8 @@ import { randomUUID } from 'crypto';
 import { routes } from './routes';
 import { env } from './config/env';
 import { startExplorerWorker } from './modules/explorer/worker';
+import fastifyCookie from '@fastify/cookie';
+import fastifyCors from '@fastify/cors';
 
 const fastify = Fastify({
   logger: {
@@ -19,13 +21,13 @@ const fastify = Fastify({
 });
 
 // Register cookie support
-fastify.register(require('@fastify/cookie'), {
-  secret: env.JWT_SECRET,
+fastify.register(fastifyCookie, {
+  secret: env.COOKIE_SECRET,
   parseOptions: {}
 });
 
 // Register CORS support
-fastify.register(require('@fastify/cors'), {
+fastify.register(fastifyCors, {
   origin: env.NODE_ENV === 'production' ? false : ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true
 });
