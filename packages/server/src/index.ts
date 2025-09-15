@@ -72,7 +72,7 @@ fastify.setErrorHandler(async (error, request, reply) => {
   request.log.error(error);
   
   reply.status(error.statusCode || 500).send({
-    ok: false,.
+    ok: false,
     error: {
       code: error.code || 'INTERNAL_ERROR',
       message: error.message || 'Internal server error',
