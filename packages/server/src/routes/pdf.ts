@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { uploadFile } from '../modules/storage/s3';
 import { parsePdf } from '../modules/ingest/parser';
 import { PdfUploadResponseSchema, ParsedDocResponseSchema } from '@the-scientist/schemas';
@@ -19,7 +20,9 @@ export async function pdfRoutes(fastify: FastifyInstance) {
   }
 
   // POST /api/v1/projects/:id/candidates/:cid/pdf
-  fastify.post('/projects/:id/candidates/:cid/pdf', async (request, reply) => {
+  fastify.post('/projects/:id/candidates/:cid/pdf', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId, cid: candidateId } = request.params as { id: string; cid: string };
       

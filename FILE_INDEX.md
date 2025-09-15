@@ -368,4 +368,84 @@ packages/web/node_modules/         # Web node modules
 
 ---
 
-*Last Updated: $(date) - DOCX Export Implementation Complete*
+## 📁 New Files Added (PDF & DOCX Bibliography Extraction)
+
+**Task 5 - PDF Bibliography Extraction Implementation:**
+**Task 6 - DOCX Bibliography Extraction Implementation:**
+
+### Server Package New Files:
+- `packages/server/src/config/importConfig.ts` - PDF/DOCX import configuration with multilingual headers
+- `packages/server/src/services/fileValidation.ts` - Magic number file validation service
+- `packages/server/src/services/fileValidation.test.ts` - File validation tests
+- `packages/server/src/modules/import/bibCore.ts` - Shared bibliography parsing logic
+- `packages/server/src/modules/import/bibCore.test.ts` - Shared bibliography logic tests
+- `packages/server/src/modules/import/extractors/pdfBibExtractor.ts` - PDF bibliography extractor
+- `packages/server/src/modules/import/extractors/pdfBibExtractor.test.ts` - PDF extractor tests
+- `packages/server/src/modules/import/extractors/docxBibExtractor.ts` - DOCX bibliography extractor
+- `packages/server/src/modules/import/extractors/docxBibExtractor.test.ts` - DOCX extractor tests
+- `packages/server/src/routes/import.test.ts` - Import route tests with PDF/DOCX support
+
+### Updated Files:
+- `packages/server/src/modules/import/parser.ts` - Enhanced with PDF/DOCX parsing support
+- `packages/server/src/routes/import.ts` - Updated with PDF/DOCX import functionality
+- `packages/server/env.example` - Added FEATURE_IMPORT_PDF_BIB and FEATURE_IMPORT_DOCX_BIB flags
+- `packages/web/src/components/import/ImportModal.tsx` - Updated to accept PDF/DOCX files
+
+### Dependencies Added:
+- `pdf-parse` - PDF text extraction library
+- `file-type` - Magic number file type detection
+- `@types/pdf-parse` - TypeScript types for pdf-parse
+- `mammoth` - DOCX text extraction library
+
+## 📁 New Files Added (Auth v2 Implementation)
+
+**Task: Auth v2 - Solid Cookie-based Auth, Dev-bypass, Ownership Guards, and Consistent Error Contract**
+
+### Server Package New Files:
+- `packages/server/src/app.ts` - Main application setup with plugin registration
+- `packages/server/src/auth/` - Authentication system directory
+  - `packages/server/src/auth/middleware.ts` - Authentication and ownership middleware
+  - `packages/server/src/auth/jwt.ts` - JWT token management
+  - `packages/server/src/auth/cookies.ts` - Cookie management utilities
+- `packages/server/src/config/auth.ts` - Authentication configuration
+- `packages/server/src/db/` - Database repository layer
+  - `packages/server/src/db/userRepository.ts` - User database operations
+  - `packages/server/src/db/projectRepository.ts` - Project database operations
+- `packages/server/src/plugins/` - Security and utility plugins
+  - `packages/server/src/plugins/cors.ts` - CORS configuration plugin
+  - `packages/server/src/plugins/helmet.ts` - Security headers plugin
+  - `packages/server/src/plugins/cookie.ts` - Cookie support plugin
+  - `packages/server/src/plugins/errorHandler.ts` - Global error handler plugin
+- `packages/server/src/routes/auth-v2.ts` - New authentication routes
+- `packages/server/src/config/pubmed.ts` - PubMed configuration and feature flags
+- `packages/server/src/modules/pubmed/` - PubMed search system
+  - `packages/server/src/modules/pubmed/adapter.ts` - PubMed API integration
+  - `packages/server/src/modules/pubmed/cache.ts` - Redis caching system
+  - `packages/server/src/modules/pubmed/search.queue.ts` - BullMQ job system
+  - `packages/server/src/modules/pubmed/routes.ts` - API routes and endpoints
+- `packages/web/src/components/search/` - Search components
+  - `packages/web/src/components/search/PubMedSearchPanel.tsx` - PubMed search interface
+
+### Updated Files:
+- `packages/server/src/config/env.ts` - Enhanced environment configuration with auth settings
+- `packages/server/src/index.ts` - Updated with new authentication system and PubMed worker
+- `packages/server/src/routes/*.ts` - All routes updated with new middleware and error handling
+- `packages/shared/schemas/src/index.ts` - Export PubMed schemas
+- `packages/shared/schemas/src/pubmed.ts` - PubMed API schemas and types
+- `packages/web/src/hooks/useAuth.tsx` - Updated for new authentication system
+- `packages/web/src/lib/api.ts` - Updated error handling and cookie support
+- `packages/web/src/pages/Login.tsx` - Enhanced with dev bypass functionality
+
+### Dependencies Added:
+- `@fastify/cors` - CORS support
+- `@fastify/helmet` - Security headers
+- `@fastify/cookie` - Cookie support
+- `bcrypt` - Password hashing
+- `jsonwebtoken` - JWT token handling
+- `undici` - Modern HTTP client for PubMed API requests
+- `p-retry` - Retry logic for robust API calls
+- `p-limit` - Concurrency control for rate limiting
+
+---
+
+*Last Updated: 2025-01-15 - Auth v2 Implementation Complete*

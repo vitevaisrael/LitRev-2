@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { requireAuth } from '../auth/middleware';
 import { 
   StartChatSchema, 
   SendMessageSchema, 
@@ -16,7 +17,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/chat/sessions
   fastify.post('/chat/sessions', {
-    preHandler: async (request, reply) => {
+    preHandler: [requireAuth, async (request, reply) => {
       if (!env.FEATURE_CHAT_REVIEW) {
         return sendError(reply, 'FEATURE_DISABLED', 'Chat review feature is not enabled', 403);
       }
@@ -26,7 +27,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
-    }
+    }]
   }, async (request, reply) => {
     try {
       const { topic, findings } = request.body as { topic: string; findings?: string };
@@ -40,7 +41,9 @@ export async function chatRoutes(fastify: FastifyInstance) {
   });
 
   // GET /api/v1/chat/sessions/:id
-  fastify.get('/chat/sessions/:id', async (request, reply) => {
+  fastify.get('/chat/sessions/:id', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
       

@@ -10,3 +10,4 @@ export * from './exports';
 export * from './prisma';
 export * from './pdf';
 export * from './chat';
+export * from './pubmed';

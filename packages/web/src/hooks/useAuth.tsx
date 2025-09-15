@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
+  devBypass: () => Promise<void>;
   error: string | null;
 }
 
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading, error: authError } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
-      const response = await api.get('/auth/me');
+      const response = await api.get('/auth-v2/me');
       return (response.data as any).user;
     },
     retry: false,
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth-v2/login', { email, password });
       return response.data;
     },
     onSuccess: () => {
@@ -47,14 +48,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
     },
     onError: (error: any) => {
-      setError(error?.response?.data?.error?.message || 'Login failed');
+      setError(error?.response?.data?.error || 'Login failed');
     }
   });
 
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async ({ email, password, name }: { email: string; password: string; name?: string }) => {
-      const response = await api.post('/auth/register', { email, password, name });
+      const response = await api.post('/auth-v2/register', { email, password, name });
       return response.data;
     },
     onSuccess: () => {
@@ -62,21 +63,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
     },
     onError: (error: any) => {
-      setError(error?.response?.data?.error?.message || 'Registration failed');
+      setError(error?.response?.data?.error || 'Registration failed');
     }
   });
 
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await api.post('/auth/logout');
+      await api.post('/auth-v2/logout');
     },
     onSuccess: () => {
       queryClient.clear();
       setError(null);
     },
     onError: (error: any) => {
-      setError(error?.response?.data?.error?.message || 'Logout failed');
+      setError(error?.response?.data?.error || 'Logout failed');
+    }
+  });
+
+  // Dev bypass mutation
+  const devBypassMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.post('/auth-v2/login', { devBypass: true });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      setError(null);
+    },
+    onError: (error: any) => {
+      setError(error?.response?.data?.error || 'Dev bypass failed');
     }
   });
 
@@ -95,14 +111,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await logoutMutation.mutateAsync();
   };
 
+  const devBypass = async () => {
+    setError(null);
+    await devBypassMutation.mutateAsync();
+  };
+
   const value: AuthContextType = {
     user: user || null,
-    isLoading: isLoading || loginMutation.isPending || registerMutation.isPending || logoutMutation.isPending,
+    isLoading: isLoading || loginMutation.isPending || registerMutation.isPending || logoutMutation.isPending || devBypassMutation.isPending,
     isAuthenticated: !!user,
     login,
     register,
     logout,
-    error: error || (authError as any)?.response?.data?.error?.message || null
+    devBypass,
+    error: error || (authError as any)?.response?.data?.error || null
   };
 
   return (

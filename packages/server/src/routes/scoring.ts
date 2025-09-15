@@ -1,11 +1,14 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { calculateScore } from '../utils/scoreCalculator';
 
 export async function scoringRoutes(fastify: FastifyInstance) {
   // POST /api/v1/projects/:id/candidates/:cid/recompute-score
-  fastify.post('/projects/:id/candidates/:cid/recompute-score', async (request, reply) => {
+  fastify.post('/projects/:id/candidates/:cid/recompute-score', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId, cid: candidateId } = request.params as { id: string; cid: string };
       

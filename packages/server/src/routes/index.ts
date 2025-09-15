@@ -17,6 +17,7 @@ import { savedSearchesRoutes } from './saved-searches';
 import { searchRunsRoutes } from './search-runs';
 import { resultsRoutes } from './results';
 import { adminRoutes } from './admin';
+import pubmedRoutes from '../modules/pubmed/routes';
 import { env } from '../config/env';
 
 export async function routes(fastify: FastifyInstance) {
@@ -45,5 +46,10 @@ export async function routes(fastify: FastifyInstance) {
   // Register chat routes only if feature is enabled
   if (env.FEATURE_CHAT_REVIEW) {
     await fastify.register(chatRoutes);
+  }
+  
+  // Register PubMed routes only if feature is enabled
+  if (env.FEATURE_PUBMED_SEARCH) {
+    await fastify.register(pubmedRoutes);
   }
 }

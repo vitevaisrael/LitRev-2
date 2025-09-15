@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { PaginationSchema, PaginatedResponseSchema } from '@the-scientist/schemas';
 import { z } from 'zod';
 
@@ -14,7 +15,9 @@ const CandidateFiltersSchema = z.object({
 
 export async function candidatesRoutes(fastify: FastifyInstance) {
   // GET /api/v1/projects/:id/candidates
-  fastify.get('/projects/:id/candidates', async (request, reply) => {
+  fastify.get('/projects/:id/candidates', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const query = request.query as any;

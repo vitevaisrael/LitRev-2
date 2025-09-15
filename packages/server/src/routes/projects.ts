@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
-import { authenticate, validateProjectOwnership, AuthenticatedRequest } from '../middleware/auth';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { z } from 'zod';
 
 const CreateProjectSchema = z.object({
@@ -11,12 +11,12 @@ const CreateProjectSchema = z.object({
 export async function projectsRoutes(fastify: FastifyInstance) {
   // GET /api/v1/projects
   fastify.get('/projects', {
-    preHandler: authenticate
-  }, async (request: AuthenticatedRequest, reply) => {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const projects = await prisma.project.findMany({
         where: {
-          ownerId: request.user!.id
+          ownerId: (request as any).user.id
         },
         include: {
           prisma: true
@@ -32,14 +32,14 @@ export async function projectsRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/projects
   fastify.post('/projects', {
-    preHandler: [authenticate, async (request, reply) => {
+    preHandler: [requireAuth, async (request, reply) => {
       try {
         request.body = CreateProjectSchema.parse(request.body);
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
     }]
-  }, async (request: AuthenticatedRequest, reply) => {
+  }, async (request, reply) => {
     try {
       const { title } = request.body as { title: string };
       
@@ -47,7 +47,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
         const newProject = await tx.project.create({
           data: {
             title,
-            ownerId: request.user!.id,
+            ownerId: (request as any).user.id,
             settings: { preferOA: true }
           },
           include: {
@@ -59,7 +59,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
         await tx.auditLog.create({
           data: {
             projectId: newProject.id,
-            userId: request.user!.id,
+            userId: (request as any).user.id,
             action: 'project_created',
             details: { title }
           }
@@ -76,8 +76,8 @@ export async function projectsRoutes(fastify: FastifyInstance) {
 
   // GET /api/v1/projects/:id/prisma
   fastify.get('/projects/:id/prisma', {
-    preHandler: [authenticate, validateProjectOwnership]
-  }, async (request: AuthenticatedRequest, reply) => {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       
@@ -180,7 +180,9 @@ export async function projectsRoutes(fastify: FastifyInstance) {
   });
 
   // GET /api/v1/projects/:id/audit-logs
-  fastify.get('/projects/:id/audit-logs', async (request, reply) => {
+  fastify.get('/projects/:id/audit-logs', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const query = request.query as any;

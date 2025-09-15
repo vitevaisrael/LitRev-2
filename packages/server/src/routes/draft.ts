@@ -1,11 +1,14 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { DraftSectionSchema, DraftResponseSchema, DraftListResponseSchema } from '@the-scientist/schemas';
 
 export async function draftRoutes(fastify: FastifyInstance) {
   // GET /api/v1/projects/:id/draft
-  fastify.get('/projects/:id/draft', async (request, reply) => {
+  fastify.get('/projects/:id/draft', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       
@@ -40,7 +43,9 @@ export async function draftRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/projects/:id/draft
-  fastify.post('/projects/:id/draft', async (request, reply) => {
+  fastify.post('/projects/:id/draft', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const body = request.body as any;
@@ -98,7 +103,7 @@ export async function draftRoutes(fastify: FastifyInstance) {
       await prisma.auditLog.create({
         data: {
           projectId,
-          userId: projectId, // Using projectId as userId for now
+          userId: (request as any).user.id,
           action: 'draft_saved',
           details: {
             section: validatedBody.section,
@@ -130,7 +135,9 @@ export async function draftRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/projects/:id/draft/suggest-citations (stub)
-  fastify.post('/projects/:id/draft/suggest-citations', async (request, reply) => {
+  fastify.post('/projects/:id/draft/suggest-citations', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const { section, text } = request.body as { section: string; text: string };
@@ -152,7 +159,9 @@ export async function draftRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/projects/:id/draft/tighten (stub)
-  fastify.post('/projects/:id/draft/tighten', async (request, reply) => {
+  fastify.post('/projects/:id/draft/tighten', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const { section, text } = request.body as { section: string; text: string };
@@ -167,7 +176,9 @@ export async function draftRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/projects/:id/draft/coverage (stub)
-  fastify.post('/projects/:id/draft/coverage', async (request, reply) => {
+  fastify.post('/projects/:id/draft/coverage', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const { section, text } = request.body as { section: string; text: string };

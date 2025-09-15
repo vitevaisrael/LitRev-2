@@ -29,7 +29,15 @@ export function ImportModal({ isOpen, onClose, projectId }: ImportModalProps) {
     },
     onSuccess: (response) => {
       const result = response.data as any;
-      showSuccess(`Successfully imported ${result.added} references. ${result.duplicates} duplicates found.`);
+      const extension = selectedFile?.name.toLowerCase().split('.').pop();
+      
+      // Show success message with confidence warning if applicable
+      let message = `Successfully imported ${result.imported} references. ${result.duplicates} duplicates found.`;
+      if ((extension === 'pdf' || extension === 'docx') && result.metadata?.warning) {
+        message += ` Note: ${result.metadata.warning}`;
+      }
+      
+      showSuccess(message);
       
       // Refetch candidates, PRISMA data, and audit logs
       queryClient.invalidateQueries({ queryKey: queryKeys.candidates(projectId) });
@@ -46,8 +54,8 @@ export function ImportModal({ isOpen, onClose, projectId }: ImportModalProps) {
 
   const handleFileSelect = (file: File) => {
     const extension = file.name.toLowerCase().split('.').pop();
-    if (!['ris', 'bib', 'bibtex'].includes(extension || '')) {
-      showError('Only .ris, .bib, and .bibtex files are supported');
+    if (!['ris', 'bib', 'bibtex', 'pdf', 'docx'].includes(extension || '')) {
+      showError('Only .ris, .bib, .bibtex, .pdf, and .docx files are supported');
       return;
     }
     setSelectedFile(file);
@@ -103,7 +111,10 @@ export function ImportModal({ isOpen, onClose, projectId }: ImportModalProps) {
 
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Import references from RIS, BibTeX, or BibTeX files. Supported formats: .ris, .bib, .bibtex
+            Import references from RIS, BibTeX, PDF, or DOCX files. Supported formats: .ris, .bib, .bibtex, .pdf, .docx
+          </p>
+          <p className="text-xs text-gray-500">
+            For PDF or DOCX files, we'll extract the References section automatically. For best accuracy, prefer RIS/BibTeX files.
           </p>
 
           {/* File Drop Zone */}
@@ -134,7 +145,7 @@ export function ImportModal({ isOpen, onClose, projectId }: ImportModalProps) {
                   browse to select
                   <input
                     type="file"
-                    accept=".ris,.bib,.bibtex"
+                    accept=".ris,.bib,.bibtex,.pdf,.docx"
                     onChange={handleFileInput}
                     className="hidden"
                   />
@@ -146,7 +157,7 @@ export function ImportModal({ isOpen, onClose, projectId }: ImportModalProps) {
           {/* File Input (hidden) */}
           <input
             type="file"
-            accept=".ris,.bib,.bibtex"
+            accept=".ris,.bib,.bibtex,.pdf,.docx"
             onChange={handleFileInput}
             className="hidden"
             id="file-input"

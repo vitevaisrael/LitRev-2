@@ -3,6 +3,7 @@ import { ScreeningProposalSchema, DecideBodySchema } from '@the-scientist/schema
 import { screener } from '../modules/screen/screener';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { z } from 'zod';
 
 const ProposeSchema = z.object({
@@ -15,13 +16,13 @@ const BulkDecideSchema = z.object({
 
 export async function screenRoutes(fastify: FastifyInstance) {
   fastify.post('/projects/:id/screen/propose', {
-    preHandler: async (request, reply) => {
+    preHandler: [requireAuth, requireProjectAccess, async (request, reply) => {
       try {
         request.body = ProposeSchema.parse(request.body);
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
-    }
+    }]
   }, async (request, reply) => {
     try {
       const { candidateId } = request.body as { candidateId: string };
@@ -40,19 +41,19 @@ export async function screenRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/projects/:id/decide
   fastify.post('/projects/:id/decide', {
-    preHandler: async (request, reply) => {
+    preHandler: [requireAuth, requireProjectAccess, async (request, reply) => {
       try {
         request.body = DecideBodySchema.parse(request.body);
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
-    }
+    }]
   }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const decision = request.body as any;
       const payload = { ...decision, stage: decision.stage ?? 'title_abstract' };
-      const defaultUserId = '00000000-0000-0000-0000-000000000000';
+      const userId = (request as any).user.id;
 
       const result = await prisma.$transaction(async (tx: any) => {
         // Create decision
@@ -60,7 +61,7 @@ export async function screenRoutes(fastify: FastifyInstance) {
           data: {
             ...payload,
             projectId,
-            userId: defaultUserId
+            userId: userId
           }
         });
 
@@ -84,7 +85,7 @@ export async function screenRoutes(fastify: FastifyInstance) {
         await tx.auditLog.create({
           data: {
             projectId,
-            userId: defaultUserId,
+            userId: userId,
             action: 'decision_made',
             details: { action: payload.action, candidateId: payload.candidateId }
           }
@@ -101,19 +102,19 @@ export async function screenRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/projects/:id/decide/bulk
   fastify.post('/projects/:id/decide/bulk', {
-    preHandler: async (request, reply) => {
+    preHandler: [requireAuth, requireProjectAccess, async (request, reply) => {
       try {
         request.body = BulkDecideSchema.parse(request.body);
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
-    }
+    }]
   }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const { decisions } = request.body as { decisions: any[] };
       const payloads = decisions.map(d => ({ ...d, stage: d.stage ?? 'title_abstract' }));
-      const defaultUserId = '00000000-0000-0000-0000-000000000000';
+      const userId = (request as any).user.id;
 
       const result = await prisma.$transaction(async (tx: any) => {
         // Create all decisions
@@ -123,7 +124,7 @@ export async function screenRoutes(fastify: FastifyInstance) {
               data: {
                 ...payload,
                 projectId,
-                userId: defaultUserId
+                userId: userId
               }
             })
           )
@@ -155,7 +156,7 @@ export async function screenRoutes(fastify: FastifyInstance) {
         await tx.auditLog.create({
           data: {
             projectId,
-            userId: defaultUserId,
+            userId: userId,
             action: 'decision_made',
             details: { 
               type: 'bulk',

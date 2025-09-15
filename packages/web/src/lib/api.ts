@@ -7,10 +7,7 @@ export interface ApiResponse<T = any> {
 
 export interface ApiError {
   ok: false;
-  error: {
-    code: string;
-    message: string;
-  };
+  error: string;
 }
 
 class ApiClient {
@@ -36,11 +33,11 @@ class ApiClient {
     } else {
       // Fallback for non-JSON responses
       const text = await response.text();
-      try { data = JSON.parse(text); } catch { data = { ok: false, error: { message: text } }; }
+      try { data = JSON.parse(text); } catch { data = { ok: false, error: text }; }
     }
 
     if (!response.ok) {
-      const err: any = new Error(data?.error?.message || 'Request failed');
+      const err: any = new Error(data?.error || 'Request failed');
       err.response = { status: response.status, data };
       throw err;
     }

@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { z } from 'zod';
 
 const CreateClaimSchema = z.object({
@@ -20,7 +21,9 @@ const CreateSupportSchema = z.object({
 
 export async function ledgerRoutes(fastify: FastifyInstance) {
   // GET /api/v1/projects/:id/ledger/claims
-  fastify.get('/projects/:id/ledger/claims', async (request, reply) => {
+  fastify.get('/projects/:id/ledger/claims', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       
@@ -40,18 +43,18 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/projects/:id/ledger/claims
   fastify.post('/projects/:id/ledger/claims', {
-    preHandler: async (request, reply) => {
+    preHandler: [requireAuth, requireProjectAccess, async (request, reply) => {
       try {
         request.body = CreateClaimSchema.parse(request.body);
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
-    }
+    }]
   }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const claimData = request.body as any;
-      const defaultUserId = '00000000-0000-0000-0000-000000000000';
+      const userId = (request as any).user.id;
 
       const claim = await prisma.$transaction(async (tx: any) => {
         const newClaim = await tx.claim.create({
@@ -65,7 +68,7 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
         await tx.auditLog.create({
           data: {
             projectId,
-            userId: defaultUserId,
+            userId: userId,
             action: 'claim_created',
             details: { claimId: newClaim.id, text: claimData.text }
           }
@@ -82,18 +85,18 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/projects/:id/ledger/supports
   fastify.post('/projects/:id/ledger/supports', {
-    preHandler: async (request, reply) => {
+    preHandler: [requireAuth, requireProjectAccess, async (request, reply) => {
       try {
         request.body = CreateSupportSchema.parse(request.body);
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
-    }
+    }]
   }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const supportData = request.body as any;
-      const defaultUserId = '00000000-0000-0000-0000-000000000000';
+      const userId = (request as any).user.id;
 
       // Verify claim exists and belongs to project
       const claim = await prisma.claim.findFirst({
@@ -131,7 +134,7 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
         await tx.auditLog.create({
           data: {
             projectId,
-            userId: defaultUserId,
+            userId: userId,
             action: 'support_created',
             details: { 
               supportId: newSupport.id, 

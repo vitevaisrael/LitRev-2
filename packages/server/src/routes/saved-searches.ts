@@ -2,12 +2,14 @@ import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
 import { searchQueue } from '../jobs/searchQueue';
-import { AuthenticatedRequest } from '../types/api';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { QueryManifest } from '@the-scientist/schemas';
 
 export async function savedSearchesRoutes(fastify: FastifyInstance) {
   // POST /api/v1/saved-searches
-  fastify.post('/saved-searches', async (request, reply) => {
+  fastify.post('/saved-searches', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { projectId, name, description, manifest } = request.body as {
         projectId: string;
@@ -16,10 +18,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
         manifest: QueryManifest;
       };
 
-      const userId = (request as AuthenticatedRequest).user?.id;
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
+      const userId = (request as any).user.id;
 
       // Verify project ownership
       const project = await prisma.project.findFirst({
@@ -49,14 +48,12 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/saved-searches/:id/run
-  fastify.post('/saved-searches/:id/run', async (request, reply) => {
+  fastify.post('/saved-searches/:id/run', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const userId = (request as AuthenticatedRequest).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
+      const userId = (request as any).user.id;
 
       // Get saved search
       const savedSearch = await prisma.savedSearch.findUnique({
@@ -96,14 +93,12 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
   });
 
   // GET /api/v1/saved-searches
-  fastify.get('/saved-searches', async (request, reply) => {
+  fastify.get('/saved-searches', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { projectId } = request.query as { projectId?: string };
-      const userId = (request as AuthenticatedRequest).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
+      const userId = (request as any).user.id;
 
       const where: any = {};
       if (projectId) {
@@ -148,14 +143,12 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
   });
 
   // GET /api/v1/saved-searches/:id
-  fastify.get('/saved-searches/:id', async (request, reply) => {
+  fastify.get('/saved-searches/:id', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const userId = (request as AuthenticatedRequest).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
+      const userId = (request as any).user.id;
 
       const savedSearch = await prisma.savedSearch.findUnique({
         where: { id },
@@ -185,14 +178,12 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
   });
 
   // DELETE /api/v1/saved-searches/:id
-  fastify.delete('/saved-searches/:id', async (request, reply) => {
+  fastify.delete('/saved-searches/:id', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const userId = (request as AuthenticatedRequest).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
+      const userId = (request as any).user.id;
 
       const savedSearch = await prisma.savedSearch.findUnique({
         where: { id },
