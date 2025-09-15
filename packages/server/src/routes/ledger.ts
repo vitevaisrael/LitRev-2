@@ -53,7 +53,7 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
       const claimData = request.body as any;
       const defaultUserId = '00000000-0000-0000-0000-000000000000';
 
-      const claim = await prisma.$transaction(async (tx) => {
+      const claim = await prisma.$transaction(async (tx: any) => {
         const newClaim = await tx.claim.create({
           data: {
             ...claimData,
@@ -119,7 +119,7 @@ export async function ledgerRoutes(fastify: FastifyInstance) {
         return sendError(reply, 'NOT_FOUND', 'Candidate not found', 404);
       }
 
-      const support = await prisma.$transaction(async (tx) => {
+      const support = await prisma.$transaction(async (tx: any) => {
         const newSupport = await tx.support.create({
           data: {
             ...supportData,

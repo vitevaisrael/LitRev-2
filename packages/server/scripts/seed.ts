@@ -34,7 +34,7 @@ async function seed() {
     create: {
       projectId: project.id,
       identified: 3,
-      duplicates: 0,
+      deduped: 0,
       screened: 0,
       included: 0,
       excluded: 0

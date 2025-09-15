@@ -10,10 +10,6 @@ export interface AuthenticatedRequest extends FastifyRequest {
     email: string;
     name: string | null;
   };
-  cookies?: {
-    accessToken?: string;
-    refreshToken?: string;
-  };
 }
 
 // Authentication middleware

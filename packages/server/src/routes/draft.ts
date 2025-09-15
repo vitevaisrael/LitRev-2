@@ -16,7 +16,7 @@ export async function draftRoutes(fastify: FastifyInstance) {
       });
       
       const result = {
-        sections: sections.map(section => ({
+        sections: sections.map((section: any) => ({
           id: section.id,
           projectId: section.projectId,
           section: section.section,

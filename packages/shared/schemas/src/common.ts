@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
 export const UUIDSchema = z.string().uuid();
-export const DOISchema = z.string().regex(/^10\.\S+$/);
-export const PMIDSchema = z.string().regex(/^[0-9]+$/);
+// DOI must start with 10. and include a slash with non-empty suffix
+export const DOISchema = z.string().regex(/^10\.\S+\/\S+$/);
+// PMID: 1 to 8 digits
+export const PMIDSchema = z.string().regex(/^\d{1,8}$/);
 
 export const LocatorSchema = z.object({
   page: z.number().int().min(1),
@@ -12,7 +14,7 @@ export const LocatorSchema = z.object({
 export const ActionSchema = z.enum(["include", "exclude", "better", "ask"]);
 export const StageSchema = z.enum(["title_abstract", "full_text"]);
 
-export const TimestampSchema = z.string().datetime();
+export const TimestampSchema = z.union([z.string().datetime(), z.date()]);
 
 export const PaginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

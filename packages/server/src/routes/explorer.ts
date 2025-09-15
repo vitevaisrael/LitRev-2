@@ -241,7 +241,7 @@ export async function explorerRoutes(fastify: FastifyInstance) {
       const { id: projectId } = request.params as { id: string };
       const { runId, refs } = request.body as { runId: string; refs: any[] };
       
-      const imported = await prisma.$transaction(async (tx) => {
+      const imported = await prisma.$transaction(async (tx: any) => {
         const candidates = [];
         
         for (const ref of refs) {

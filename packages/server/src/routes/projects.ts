@@ -43,7 +43,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
     try {
       const { title } = request.body as { title: string };
       
-      const project = await prisma.$transaction(async (tx) => {
+      const project = await prisma.$transaction(async (tx: any) => {
         const newProject = await tx.project.create({
           data: {
             title,
@@ -100,8 +100,8 @@ export async function projectsRoutes(fastify: FastifyInstance) {
       });
 
       // Build history from audit logs
-      const history = [];
-      let currentCounts = {
+      const history: any[] = [];
+      const currentCounts: any = {
         identified: 0,
         duplicates: 0,
         screened: 0,
@@ -150,7 +150,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
         history[0] = {
           timestamp: new Date().toISOString(),
           identified: prismaData.identified,
-          duplicates: prismaData.duplicates,
+          duplicates: (prismaData as any).deduped ?? 0,
           screened: prismaData.screened,
           included: prismaData.included,
           excluded: prismaData.excluded

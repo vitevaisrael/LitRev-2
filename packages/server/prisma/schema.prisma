@@ -14,6 +14,7 @@ model User {
   name         String?
   createdAt    DateTime @default(now())
   projects     Project[]
+  journalBlocklists JournalBlocklist[]
 }
 
 model Project {
@@ -21,6 +22,7 @@ model Project {
   ownerId    String
   owner      User     @relation(fields: [ownerId], references: [id])
   title      String
+  description String?
   settings   Json     // { preferOA: boolean }
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -35,6 +37,7 @@ model Project {
   explorerRuns ExplorerRun[]
   auditLogs    AuditLog[]
   jobStatuses  JobStatus[]
+  savedSearches SavedSearch[]
 }
 
 model ProblemProfile {
@@ -63,6 +66,7 @@ model Candidate {
   title       String
   journal     String
   year        Int
+  status      String?
   authors     Json?
   abstract    String?
   links       Json?    // { oaUrl?, publisherUrl?, pubmedUrl? }
@@ -99,11 +103,13 @@ model Decision {
 model PrismaData {
   projectId  String   @id
   identified Int      @default(0)
-  duplicates Int      @default(0)
+  deduped    Int      @default(0) @map("duplicates")
   screened   Int      @default(0)
   included   Int      @default(0)
   excluded   Int      @default(0)
   project    Project  @relation(fields: [projectId], references: [id])
+
+  @@map("Prisma")
 }
 
 model ParsedDoc {
@@ -214,4 +220,72 @@ model ChatMessage {
   createdAt   DateTime @default(now())
   session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   @@index([sessionId, createdAt])
+}
+
+model SavedSearch {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  manifest    Json     // QueryManifest
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  searchRuns  SearchRun[]
+  @@index([projectId])
+  @@index([createdBy])
+}
+
+model SearchRun {
+  id            String   @id @default(uuid())
+  savedSearchId String
+  status        String   // pending|running|completed|failed
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  savedSearch   SavedSearch @relation(fields: [savedSearchId], references: [id], onDelete: Cascade)
+  searchResults SearchResult[]
+  @@index([savedSearchId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SearchResult {
+  id            String   @id @default(uuid())
+  searchRunId   String
+  canonicalHash String
+  title         String
+  year          Int?
+  doi           String?
+  pmid          String?
+  pmcid         String?
+  source        String
+  authors       Json     @default("[]")
+  journal       String?
+  volume        String?
+  issue         String?
+  pages         String?
+  abstract      String?
+  meshTerms     Json     @default("[]")
+  flags         Json     @default("{}")
+  rawPayload    Json     @default("{}")
+  createdAt     DateTime @default(now())
+  searchRun     SearchRun @relation(fields: [searchRunId], references: [id], onDelete: Cascade)
+  @@index([searchRunId])
+  @@index([canonicalHash])
+  @@index([doi])
+  @@index([pmid])
+  @@index([title, year])
+  @@index([flags], type: Gin)
+}
+
+model JournalBlocklist {
+  id        String   @id @default(uuid())
+  issn      String   @unique
+  note      String?
+  addedBy   String
+  addedAt   DateTime @default(now())
+  addedByUser User   @relation(fields: [addedBy], references: [id], onDelete: Cascade)
+  @@index([issn])
 }

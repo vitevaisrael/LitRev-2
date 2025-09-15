@@ -8,6 +8,7 @@ import { Label } from '../ui/label';
 import { Separator } from '../ui/separator';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Dropzone } from '../ui/dropzone';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { FileText, Upload, Search, Quote, CheckCircle, XCircle, HelpCircle, MessageSquare } from 'lucide-react';
 import { queryKeys } from '../../lib/queryKeys';
 import { notifySuccess, notifyError, handleApiError } from '../../lib/notify';
@@ -316,127 +317,117 @@ export function DecisionCard({
         </Card>
       )}
 
-      {candidate.score && (
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg">Quality Score: {candidate.score.total}/65</CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => recomputeScoreMutation.mutate()}
-                disabled={recomputeScoreMutation.isPending}
-                title="Recompute score based on current data"
-              >
-                {recomputeScoreMutation.isPending ? 'Computing...' : 'Recompute'}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Design</span>
-                  <span className="font-medium">{candidate.score.design}/40</span>
+      <Accordion type="multiple" className="w-full space-y-6">
+        {candidate.score && (
+          <Card>
+            <AccordionItem value="score" className="border-b-0">
+              <AccordionTrigger className="px-6">
+                <CardTitle className="text-lg">Quality Score: {candidate.score.total}/65</CardTitle>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6">
+                <div className="flex justify-end mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => recomputeScoreMutation.mutate()}
+                    disabled={recomputeScoreMutation.isPending}
+                    title="Recompute score based on current data"
+                  >
+                    {recomputeScoreMutation.isPending ? 'Computing...' : 'Recompute'}
+                  </Button>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(candidate.score.design / 40) * 100}%` }}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Design</span>
+                      <span className="font-medium">{candidate.score.design}/40</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: `${(candidate.score.design / 40) * 100}%` }} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Study design type</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Directness</span>
+                      <span className="font-medium">{candidate.score.directness}/10</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: `${(candidate.score.directness / 10) * 100}%` }} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Relevance to profile</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Recency</span>
+                      <span className="font-medium">{candidate.score.recency}/5</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: `${(candidate.score.recency / 5) * 100}%` }} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Publication recency</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Journal</span>
+                      <span className="font-medium">{candidate.score.journal}/5</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: `${(candidate.score.journal / 5) * 100}%` }} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Journal impact</p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">Study design type (SR/MA=40, RCT=35, Cohort=28, etc.)</p>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Directness</span>
-                  <span className="font-medium">{candidate.score.directness}/10</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(candidate.score.directness / 10) * 100}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Relevance to problem profile (exact=10, close=7, partial=3, off=0)</p>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Recency</span>
-                  <span className="font-medium">{candidate.score.recency}/5</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(candidate.score.recency / 5) * 100}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Publication recency (≤2y=5, ≤5y=3, older=1, very old=0)</p>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Journal</span>
-                  <span className="font-medium">{candidate.score.journal}/5</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(candidate.score.journal / 5) * 100}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Journal impact factor (NEJM/Lancet/JAMA=5, etc.)</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </AccordionContent>
+            </AccordionItem>
+          </Card>
+        )}
 
-      {/* PDF Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            PDF Document
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Dropzone
-              onFileSelect={handleFileSelect}
-              isUploading={pdfUploadMutation.isPending}
-              uploadProgress={uploadProgress}
-              error={uploadError}
-              success={uploadSuccess}
-              acceptedFileTypes={['.pdf']}
-              maxFileSize={10 * 1024 * 1024} // 10MB
-            />
-            
-            {parsedDocData && (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowSentences(!showSentences)}
-                  className="flex-1"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  {showSentences ? 'Hide' : 'Show'} Sentences
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowQuotePicker(!showQuotePicker)}
-                  className="flex-1"
-                >
-                  <Quote className="h-4 w-4 mr-2" />
-                  {showQuotePicker ? 'Cancel' : 'Capture Quote'}
-                </Button>
+        {/* PDF Upload & Sentences Section */}
+        <Card>
+          <AccordionItem value="pdf" className="border-b-0">
+            <AccordionTrigger className="px-6">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                PDF Document
+              </CardTitle>
+            </AccordionTrigger>
+            <AccordionContent className="px-6 pb-6">
+              <div className="space-y-4">
+                <Dropzone
+                  onFileSelect={handleFileSelect}
+                  isUploading={pdfUploadMutation.isPending}
+                  uploadProgress={uploadProgress}
+                  error={uploadError}
+                  success={uploadSuccess}
+                  acceptedFileTypes={['.pdf']}
+                  maxFileSize={10 * 1024 * 1024} // 10MB
+                />
+                {parsedDocData && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowSentences(!showSentences)}
+                      className="flex-1"
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      {showSentences ? 'Hide' : 'Show'} Sentences
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowQuotePicker(!showQuotePicker)}
+                      className="flex-1"
+                    >
+                      <Quote className="h-4 w-4 mr-2" />
+                      {showQuotePicker ? 'Cancel' : 'Capture Quote'}
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </AccordionContent>
+          </AccordionItem>
+        </Card>
+      </Accordion>
 
       {/* Sentences Panel */}
       {showSentences && parsedDocData && (

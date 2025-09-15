@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
 import { generatePrismaSvg } from '../modules/exports/prismaSvg';
+import { exportToDocx } from '../exports/docxExport';
 
 export async function exportsRoutes(fastify: FastifyInstance) {
   // POST /api/v1/projects/:id/exports/markdown
@@ -196,7 +197,13 @@ export async function exportsRoutes(fastify: FastifyInstance) {
       }
       
       // Generate PRISMA SVG (simplified version)
-      const svg = generatePrismaSvg(prismaData);
+      const svg = generatePrismaSvg({
+        identified: prismaData.identified,
+        deduped: (prismaData as any).deduped ?? 0,
+        screened: prismaData.screened,
+        included: prismaData.included,
+        excluded: prismaData.excluded
+      });
       
       // Create audit log
       await prisma.auditLog.create({
@@ -256,10 +263,10 @@ export async function exportsRoutes(fastify: FastifyInstance) {
           title: project.title,
           createdAt: project.createdAt
         },
-        claims: claims.map(claim => ({
+        claims: claims.map((claim: any) => ({
           id: claim.id,
           text: (claim as any).text,
-          supports: claim.supports.map(support => ({
+          supports: claim.supports.map((support: any) => ({
             id: support.id,
             quote: support.quote,
             locator: support.locator,
@@ -296,6 +303,50 @@ export async function exportsRoutes(fastify: FastifyInstance) {
         return sendError(reply, 'EXPORT_ERROR', error.message, 500);
       }
       return sendError(reply, 'EXPORT_ERROR', 'Failed to generate ledger export', 500);
+    }
+  });
+
+  // POST /api/v1/projects/:id/exports/docx
+  fastify.post('/projects/:id/exports/docx', async (request, reply) => {
+    try {
+      const { id: projectId } = request.params as { id: string };
+      const options = request.body as any || {};
+      
+      // Get project details
+      const project = await prisma.project.findUnique({
+        where: { id: projectId }
+      });
+      
+      if (!project) {
+        return sendError(reply, 'NOT_FOUND', 'Project not found', 404);
+      }
+      
+      // Export to DOCX
+      const result = await exportToDocx(projectId, options);
+      
+      // Create audit log
+      await prisma.auditLog.create({
+        data: {
+          projectId,
+          userId: projectId, // Using projectId as userId for now
+          action: 'export_run',
+          details: {
+            type: 'docx',
+            metadata: result.metadata
+          }
+        }
+      });
+      
+      // Set headers for file download
+      reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      reply.header('Content-Disposition', `attachment; filename="${result.filename}"`);
+      
+      return result.buffer;
+    } catch (error) {
+      if (error instanceof Error) {
+        return sendError(reply, 'EXPORT_ERROR', error.message, 500);
+      }
+      return sendError(reply, 'EXPORT_ERROR', 'Failed to generate DOCX export', 500);
     }
   });
 }

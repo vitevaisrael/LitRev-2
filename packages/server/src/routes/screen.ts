@@ -54,7 +54,7 @@ export async function screenRoutes(fastify: FastifyInstance) {
       const payload = { ...decision, stage: decision.stage ?? 'title_abstract' };
       const defaultUserId = '00000000-0000-0000-0000-000000000000';
 
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: any) => {
         // Create decision
         const newDecision = await tx.decision.create({
           data: {
@@ -115,7 +115,7 @@ export async function screenRoutes(fastify: FastifyInstance) {
       const payloads = decisions.map(d => ({ ...d, stage: d.stage ?? 'title_abstract' }));
       const defaultUserId = '00000000-0000-0000-0000-000000000000';
 
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: any) => {
         // Create all decisions
         const newDecisions = await Promise.all(
           payloads.map(payload =>
