@@ -1,0 +1,13 @@
+{
+  "database": "PubMed",
+  "queryString": "IgA nephropathy AND (therapy OR treatment)",
+  "hits": 120,
+  "afterFilters": 80,
+  "included": 25,
+  "excluded": 55,
+  "excludedReasonCodes": ["population-mismatch", "insufficient-outcomes"],
+  "inclusionReason": "Matches PICO and OA availability",
+  "dateRun": "2025-09-01",
+  "notes": "De-duplicated across OA sources before counts"
+}
+

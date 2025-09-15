@@ -1,0 +1,11 @@
+{
+  "sources": ["PubMed", "OpenAlex", "Crossref", "ClinicalTrials.gov", "Europe PMC", "Unpaywall"],
+  "queries": [
+    "IgA nephropathy AND (randomized OR cohort)",
+    "IgAN AND (therapy OR treatment)"
+  ],
+  "dateRange": { "from": "2015-01-01", "to": "2025-01-01" },
+  "inclusionCriteria": ["Adults", "Human studies", "Clinical outcomes reported"],
+  "exclusionCriteria": ["Animal-only", "No outcomes of interest"]
+}
+
