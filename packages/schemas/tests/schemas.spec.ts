@@ -4,8 +4,9 @@ import decisionCards from '../src/fixtures/evidence-decision-card.sample.json';
 
 describe('fixtures pass Zod parse', () => {
   it('Keep & Exclude samples validate', () => {
-    for (const card of decisionCards as any[]) evidenceDecisionCard.parse(card);
-    expect(true).toBe(true);
+    for (const card of decisionCards as any[]) {
+      evidenceDecisionCard.parse(card);
+    }
   });
 });
 

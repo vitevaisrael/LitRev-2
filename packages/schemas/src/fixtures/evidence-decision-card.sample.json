@@ -7,10 +7,7 @@
       "title": "Therapeutic approaches in IgA nephropathy: a comparative analysis",
       "journal": "Journal of Renal Medicine",
       "year": 2023,
-      "authors": [
-        { "given": "Alex", "family": "Chen" },
-        { "full": "Morgan Patel" }
-      ]
+      "authors": ["Alex Chen", "Morgan Patel"]
     },
     "decision": "Keep",
     "rationale": "Matches PICO and reports renal survival outcomes with adequate follow-up.",
@@ -29,9 +26,7 @@
       "title": "Small case series in unrelated population",
       "journal": "Clinical Observations",
       "year": 2019,
-      "authors": [
-        { "given": "Jamie", "family": "Rivera" }
-      ]
+      "authors": ["Jamie Rivera"]
     },
     "decision": "Exclude",
     "rationale": "Population mismatch and insufficient outcomes for scope.",
@@ -40,4 +35,3 @@
     "nextAction": "Log exclusion reason"
   }
 ]
-
