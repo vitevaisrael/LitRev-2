@@ -123,7 +123,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
           select: { id: true }
         });
 
-        where.projectId = { in: userProjects.map(p => p.id) };
+        where.projectId = { in: userProjects.map((p: any) => p.id) };
       }
 
       const savedSearches = await prisma.savedSearch.findMany({
