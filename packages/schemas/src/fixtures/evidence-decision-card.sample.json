@@ -30,7 +30,7 @@
       "journal": "Clinical Observations",
       "year": 2019,
       "authors": [
-        { "given": "Jamie", "family": "Rivera" }
+        "Jamie Rivera"
       ]
     },
     "decision": "Exclude",
