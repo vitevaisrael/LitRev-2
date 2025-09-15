@@ -47,7 +47,11 @@ shared/schemas/      Zod validators + shared types
 
 **LLM Integration:**
 - OpenAI GPT-5 Thinking (with Tools) via provider interface
+<<<<<<< HEAD
 - Mock provider fallback when OPENAI_API_KEY missing; model and temperature can be configured via OPENAI_MODEL and OPENAI_TEMPERATURE
+=======
+- Mock provider fallback when OPENAI_API_KEY missing; model and temperature configurable via OPENAI_MODEL and OPENAI_TEMPERATURE
+>>>>>>> origin/main
 - Temperature 0 for screening decisions
 
 **PDF Processing:**
@@ -66,7 +70,7 @@ shared/schemas/      Zod validators + shared types
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/thescientist
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=change_me
-COOKIE_SECRET=change_me_too
+COOKIE_SECRET=change_me_cookie
 S3_ENDPOINT=http://localhost:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin

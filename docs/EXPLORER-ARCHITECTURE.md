@@ -51,7 +51,7 @@ This document explains how the Explorer feature is implemented so contributors c
 
 ## Configuration & Ops
 - Redis required for BullMQ (`REDIS_URL`). Worker start is attempted at server boot; logs a warning if Redis is unavailable (server still runs).
-- OpenAI is optional (`OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_TEMPERATURE`); mock provider is used if missing.
+- OpenAI is optional (`OPENAI_API_KEY`); default model and temperature can be set via `OPENAI_MODEL` and `OPENAI_TEMPERATURE`. A mock provider is used if the key is missing.
 - PubMed E-utilities are accessed over HTTPS (no key required); failures degrade gracefully to empty refs.
 
 ## Failure Modes & Retries
@@ -69,4 +69,3 @@ This document explains how the Explorer feature is implemented so contributors c
 - Launch a run with and without `prompt` to verify ProblemProfile fallback.
 - Verify JobStatus progression and finalization; confirm artifact via `GET /explorer/:runId`.
 - Import a subset of refs; ensure Candidates are created, PRISMA.identified increments, AuditLog written.
-

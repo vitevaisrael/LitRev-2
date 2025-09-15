@@ -2,32 +2,9 @@ import OpenAI from 'openai';
 import { z } from 'zod';
 import { ScreeningProposalSchema } from '@the-scientist/schemas';
 import { LLMProvider, LLMConfig } from './adapter';
+import { ExplorerResponseSchema } from './schemas';
+import { LLMResponseError } from './errors';
 import { env } from '../../config/env';
-
-class LLMResponseError extends Error {
-  constructor(public code: string, message: string, public raw: string) {
-    super(message);
-  }
-}
-
-const ExplorerResponseSchema = z.object({
-  outline: z.array(z.string()).optional(),
-  narrative: z.array(z.object({
-    section: z.string(),
-    text: z.string(),
-    refs: z.array(z.object({
-      doi: z.string().optional(),
-      pmid: z.string().optional()
-    })).optional()
-  })).optional(),
-  refs: z.array(z.object({
-    title: z.string(),
-    doi: z.string().optional(),
-    pmid: z.string().optional(),
-    journal: z.string(),
-    year: z.number().int()
-  })).optional()
-}).strict();
 
 export class OpenAIProvider implements LLMProvider {
   private client: OpenAI;
@@ -38,10 +15,28 @@ export class OpenAIProvider implements LLMProvider {
       apiKey: env.OPENAI_API_KEY
     });
     this.config = {
-      model: config.model || env.OPENAI_MODEL || 'gpt-5',
+      model: config.model ?? env.OPENAI_MODEL ?? 'gpt-5',
       temperature: config.temperature ?? env.OPENAI_TEMPERATURE ?? 0,
       maxTokens: config.maxTokens
     };
+  }
+
+  private parseAndValidateResponse<T extends z.ZodTypeAny>(
+    rawContent: string | null | undefined,
+    schema: T
+  ): z.infer<T> {
+    const raw = rawContent ?? '{}';
+    let json: unknown;
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      throw new LLMResponseError('INVALID_JSON', 'Failed to parse JSON response', raw);
+    }
+    const parsed = schema.safeParse(json);
+    if (!parsed.success) {
+      throw new LLMResponseError('INVALID_SHAPE', parsed.error.message, raw);
+    }
+    return parsed.data;
   }
 
   async propose(candidateId: string, parsedText?: string): Promise<any> {
@@ -60,18 +55,10 @@ Do not invent quotes. If none found, set supports:[] and choose ask or better.`;
       response_format: { type: 'json_object' }
     });
 
-    const raw = response.choices[0].message.content || '{}';
-    let json: unknown;
-    try {
-      json = JSON.parse(raw);
-    } catch {
-      throw new LLMResponseError('INVALID_JSON', 'Failed to parse JSON response', raw);
-    }
-    const parsed = ScreeningProposalSchema.safeParse(json);
-    if (!parsed.success) {
-      throw new LLMResponseError('INVALID_SHAPE', parsed.error.message, raw);
-    }
-    return parsed.data;
+    return this.parseAndValidateResponse(
+      response.choices[0].message.content,
+      ScreeningProposalSchema
+    );
   }
 
   async generateExplorer(profile: any): Promise<any> {
@@ -89,18 +76,10 @@ Do not fabricate identifiers; omit if unknown.`;
       response_format: { type: 'json_object' }
     });
 
-    const raw = response.choices[0].message.content || '{}';
-    let json: unknown;
-    try {
-      json = JSON.parse(raw);
-    } catch {
-      throw new LLMResponseError('INVALID_JSON', 'Failed to parse JSON response', raw);
-    }
-    const parsed = ExplorerResponseSchema.safeParse(json);
-    if (!parsed.success) {
-      throw new LLMResponseError('INVALID_SHAPE', parsed.error.message, raw);
-    }
-    return parsed.data;
+    return this.parseAndValidateResponse(
+      response.choices[0].message.content,
+      ExplorerResponseSchema
+    );
   }
 
   async tighten(text: string): Promise<string> {
