@@ -27,7 +27,7 @@
     "studyType": { "type": "string" },
     "outcomes": { "type": "array", "items": { "type": "string" } },
     "biasNotes": { "type": "string" },
-    "strengthGrade": { "type": "string" },
+    "strengthGrade": { "type": "string", "enum": ["very-low", "low", "moderate", "high"] },
     "nextAction": { "type": "string" }
   },
   "required": ["sourceCitation", "decision", "rationale", "journalSignal"]

@@ -30,7 +30,7 @@ export const evidenceDecisionCard = z.object({
   studyType: z.string().optional(),
   outcomes: z.array(z.string()).optional(),
   biasNotes: z.string().optional(),
-  strengthGrade: z.string().optional(),
+  strengthGrade: z.enum(["very-low", "low", "moderate", "high"]).optional(),
   nextAction: z.string().optional(),
 });
 export type EvidenceDecisionCard = z.infer<typeof evidenceDecisionCard>;
