@@ -7,7 +7,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
   JWT_SECRET: z.string().min(1),
-  COOKIE_SECRET: z.string().min(1),
+  COOKIE_SECRET: z.string().min(1).default('test-cookie-secret'),
   S3_ENDPOINT: z.string().url(),
   S3_ACCESS_KEY: z.string().min(1),
   S3_SECRET_KEY: z.string().min(1),
@@ -15,6 +15,7 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().optional(),
   OPENAI_TEMPERATURE: z.coerce.number().min(0).max(2).optional(),
+  
   UNPAYWALL_EMAIL: z.string().email(),
   FEATURE_EXPLORER: z.preprocess((v) => v === 'true', z.boolean()).default(false),
   FEATURE_CHAT_REVIEW: z.preprocess((v) => v === 'true', z.boolean()).default(false),
@@ -28,4 +29,3 @@ if (!parsed.success) {
   throw new Error('Invalid environment variables');
 }
 export const env = parsed.data;
-

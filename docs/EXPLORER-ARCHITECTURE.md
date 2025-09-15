@@ -69,4 +69,3 @@ This document explains how the Explorer feature is implemented so contributors c
 - Launch a run with and without `prompt` to verify ProblemProfile fallback.
 - Verify JobStatus progression and finalization; confirm artifact via `GET /explorer/:runId`.
 - Import a subset of refs; ensure Candidates are created, PRISMA.identified increments, AuditLog written.
-

@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import { routes } from './routes';
 import { env } from './config/env';
 import { startExplorerWorker } from './modules/explorer/worker';
+import fastifyRateLimit from '@fastify/rate-limit';
 
 const fastify = Fastify({
   logger: {

@@ -47,7 +47,11 @@ shared/schemas/      Zod validators + shared types
 
 **LLM Integration:**
 - OpenAI GPT-5 Thinking (with Tools) via provider interface
+<<<<<<< HEAD
+- Mock provider fallback when OPENAI_API_KEY missing; model and temperature can be configured via OPENAI_MODEL and OPENAI_TEMPERATURE
+=======
 - Mock provider fallback when OPENAI_API_KEY missing; model and temperature configurable via OPENAI_MODEL and OPENAI_TEMPERATURE
+>>>>>>> origin/main
 - Temperature 0 for screening decisions
 
 **PDF Processing:**
