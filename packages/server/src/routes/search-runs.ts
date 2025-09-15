@@ -130,12 +130,12 @@ export async function searchRunsRoutes(fastify: FastifyInstance) {
       });
 
       // Filter out runs from projects not owned by user
-      const filteredRuns = searchRuns.filter(run => 
+      const filteredRuns = searchRuns.filter((run: any) => 
         run.savedSearch.project.ownerId === userId
       );
 
       return sendSuccess(reply, {
-        searchRuns: filteredRuns.map(run => ({
+        searchRuns: filteredRuns.map((run: any) => ({
           id: run.id,
           status: run.status,
           createdAt: run.createdAt,
