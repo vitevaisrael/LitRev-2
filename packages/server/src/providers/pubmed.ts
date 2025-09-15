@@ -54,7 +54,7 @@ export async function pubmedSearch(options: PubMedSearchOptions): Promise<Provid
       throw new Error(`PubMed search failed: ${searchResponse.statusText}`);
     }
 
-    const searchData: PubMedResponse = await searchResponse.json();
+    const searchData = (await searchResponse.json()) as PubMedResponse;
     const pmids = searchData.esearchresult.idlist;
 
     if (pmids.length === 0) {
@@ -75,7 +75,7 @@ export async function pubmedSearch(options: PubMedSearchOptions): Promise<Provid
       throw new Error(`PubMed summary failed: ${summaryResponse.statusText}`);
     }
 
-    const summaryData: PubMedSummaryResponse = await summaryResponse.json();
+    const summaryData = (await summaryResponse.json()) as PubMedSummaryResponse;
 
     // Step 3: Convert to ProviderRecord format
     const records: ProviderRecord[] = [];

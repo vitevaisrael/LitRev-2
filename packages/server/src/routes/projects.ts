@@ -100,8 +100,8 @@ export async function projectsRoutes(fastify: FastifyInstance) {
       });
 
       // Build history from audit logs
-      const history = [];
-      const currentCounts = {
+      const history: any[] = [];
+      const currentCounts: any = {
         identified: 0,
         duplicates: 0,
         screened: 0,
@@ -150,7 +150,7 @@ export async function projectsRoutes(fastify: FastifyInstance) {
         history[0] = {
           timestamp: new Date().toISOString(),
           identified: prismaData.identified,
-          duplicates: prismaData.duplicates,
+          duplicates: (prismaData as any).deduped ?? 0,
           screened: prismaData.screened,
           included: prismaData.included,
           excluded: prismaData.excluded

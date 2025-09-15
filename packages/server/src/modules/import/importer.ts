@@ -82,7 +82,7 @@ export async function importReferences(
     create: {
       projectId,
       identified: candidates.length,
-      duplicates: 0,
+      deduped: 0,
       screened: 0,
       included: 0,
       excluded: 0

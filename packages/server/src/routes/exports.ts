@@ -197,7 +197,13 @@ export async function exportsRoutes(fastify: FastifyInstance) {
       }
       
       // Generate PRISMA SVG (simplified version)
-      const svg = generatePrismaSvg(prismaData);
+      const svg = generatePrismaSvg({
+        identified: prismaData.identified,
+        deduped: (prismaData as any).deduped ?? 0,
+        screened: prismaData.screened,
+        included: prismaData.included,
+        excluded: prismaData.excluded
+      });
       
       // Create audit log
       await prisma.auditLog.create({

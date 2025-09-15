@@ -5,7 +5,6 @@ import { routes } from './routes';
 import { env } from './config/env';
 import { startExplorerWorker } from './modules/explorer/worker';
 import { startSearchWorker } from './jobs/searchQueue';
-import { startSearchWorker } from './jobs/searchQueue';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastifyRateLimit from '@fastify/rate-limit';

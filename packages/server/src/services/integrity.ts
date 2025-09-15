@@ -65,7 +65,7 @@ export async function checkPredatoryJournals(record: ProviderRecord): Promise<Pr
       const blocklistEntry = await prisma.journalBlocklist.findFirst({
         where: {
           OR: [
-            { journal: { contains: record.journal, mode: 'insensitive' } },
+            { note: { contains: record.journal, mode: 'insensitive' } },
             { issn: record.journal }
           ]
         }

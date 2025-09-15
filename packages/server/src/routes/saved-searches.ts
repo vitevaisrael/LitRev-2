@@ -129,7 +129,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
       const savedSearches = await prisma.savedSearch.findMany({
         where,
         include: {
-          project: { select: { id: true, title: true } },
+          project: { select: { id: true, title: true, ownerId: true } },
           searchRuns: {
             orderBy: { createdAt: 'desc' },
             take: 1,
@@ -159,7 +159,7 @@ export async function savedSearchesRoutes(fastify: FastifyInstance) {
       const savedSearch = await prisma.savedSearch.findUnique({
         where: { id },
         include: {
-          project: { select: { id: true, title: true } },
+          project: { select: { id: true, title: true, ownerId: true } },
           searchRuns: {
             orderBy: { createdAt: 'desc' },
             select: { id: true, status: true, createdAt: true, metadata: true }

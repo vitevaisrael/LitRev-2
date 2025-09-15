@@ -1,13 +1,16 @@
 export interface PrismaCounters {
   identified: number;
-  duplicates: number;
   screened: number;
   included: number;
   excluded: number;
+  // Accept either legacy 'duplicates' or new 'deduped' (mapped to same meaning here)
+  duplicates?: number;
+  deduped?: number;
 }
 
 export function generatePrismaSvg(counters: PrismaCounters): string {
-  const { identified, duplicates, screened, included, excluded } = counters;
+  const { identified, screened, included, excluded } = counters;
+  const duplicates = typeof counters.duplicates === 'number' ? counters.duplicates : (counters.deduped || 0);
   
   // Simple PRISMA flow diagram
   const svg = `

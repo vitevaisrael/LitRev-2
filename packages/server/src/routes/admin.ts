@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { getIntegrityStats } from '../services/integrity';
 
@@ -99,11 +100,11 @@ export async function adminRoutes(fastify: FastifyInstance) {
           projectId: 'admin', // Special project ID for admin actions
           userId,
           action: 'journal_blocklist_added',
-          details: {
+          details: ({
             issn,
             note,
             blocklistEntryId: blocklistEntry.id
-          }
+          }) as unknown as Prisma.InputJsonValue
         }
       });
 
@@ -300,15 +301,15 @@ export async function adminRoutes(fastify: FastifyInstance) {
         const flags = await generateIntegrityFlags({
           title: candidate.title,
           journal: candidate.journal || '',
-          doi: candidate.doi,
-          pmid: candidate.pmid,
+          doi: candidate.doi || undefined,
+          pmid: candidate.pmid || undefined,
           source: 'candidate'
         });
 
         // Update candidate with new flags
         await prisma.candidate.update({
           where: { id: candidate.id },
-          data: { flags }
+          data: { flags: flags as unknown as Prisma.InputJsonValue }
         });
 
         results.push({
@@ -324,13 +325,13 @@ export async function adminRoutes(fastify: FastifyInstance) {
           projectId,
           userId,
           action: 'integrity_check_run',
-          details: {
+          details: ({
             candidateCount: candidates.length,
             results: results.map(r => ({
               candidateId: r.candidateId,
               flags: r.flags
             }))
-          }
+          }) as unknown as Prisma.InputJsonValue
         }
       });
 

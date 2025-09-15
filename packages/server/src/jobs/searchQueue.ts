@@ -228,7 +228,7 @@ async function computePrismaDeltas(searchRunId: string, stats: any): Promise<voi
     create: {
       projectId,
       identified: stats.unique,
-      duplicates: 0,
+      deduped: 0,
       screened: 0,
       included: 0,
       excluded: 0

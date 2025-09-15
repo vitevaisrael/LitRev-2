@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
 export async function resultsRoutes(fastify: FastifyInstance) {
@@ -278,13 +279,13 @@ export async function resultsRoutes(fastify: FastifyInstance) {
           year: searchResult.year || new Date().getFullYear(),
           doi: searchResult.doi,
           pmid: searchResult.pmid,
-          authors: searchResult.authors,
-          abstract: searchResult.abstract,
+          authors: searchResult.authors as unknown as Prisma.InputJsonValue,
+          abstract: searchResult.abstract || undefined,
           links: {
             oaUrl: searchResult.doi ? `https://doi.org/${searchResult.doi}` : undefined,
             pubmedUrl: searchResult.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${searchResult.pmid}/` : undefined
-          },
-          flags: searchResult.flags || {}
+          } as Prisma.InputJsonValue,
+          flags: (searchResult.flags || {}) as unknown as Prisma.InputJsonValue
         }
       });
 
@@ -297,7 +298,7 @@ export async function resultsRoutes(fastify: FastifyInstance) {
         create: {
           projectId,
           identified: 1,
-          duplicates: 0,
+          deduped: 0,
           screened: 0,
           included: 0,
           excluded: 0
@@ -315,7 +316,7 @@ export async function resultsRoutes(fastify: FastifyInstance) {
             source: 'search_result',
             searchResultId: resultId,
             title: candidate.title
-          }
+          } as Prisma.InputJsonValue
         }
       });
 

@@ -143,8 +143,8 @@ export async function exportToDocx(
   }
 
   // Included studies section
-  const includedCandidates = candidates.filter(c => c.status === 'included');
-  const excludedCandidates = candidates.filter(c => c.status === 'excluded');
+  const includedCandidates = candidates.filter((c: any) => c.status === 'included');
+  const excludedCandidates = candidates.filter((c: any) => c.status === 'excluded');
 
   sections.push(
     new Paragraph({
@@ -187,22 +187,28 @@ export async function exportToDocx(
     );
 
     // Authors (if requested)
-    if (includeAuthors && candidate.authors && candidate.authors.length > 0) {
-      const authorsText = Array.isArray(candidate.authors) 
-        ? candidate.authors.join(', ')
-        : candidate.authors;
-      
-      sections.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `Authors: ${authorsText}`,
-              size: 22
-            })
-          ],
-          spacing: { after: 100 }
-        })
-      );
+    if (includeAuthors && candidate.authors) {
+      let authorsArr: string[] | null = null;
+      if (Array.isArray(candidate.authors)) {
+        authorsArr = candidate.authors as any[];
+      } else if (typeof candidate.authors === 'string') {
+        authorsArr = [candidate.authors];
+      }
+      const authorsText = authorsArr && authorsArr.length > 0 ? authorsArr.join(', ') : undefined;
+      if (authorsText) {
+        
+        sections.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `Authors: ${authorsText}`,
+                size: 22
+              })
+            ],
+            spacing: { after: 100 }
+          })
+        );
+      }
     }
 
     // Journal (if requested)

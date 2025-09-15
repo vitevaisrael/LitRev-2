@@ -45,8 +45,9 @@ export async function searchRunsRoutes(fastify: FastifyInstance) {
       }
 
       // Get provider stats from metadata
-      const providerStats = searchRun.metadata?.providerStats || {};
-      const dedupeStats = searchRun.metadata?.dedupeStats || {};
+      const md: any = searchRun.metadata as any;
+      const providerStats = md?.providerStats || {};
+      const dedupeStats = md?.dedupeStats || {};
 
       return sendSuccess(reply, {
         id: searchRun.id,
