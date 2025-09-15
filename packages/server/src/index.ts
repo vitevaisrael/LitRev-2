@@ -1,9 +1,10 @@
-
 import Fastify from 'fastify';
 import { randomUUID } from 'crypto';
 import { routes } from './routes';
 import { env } from './config/env';
 import { startExplorerWorker } from './modules/explorer/worker';
+import fastifyCookie from '@fastify/cookie';
+import fastifyCors from '@fastify/cors';
 import fastifyRateLimit from '@fastify/rate-limit';
 
 const fastify = Fastify({
@@ -20,15 +21,37 @@ const fastify = Fastify({
 });
 
 // Register cookie support
-fastify.register(require('@fastify/cookie'), {
+fastify.register(fastifyCookie, {
   secret: env.COOKIE_SECRET,
   parseOptions: {}
 });
 
 // Register CORS support
-fastify.register(require('@fastify/cors'), {
+fastify.register(fastifyCors, {
   origin: env.NODE_ENV === 'production' ? false : ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true
+});
+
+// Register rate limiting
+fastify.register(fastifyRateLimit, {
+  global: true,
+  max: 100, // requests per timeWindow
+  timeWindow: '1 minute',
+  hook: 'onSend',
+  addHeaders: {
+    'x-ratelimit-limit': true,
+    'x-ratelimit-remaining': true,
+    'x-ratelimit-reset': true
+  },
+  ban: 0, // disable banning
+  errorResponseBuilder: (request, context) => ({
+    ok: false,
+    error: {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: `Rate limit exceeded, retry in ${Math.round(context.ttl / 1000)} seconds`,
+      requestId: request.id
+    }
+  })
 });
 
 // Request ID and logging
@@ -49,7 +72,7 @@ fastify.setErrorHandler(async (error, request, reply) => {
   request.log.error(error);
   
   reply.status(error.statusCode || 500).send({
-    ok: false,
+    ok: false,.
     error: {
       code: error.code || 'INTERNAL_ERROR',
       message: error.message || 'Internal server error',
@@ -58,13 +81,6 @@ fastify.setErrorHandler(async (error, request, reply) => {
   });
 });
 
-// Rate limit headers (stub)
-fastify.addHook('onSend', async (request, reply, payload) => {
-  reply.header('X-RateLimit-Limit', '100');
-  reply.header('X-RateLimit-Remaining', '100');
-  reply.header('X-RateLimit-Reset', Math.floor(Date.now() / 1000) + 60);
-  return payload;
-});
 
 // Register routes
 fastify.register(routes, { prefix: '/api/v1' });

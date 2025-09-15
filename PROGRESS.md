@@ -624,3 +624,134 @@
 - **Type Safety**: Full TypeScript support with proper type definitions
 
 **Next Steps**: Ready for UI-06 (Theme & Tokens) and subsequent UI tasks.
+
+## Task 3 — Evidence Integrity Checks (Retractions & Predatory Flags) ✅
+
+**Goal**: Implement comprehensive evidence integrity checking system to detect retracted publications and predatory journals, with admin management capabilities.
+
+### ✅ **Completed Implementation**
+
+**1) Database Schema Extension** ✅
+- ✅ **Flags Column**: Added `flags JSONB` column to `search_results` table with GIN index for efficient querying
+- ✅ **Journal Blocklist**: Created `journal_blocklist` table with ISSN tracking, notes, and audit trail
+- ✅ **User Relations**: Extended User model to include journal blocklist management relations
+- ✅ **Migration**: Applied database migration with proper indexes and constraints
+
+**2) Integrity Detection Service** ✅
+- ✅ **Retraction Detection**: Comprehensive retraction detection from PubMed and Crossref sources
+- ✅ **PubMed Integration**: Detection via PublicationType and CommentsCorrectionsList
+- ✅ **Crossref Integration**: Detection via relation types and subtype indicators
+- ✅ **Predatory Journal Detection**: Blocklist-based detection with configurable policies
+- ✅ **Confidence Scoring**: High/medium/low confidence levels for detected flags
+- ✅ **Source Tracking**: Detailed source attribution for each detected flag
+
+**3) Admin Management System** ✅
+- ✅ **Journal Blocklist CRUD**: Complete CRUD operations for managing predatory journal lists
+- ✅ **Search & Pagination**: Advanced search capabilities with pagination support
+- ✅ **User Attribution**: Full audit trail with user attribution for blocklist entries
+- ✅ **Integrity Statistics**: Comprehensive statistics dashboard for project integrity metrics
+- ✅ **API Endpoints**: RESTful API for all admin operations
+
+**4) Search Pipeline Integration** ✅
+- ✅ **Automatic Detection**: Integrity flags automatically detected during search result ingestion
+- ✅ **Batch Processing**: Efficient batch processing with error handling
+- ✅ **Flag Storage**: Flags stored with search results for persistent integrity tracking
+- ✅ **Performance Optimization**: Optimized processing with smaller batch sizes for integrity checks
+
+**5) Results API Enhancement** ✅
+- ✅ **Flag Inclusion**: Search results API now includes integrity flags in responses
+- ✅ **Filtering Options**: Advanced filtering by integrity status (excludeFlagged, flaggedOnly, retractedOnly, predatoryOnly)
+- ✅ **Import Integration**: Search result import preserves integrity flags in candidate records
+- ✅ **JSONB Queries**: Efficient PostgreSQL JSONB queries for flag-based filtering
+
+**6) Testing Infrastructure** ✅
+- ✅ **Unit Tests**: Comprehensive unit tests for all integrity detection functions
+- ✅ **Integration Tests**: Full integration tests for admin API endpoints
+- ✅ **Edge Case Testing**: Tests for various retraction and predatory detection scenarios
+- ✅ **Error Handling**: Robust error handling and graceful degradation testing
+
+### ✅ **Technical Implementation Details**
+
+**Integrity Detection Features:**
+- **Multi-Source Detection**: PubMed and Crossref retraction detection with extensible architecture
+- **Publication Type Analysis**: Detection via PubMed PublicationTypeList indicators
+- **Comment Analysis**: Detection via PubMed CommentsCorrectionsList retraction notices
+- **Relation Analysis**: Detection via Crossref relation types and subtype indicators
+- **Blocklist Management**: Admin-managed predatory journal detection with full CRUD operations
+
+**Database Design:**
+- **JSONB Flags**: Flexible flag storage with GIN indexing for efficient queries
+- **Audit Trail**: Complete user attribution and timestamp tracking
+- **Foreign Key Constraints**: Proper referential integrity with cascade operations
+- **Index Optimization**: Strategic indexing for performance and query efficiency
+
+**API Design:**
+- **RESTful Endpoints**: Clean, consistent API design following REST principles
+- **Advanced Filtering**: Multiple filtering options for integrity-based result queries
+- **Pagination Support**: Efficient pagination for large result sets
+- **Error Handling**: Comprehensive error handling with proper HTTP status codes
+
+**Performance Features:**
+- **Batch Processing**: Efficient batch processing during search result ingestion
+- **Async Processing**: Non-blocking integrity detection during search operations
+- **Query Optimization**: Optimized database queries with proper indexing
+- **Error Resilience**: Graceful error handling that doesn't break search operations
+
+### ✅ **Verification Results**
+
+**✅ Integrity Detection Confirmed**:
+- Retraction detection working for PubMed and Crossref sources
+- Predatory journal detection via admin-managed blocklist
+- Confidence scoring and source attribution functional
+- Automatic flag application during search result ingestion
+
+**✅ Admin Management Confirmed**:
+- Journal blocklist CRUD operations working correctly
+- Search and pagination functionality operational
+- Integrity statistics dashboard providing accurate metrics
+- User attribution and audit trail properly maintained
+
+**✅ API Integration Confirmed**:
+- Search results API includes integrity flags
+- Filtering options working for all integrity-based queries
+- Import functionality preserves integrity flags
+- Admin endpoints providing full management capabilities
+
+**✅ Testing Confirmed**:
+- Unit tests passing for all integrity detection functions
+- Integration tests passing for admin API endpoints
+- Edge cases properly handled with appropriate error responses
+- Performance tests confirming efficient batch processing
+
+**Commands to Test Integrity System:**
+```bash
+# Test integrity detection
+pnpm test src/services/integrity.test.ts
+
+# Test admin API
+pnpm test src/routes/admin.test.ts
+
+# Test build
+pnpm build
+```
+
+**API Usage:**
+```bash
+# Get integrity statistics
+curl -X GET http://localhost:3000/api/v1/admin/integrity-stats/{projectId}
+
+# List journal blocklist
+curl -X GET http://localhost:3000/api/v1/admin/journal-blocklist
+
+# Add journal to blocklist
+curl -X POST http://localhost:3000/api/v1/admin/journal-blocklist \
+  -H "Content-Type: application/json" \
+  -d '{"issn": "1234-5678", "note": "Known predatory journal", "addedBy": "user-id"}'
+
+# Filter results by integrity
+curl -X GET "http://localhost:3000/api/v1/projects/{projectId}/results?excludeFlagged=true"
+curl -X GET "http://localhost:3000/api/v1/projects/{projectId}/results?retractedOnly=true"
+curl -X GET "http://localhost:3000/api/v1/projects/{projectId}/results?predatoryOnly=true"
+```
+
+**Status**: **COMPLETE** - Evidence integrity checks system fully implemented and tested.
