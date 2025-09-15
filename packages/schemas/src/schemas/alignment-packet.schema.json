@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app.local/schemas/alignment-packet.schema.json",
+  "title": "AlignmentPacket",
+  "description": "Alignment packet: mini-abstract, outline, anchors, criteria, OA sources, and search plan summary.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "researchQuestion": { "type": "string" },
+    "miniAbstract": { "type": "string", "minLength": 1, "maxLength": 1200 },
+    "outline": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "topAnchors": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 5 },
+    "inclusionCriteria": { "type": "array", "items": { "type": "string" } },
+    "exclusionCriteria": { "type": "array", "items": { "type": "string" } },
+    "oaSources": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["PubMed", "OpenAlex", "Crossref", "ClinicalTrials.gov", "Europe PMC", "Unpaywall"]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "searchPlanSummary": { "type": "string" }
+  },
+  "required": ["miniAbstract", "outline", "topAnchors", "inclusionCriteria", "exclusionCriteria", "oaSources", "searchPlanSummary"]
+}
+

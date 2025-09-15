@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app.local/schemas/search-plan.schema.json",
+  "title": "SearchPlan",
+  "description": "OA-only sources, queries, date range, and inclusion/exclusion criteria.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "sources": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["PubMed", "OpenAlex", "Crossref", "ClinicalTrials.gov", "Europe PMC", "Unpaywall"] },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "queries": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "dateRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string", "format": "date" },
+        "to": { "type": "string", "format": "date" }
+      },
+      "required": ["from", "to"]
+    },
+    "inclusionCriteria": { "type": "array", "items": { "type": "string" } },
+    "exclusionCriteria": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["sources", "queries", "dateRange", "inclusionCriteria", "exclusionCriteria"]
+}
+

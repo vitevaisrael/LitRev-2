@@ -1,0 +1,17 @@
+{
+  "researchQuestion": "In adults with IgAN, which therapies improve renal outcomes vs standard care?",
+  "miniAbstract": "This packet aligns scope for evaluating therapeutic options in IgAN with an OA-first strategy, outlining anchors, criteria, and search plan summary.",
+  "outline": ["Background", "Population & Interventions", "Outcomes", "Summary", "Limitations"],
+  "topAnchors": [
+    "Renal survival endpoints",
+    "Proteinuria reduction",
+    "Immunomodulation",
+    "Adverse events",
+    "OA-first sourcing"
+  ],
+  "inclusionCriteria": ["Human studies", "Adult population", "Comparative or robust single-arm"],
+  "exclusionCriteria": ["Animal-only", "Case reports only", "Non-English without translation"],
+  "oaSources": ["PubMed", "OpenAlex", "Crossref", "ClinicalTrials.gov", "Europe PMC", "Unpaywall"],
+  "searchPlanSummary": "Run OA-first queries across listed sources; apply criteria; log PRISMA counts."
+}
+

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app.local/schemas/prisma-record.schema.json",
+  "title": "PrismaRecord",
+  "description": "PRISMA logging entry: source, query, counts, reasons, and notes.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "database": {
+      "type": "string",
+      "enum": ["PubMed", "OpenAlex", "Crossref", "ClinicalTrials.gov", "Europe PMC", "Unpaywall"]
+    },
+    "queryString": { "type": "string", "minLength": 1 },
+    "hits": { "type": "integer", "minimum": 0 },
+    "afterFilters": { "type": "integer", "minimum": 0 },
+    "included": { "type": "integer", "minimum": 0 },
+    "excluded": { "type": "integer", "minimum": 0 },
+    "excludedReasonCodes": { "type": "array", "items": { "type": "string" } },
+    "inclusionReason": { "type": "string" },
+    "dateRun": { "type": "string", "format": "date" },
+    "notes": { "type": "string" }
+  },
+  "required": ["database", "queryString", "hits", "afterFilters", "included", "excluded", "dateRun"]
+}
+
