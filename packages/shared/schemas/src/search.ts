@@ -1,6 +1,16 @@
 import { z } from 'zod';
 import { UUIDSchema, DOISchema, PMIDSchema, TimestampSchema } from './common';
 
+export const FlagsSchema = z.object({
+  retracted: z.boolean().optional(),
+  predatory: z.boolean().optional(),
+  notes: z.string().optional(),
+  detectedAt: z.string().optional(),
+  sources: z.array(z.string()).optional()
+}).strict();
+
+export type Flags = z.infer<typeof FlagsSchema>;
+
 export const CandidateSchema = z.object({
   id: UUIDSchema,
   projectId: UUIDSchema,
@@ -16,10 +26,7 @@ export const CandidateSchema = z.object({
     publisherUrl: z.string().url().optional(),
     pubmedUrl: z.string().url().optional()
   }).optional(),
-  flags: z.object({
-    retracted: z.boolean().optional(),
-    predatory: z.boolean().optional()
-  }).optional(),
+  flags: FlagsSchema.optional(),
   score: z.object({
     design: z.number().min(0).max(40),
     directness: z.number().min(0).max(10),
@@ -71,16 +78,6 @@ export const QueryManifestSchema = z.object({
 }).strict();
 
 export type QueryManifest = z.infer<typeof QueryManifestSchema>;
-
-export const FlagsSchema = z.object({
-  retracted: z.boolean().optional(),
-  predatory: z.boolean().optional(),
-  notes: z.string().optional(),
-  detectedAt: z.string().optional(),
-  sources: z.array(z.string()).optional()
-}).strict();
-
-export type Flags = z.infer<typeof FlagsSchema>;
 
 export const PrismaCountsSchema = z.object({
   identified: z.number().int(),
