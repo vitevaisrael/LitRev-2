@@ -9,8 +9,8 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastifyRateLimit from '@fastify/rate-limit';
 
-const PORT = Number(process.env.PORT || 3000);
-const HOST = process.env.HOST ?? (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
+const PORT = env.PORT;
+const HOST = env.HOST ?? (env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 
 const fastify = Fastify({
   logger: {
