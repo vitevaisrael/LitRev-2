@@ -15,8 +15,8 @@ export class OpenAIProvider implements LLMProvider {
       apiKey: env.OPENAI_API_KEY
     });
     this.config = {
-      model: config.model ?? env.OPENAI_MODEL ?? 'gpt-5',
-      temperature: config.temperature ?? env.OPENAI_TEMPERATURE ?? 0,
+      model: config.model ?? env.OPENAI_MODEL ?? 'gpt-4o-mini',
+      temperature: config.temperature ?? (env.OPENAI_TEMPERATURE ?? 0),
       maxTokens: config.maxTokens
     };
   }
