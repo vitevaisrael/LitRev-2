@@ -20,5 +20,9 @@ interface ImportMetaEnv {
   readonly VITE_FEATURE_APP_LAYOUT?: '0' | '1';
 }
 interface ImportMetaEnv {
+  readonly VITE_FEATURE_GLOBAL_SEARCH?: '0' | '1';
+  readonly VITE_FEATURE_QUICK_CREATE?: '0' | '1';
+}
+interface ImportMetaEnv {
   readonly VITE_FEATURE_GLOBAL_DOCK?: '0' | '1';
 }

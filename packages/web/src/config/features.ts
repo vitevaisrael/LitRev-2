@@ -34,6 +34,12 @@ export const flags = {
   APP_LAYOUT: import.meta.env.VITE_FEATURE_APP_LAYOUT === '1',
 });
 
+// appended by HOME-011
+(Object.assign as any)(flags, {
+  GLOBAL_SEARCH:  import.meta.env.VITE_FEATURE_GLOBAL_SEARCH === '1',
+  QUICK_CREATE:   import.meta.env.VITE_FEATURE_QUICK_CREATE === '1',
+});
+
 // appended by HOME-009
 (Object.assign as any)(flags, {
   GLOBAL_DOCK: import.meta.env.VITE_FEATURE_GLOBAL_DOCK === '1',
