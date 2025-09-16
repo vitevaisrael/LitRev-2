@@ -2,11 +2,14 @@ import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import { requireAuth } from '../auth/middleware';
 import { getIntegrityStats } from '../services/integrity';
 
 export async function adminRoutes(fastify: FastifyInstance) {
   // GET /api/v1/admin/journal-blocklist
-  fastify.get('/admin/journal-blocklist', async (request, reply) => {
+  fastify.get('/admin/journal-blocklist', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { limit = 50, offset = 0, search } = request.query as {
         limit?: number;
@@ -59,7 +62,9 @@ export async function adminRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/admin/journal-blocklist
-  fastify.post('/admin/journal-blocklist', async (request, reply) => {
+  fastify.post('/admin/journal-blocklist', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { issn, note } = request.body as {
         issn: string;
@@ -259,7 +264,9 @@ export async function adminRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/admin/integrity-check
-  fastify.post('/admin/integrity-check', async (request, reply) => {
+  fastify.post('/admin/integrity-check', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { projectId, candidateIds } = request.body as {
         projectId: string;

@@ -1,6 +1,10 @@
 // @ts-ignore - no types available for bibtex-parse-js
 import { parse as parseBibtex } from 'bibtex-parse-js';
 import { z } from 'zod';
+import { PdfBibExtractor } from './extractors/pdfBibExtractor';
+import { DocxBibExtractor } from './extractors/docxBibExtractor';
+import { validateFileContent } from '../../services/fileValidation';
+import { IMPORT_CONFIG } from '../../config/importConfig';
 
 export interface NormalizedRef {
   title: string;
@@ -10,6 +14,10 @@ export interface NormalizedRef {
   pmid?: string;
   authors: string[];
   abstract?: string;
+  source?: string;
+  partial?: boolean;
+  confidence?: number;
+  rawText?: string;
 }
 
 // Local schema for validation
@@ -20,7 +28,11 @@ const NormalizedRefSchema = z.object({
   doi: z.string().optional(),
   pmid: z.string().optional(),
   authors: z.array(z.string()).min(1),
-  abstract: z.string().optional()
+  abstract: z.string().optional(),
+  source: z.string().optional(),
+  partial: z.boolean().optional(),
+  confidence: z.number().optional(),
+  rawText: z.string().optional()
 }).strict();
 
 // Simple RIS parser
@@ -121,7 +133,7 @@ function normalizeBibtexEntry(entry: any): NormalizedRef | null {
   }
 }
 
-// Main parser function
+// Main parser function for text-based imports
 export function parseImportFile(content: string, filename: string): NormalizedRef[] {
   const extension = filename.toLowerCase().split('.').pop();
   
@@ -134,6 +146,38 @@ export function parseImportFile(content: string, filename: string): NormalizedRe
     default:
       throw new Error(`Unsupported file format: ${extension}`);
   }
+}
+
+// Enhanced parser function that handles both text and binary inputs
+export async function parseImportFileEnhanced(input: { buffer?: Buffer; text?: string; filename?: string; mimetype?: string }): Promise<{ refs: NormalizedRef[]; metadata?: any }> {
+  // If binary provided, sniff content; otherwise treat as text
+  if (input.buffer) {
+    const ft = await validateFileContent(input.buffer);
+    switch (ft.mime) {
+      case "application/pdf":
+        if (!IMPORT_CONFIG.FEATURE_IMPORT_PDF_BIB) {
+          throw Object.assign(new Error("NOT_ENABLED"), { code: "ERR_NOT_ENABLED" });
+        }
+        return await PdfBibExtractor.extract(input.buffer);
+      case "application/vnd.openxmlformats-officedocument.wordprocessingml.document": // .docx
+        if (!IMPORT_CONFIG.FEATURE_IMPORT_DOCX_BIB) {
+          throw Object.assign(new Error("NOT_ENABLED"), { code: "ERR_NOT_ENABLED" });
+        }
+        return await DocxBibExtractor.extract(input.buffer);
+      case "application/msword": // legacy .doc (explicitly not supported)
+        throw Object.assign(new Error("DOC_LEGACY_NOT_SUPPORTED"), { code: "ERR_DOC_UNSUPPORTED" });
+      default:
+        throw Object.assign(new Error("UNSUPPORTED_TYPE"), { code: "ERR_UNSUPPORTED_TYPE", mime: ft.mime });
+    }
+  } else if (input.text) {
+    // Handle existing RIS/BibTeX detection/parse functions
+    if (input.filename) {
+      const refs = parseImportFile(input.text, input.filename);
+      return { refs, metadata: { source: "text", format: input.filename.split('.').pop() } };
+    }
+    throw Object.assign(new Error("UNKNOWN_TEXT_FORMAT"), { code: "ERR_UNKNOWN_TEXT" });
+  }
+  throw Object.assign(new Error("NO_INPUT"), { code: "ERR_NO_INPUT" });
 }
 
 // Validate normalized references

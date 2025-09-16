@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { z } from 'zod';
 
 // Problem Profile schema
@@ -18,7 +19,9 @@ const ProblemProfileSchema = z.object({
 
 export async function intakeRoutes(fastify: FastifyInstance) {
   // GET /api/v1/projects/:id/intake/profile
-  fastify.get('/projects/:id/intake/profile', async (request, reply) => {
+  fastify.get('/projects/:id/intake/profile', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       
@@ -56,7 +59,9 @@ export async function intakeRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/projects/:id/intake/profile
-  fastify.post('/projects/:id/intake/profile', async (request, reply) => {
+  fastify.post('/projects/:id/intake/profile', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       const body = request.body as any;
@@ -129,7 +134,9 @@ export async function intakeRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/projects/:id/intake/plan
-  fastify.post('/projects/:id/intake/plan', async (request, reply) => {
+  fastify.post('/projects/:id/intake/plan', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       

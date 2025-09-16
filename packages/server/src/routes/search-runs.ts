@@ -1,18 +1,17 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
-import { AuthenticatedRequest, SearchMetadata, SearchRunFilter } from '../types/api';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
+import { SearchMetadata, SearchRunFilter } from '../types/api';
 
 export async function searchRunsRoutes(fastify: FastifyInstance) {
   // GET /api/v1/search-runs/:runId
-  fastify.get('/search-runs/:runId', async (request, reply) => {
+  fastify.get('/search-runs/:runId', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { runId } = request.params as { runId: string };
-      const userId = (request as AuthenticatedRequest).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
+      const userId = (request as any).user.id;
 
       const searchRun = await prisma.searchRun.findUnique({
         where: { id: runId },
@@ -68,7 +67,9 @@ export async function searchRunsRoutes(fastify: FastifyInstance) {
   });
 
   // GET /api/v1/search-runs
-  fastify.get('/search-runs', async (request, reply) => {
+  fastify.get('/search-runs', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { 
         projectId, 
@@ -84,11 +85,7 @@ export async function searchRunsRoutes(fastify: FastifyInstance) {
         offset?: number;
       };
 
-      const userId = (request as AuthenticatedRequest).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
+      const userId = (request as any).user.id;
 
       const where: any = {};
 
@@ -162,14 +159,12 @@ export async function searchRunsRoutes(fastify: FastifyInstance) {
   });
 
   // DELETE /api/v1/search-runs/:runId
-  fastify.delete('/search-runs/:runId', async (request, reply) => {
+  fastify.delete('/search-runs/:runId', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { runId } = request.params as { runId: string };
-      const userId = (request as AuthenticatedRequest).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
+      const userId = (request as any).user.id;
 
       const searchRun = await prisma.searchRun.findUnique({
         where: { id: runId },

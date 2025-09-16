@@ -2,10 +2,13 @@ import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 
 export async function resultsRoutes(fastify: FastifyInstance) {
   // GET /api/v1/projects/:projectId/results
-  fastify.get('/projects/:projectId/results', async (request, reply) => {
+  fastify.get('/projects/:projectId/results', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { projectId } = request.params as { projectId: string };
       const {
@@ -33,21 +36,6 @@ export async function resultsRoutes(fastify: FastifyInstance) {
         retractedOnly?: boolean;
         predatoryOnly?: boolean;
       };
-
-      const userId = (request as any).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
-
-      // Verify project ownership
-      const project = await prisma.project.findFirst({
-        where: { id: projectId, ownerId: userId }
-      });
-
-      if (!project) {
-        return sendError(reply, 'NOT_FOUND', 'Project not found', 404);
-      }
 
       // Build where clause
       const where: any = {
@@ -149,23 +137,11 @@ export async function resultsRoutes(fastify: FastifyInstance) {
   });
 
   // GET /api/v1/projects/:projectId/results/:resultId
-  fastify.get('/projects/:projectId/results/:resultId', async (request, reply) => {
+  fastify.get('/projects/:projectId/results/:resultId', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { projectId, resultId } = request.params as { projectId: string; resultId: string };
-      const userId = (request as any).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
-
-      // Verify project ownership
-      const project = await prisma.project.findFirst({
-        where: { id: projectId, ownerId: userId }
-      });
-
-      if (!project) {
-        return sendError(reply, 'NOT_FOUND', 'Project not found', 404);
-      }
 
       const result = await prisma.searchResult.findFirst({
         where: {
@@ -221,23 +197,12 @@ export async function resultsRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/projects/:projectId/results/:resultId/import
-  fastify.post('/projects/:projectId/results/:resultId/import', async (request, reply) => {
+  fastify.post('/projects/:projectId/results/:resultId/import', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { projectId, resultId } = request.params as { projectId: string; resultId: string };
-      const userId = (request as any).user?.id;
-
-      if (!userId) {
-        return sendError(reply, 'UNAUTHORIZED', 'User not authenticated', 401);
-      }
-
-      // Verify project ownership
-      const project = await prisma.project.findFirst({
-        where: { id: projectId, ownerId: userId }
-      });
-
-      if (!project) {
-        return sendError(reply, 'NOT_FOUND', 'Project not found', 404);
-      }
+      const userId = (request as any).user.id;
 
       // Get search result
       const searchResult = await prisma.searchResult.findFirst({

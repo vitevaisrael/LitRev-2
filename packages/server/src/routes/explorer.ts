@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
 import { prisma } from '../lib/prisma';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { JobStatusSchema } from '@the-scientist/schemas';
@@ -43,7 +44,9 @@ export async function explorerRoutes(fastify: FastifyInstance) {
   });
 
   // POST /api/v1/job-status/:jobId/retry
-  fastify.post('/job-status/:jobId/retry', async (request, reply) => {
+  fastify.post('/job-status/:jobId/retry', {
+    preHandler: requireAuth
+  }, async (request, reply) => {
     try {
       const { jobId } = request.params as { jobId: string };
       
@@ -191,13 +194,13 @@ export async function explorerRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/projects/:id/explorer/run
   fastify.post('/projects/:id/explorer/run', {
-    preHandler: async (request, reply) => {
+    preHandler: [requireAuth, requireProjectAccess, async (request, reply) => {
       try {
         request.body = ExplorerRunSchema.parse(request.body);
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
-    }
+    }]
   }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
@@ -229,13 +232,13 @@ export async function explorerRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/projects/:id/explorer/import
   fastify.post('/projects/:id/explorer/import', {
-    preHandler: async (request, reply) => {
+    preHandler: [requireAuth, requireProjectAccess, async (request, reply) => {
       try {
         request.body = ImportRefsSchema.parse(request.body);
       } catch (error) {
         return sendError(reply, 'VALIDATION_ERROR', 'Invalid request body', 422);
       }
-    }
+    }]
   }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };

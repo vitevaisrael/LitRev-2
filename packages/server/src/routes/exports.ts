@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma';
 import { generatePrismaSvg } from '../modules/exports/prismaSvg';
 import { exportToDocx } from '../exports/docxExport';
 import { buildProjectDocx } from '../modules/exports/docx.js';
-import { authenticate } from '../middleware/auth';
+import { requireAuth, requireProjectAccess } from '../auth/middleware';
 import { 
   ExportParamsSchema, 
   ExportDocxOptionsSchema,
@@ -13,7 +13,9 @@ import {
 
 export async function exportsRoutes(fastify: FastifyInstance) {
   // POST /api/v1/projects/:id/exports/markdown
-  fastify.post('/projects/:id/exports/markdown', async (request, reply) => {
+  fastify.post('/projects/:id/exports/markdown', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };
       
@@ -329,11 +331,11 @@ export async function exportsRoutes(fastify: FastifyInstance) {
   }>(
     "/projects/:id/exports/docx",
     {
-      preValidation: [authenticate],
-      schema: {
-        params: ExportParamsSchema,
-        body: ExportDocxOptionsSchema
-      }
+      preHandler: [requireAuth, requireProjectAccess],
+      // schema: {
+      //   params: ExportParamsSchema
+      //   // body: ExportDocxOptionsSchema // Temporarily disabled
+      // }
     },
     async (request, reply) => {
       const { id: projectId } = request.params;

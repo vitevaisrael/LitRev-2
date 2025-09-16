@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { sendSuccess, sendError } from '../utils/response';
-import { prisma } from '../lib/prisma';
-import Redis from 'ioredis';
+import { prisma, checkDatabaseHealth } from '../lib/prisma';
+import { getRedis, isRedisAvailable } from '../lib/redis';
 import { Client } from 'minio';
 import { env } from '../config/env';
 
@@ -13,28 +13,35 @@ async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 }
 
 export async function healthRoutes(fastify: FastifyInstance) {
+  // Basic health check
   fastify.get('/health', async (request, reply) => {
     const started = Date.now();
-    // Probes
+    
+    // Probes with detailed error information
     const dbProbe = (async () => {
       try {
-        await withTimeout(prisma.$queryRaw`SELECT 1`, 1500);
-        return true;
-      } catch {
-        return false;
+        const isHealthy = await withTimeout(checkDatabaseHealth(), 1500);
+        return { healthy: isHealthy, error: null };
+      } catch (error) {
+        return { 
+          healthy: false, 
+          error: error instanceof Error ? error.message : 'Unknown database error' 
+        };
       }
     })();
 
     const redisProbe = (async () => {
       try {
-        if (!env.REDIS_URL) return false;
-        const redis = new Redis(env.REDIS_URL, { lazyConnect: true });
-        await withTimeout(redis.connect(), 1000).catch(() => {});
-        const pong = await withTimeout(redis.ping(), 1000);
-        await redis.quit().catch(() => redis.disconnect());
-        return pong === 'PONG' || pong === 'pong';
-      } catch {
-        return false;
+        if (!env.REDIS_URL) {
+          return { healthy: false, error: 'Redis URL not configured' };
+        }
+        const isHealthy = await withTimeout(isRedisAvailable(), 1000);
+        return { healthy: isHealthy, error: null };
+      } catch (error) {
+        return { 
+          healthy: false, 
+          error: error instanceof Error ? error.message : 'Unknown Redis error' 
+        };
       }
     })();
 
@@ -48,30 +55,74 @@ export async function healthRoutes(fastify: FastifyInstance) {
           accessKey: env.S3_ACCESS_KEY,
           secretKey: env.S3_SECRET_KEY,
         });
-        // bucketExists returns boolean or throws
         const exists = await withTimeout(minio.bucketExists(env.S3_BUCKET), 1500);
-        return !!exists;
-      } catch {
-        return false;
+        return { healthy: !!exists, error: null };
+      } catch (error) {
+        return { 
+          healthy: false, 
+          error: error instanceof Error ? error.message : 'Unknown S3 error' 
+        };
       }
     })();
 
     const [db, redis, s3] = await Promise.all([dbProbe, redisProbe, s3Probe]);
-    const healthy = db && redis && s3;
+    
+    const allHealthy = db.healthy && redis.healthy && s3.healthy;
+    const criticalHealthy = db.healthy; // Database is critical
 
     const payload = {
-      status: healthy ? 'healthy' : 'degraded',
-      services: { db, redis, s3 },
+      status: allHealthy ? 'healthy' : criticalHealthy ? 'degraded' : 'unhealthy',
+      services: { 
+        database: db, 
+        redis: redis, 
+        storage: s3 
+      },
       timestamp: new Date().toISOString(),
       uptimeSec: Math.floor(process.uptime()),
-      responseMs: Date.now() - started
+      responseMs: Date.now() - started,
+      version: process.env.npm_package_version || 'unknown',
+      environment: env.NODE_ENV
     };
 
-    if (healthy) {
+    if (allHealthy) {
       return sendSuccess(reply, payload);
+    } else if (criticalHealthy) {
+      return reply.status(200).send({ 
+        ok: false, 
+        error: { 
+          code: 'HEALTH_DEGRADED', 
+          message: 'Some services are unavailable',
+          details: payload
+        } 
+      });
     } else {
-      // Keep HTTP 200 but signal not-ok via body for UI to show red
-      return reply.status(200).send({ ok: false, error: { code: 'HEALTH_DEGRADED', message: JSON.stringify(payload) } });
+      return reply.status(503).send({ 
+        ok: false, 
+        error: { 
+          code: 'HEALTH_UNHEALTHY', 
+          message: 'Critical services are unavailable',
+          details: payload
+        } 
+      });
     }
+  });
+
+  // Detailed health check with more information
+  fastify.get('/health/detailed', async (request, reply) => {
+    const started = Date.now();
+    
+    const healthInfo = {
+      timestamp: new Date().toISOString(),
+      uptimeSec: Math.floor(process.uptime()),
+      memory: process.memoryUsage(),
+      cpu: process.cpuUsage(),
+      environment: env.NODE_ENV,
+      version: process.env.npm_package_version || 'unknown',
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch
+    };
+
+    return sendSuccess(reply, healthInfo);
   });
 }

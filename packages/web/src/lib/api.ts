@@ -7,10 +7,7 @@ export interface ApiResponse<T = any> {
 
 export interface ApiError {
   ok: false;
-  error: {
-    code: string;
-    message: string;
-  };
+  error: string;
 }
 
 class ApiClient {
@@ -22,6 +19,14 @@ class ApiClient {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(options.headers as Record<string, string> | undefined),
     };
+
+    // Add CSRF token for non-GET requests
+    if (options.method && options.method !== 'GET') {
+      const csrfToken = this.getCSRFToken();
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+    }
 
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
@@ -36,16 +41,33 @@ class ApiClient {
     } else {
       // Fallback for non-JSON responses
       const text = await response.text();
-      try { data = JSON.parse(text); } catch { data = { ok: false, error: { message: text } }; }
+      try { data = JSON.parse(text); } catch { data = { ok: false, error: text }; }
     }
 
     if (!response.ok) {
-      const err: any = new Error(data?.error?.message || 'Request failed');
+      const err: any = new Error(data?.error || 'Request failed');
       err.response = { status: response.status, data };
       throw err;
     }
 
     return data;
+  }
+
+  private getCSRFToken(): string | null {
+    // Get CSRF token from meta tag or cookie
+    const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (metaToken) return metaToken;
+    
+    // Fallback to cookie
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'csrf-token') {
+        return decodeURIComponent(value);
+      }
+    }
+    
+    return null;
   }
 
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {

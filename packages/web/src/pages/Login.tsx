@@ -7,7 +7,7 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState('');
-  const { login, register, isLoading, error } = useAuth();
+  const { login, register, devBypass, isLoading, error } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,6 +21,18 @@ export function Login() {
       }
       navigate('/projects');
     } catch (error) {
+      // Error is handled by the auth hook
+    }
+  };
+
+  const handleDevBypass = async () => {
+    try {
+      console.log('Dev bypass started...');
+      await devBypass();
+      console.log('Dev bypass completed, navigating...');
+      navigate('/projects');
+    } catch (error) {
+      console.error('Dev bypass error:', error);
       // Error is handled by the auth hook
     }
   };
@@ -105,7 +117,7 @@ export function Login() {
             </button>
           </div>
           
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <button
               type="button"
               onClick={() => setIsRegistering(!isRegistering)}
@@ -113,6 +125,20 @@ export function Login() {
             >
               {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
+            
+            {/* Dev bypass button - only show in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleDevBypass}
+                  disabled={isLoading}
+                  className="text-sm text-gray-500 hover:text-gray-400 disabled:opacity-50"
+                >
+                  Dev Bypass (Development Only)
+                </button>
+              </div>
+            )}
           </div>
         </form>
       </div>
