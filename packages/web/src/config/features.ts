@@ -4,3 +4,7 @@ export const flags = {
   HOME_AI: import.meta.env.VITE_FEATURE_HOME_AI === '1',
   PUBLIC_DEMO: import.meta.env.VITE_FEATURE_PUBLIC_DEMO === '1',
 } as const;
+// appended by HOME-002
+(Object.assign as any)(flags, {
+  HOME_AS_DEFAULT: import.meta.env.VITE_FEATURE_HOME_AS_DEFAULT === '1',
+});
