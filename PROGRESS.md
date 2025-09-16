@@ -1702,3 +1702,11 @@ Implemented accessible Cmd/Ctrl+K CommandPalette with base navigation commands
 Optional projects quick-switcher (API-backed with safe fallback) → links to /project/:id
 Safely injected <CommandPalette /> into AppShell (or printed manual steps)
 Non-breaking by default; no server/schema changes
+
+Task: Homepage content blocks (flag-gated) ✅
+Timestamp (UTC): 2025-09-16 09:40:40Z
+Added flags: HOME_BLOCK_CREATE / EXPLORER / RECENTS / ACTIVITY (all default OFF)
+Implemented Create Project, Project Explorer (with data-home-search), Recent Projects, and Activity cards
+Composed blocks via HomeBlocks; safely injected into Home.tsx (or printed manual steps)
+Added API adapters with graceful fallbacks (projects & activity)
+Non-breaking by default; no backend/schema changes

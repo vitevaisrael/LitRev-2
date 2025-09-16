@@ -32,3 +32,19 @@ export async function fetchLiteProjects(limit = 50): Promise<LiteProject[]> {
     { id: "demo-2", title: "Demo Review B", updatedAt: now },
   ];
 }
+
+export async function fetchRecentProjects(limit = 8) {
+  const list = await fetchLiteProjects(Math.max(limit, 8));
+  return list
+    .map(p => ({ ...p, ts: p.updatedAt ? Date.parse(p.updatedAt) : 0 }))
+    .sort((a,b) => (b.ts||0) - (a.ts||0))
+    .slice(0, limit)
+    .map(({ ts, ...rest }) => rest);
+}
+
+export async function searchProjects(q: string, limit = 50) {
+  const list = await fetchLiteProjects(limit);
+  const n = q.trim().toLowerCase();
+  if (!n) return list;
+  return list.filter(p => (p.title || "").toLowerCase().includes(n));
+}
