@@ -29,6 +29,11 @@ export const flags = {
   HOME_SHORTCUTS:      import.meta.env.VITE_FEATURE_HOME_SHORTCUTS === '1',
 });
 
+// appended by HOME-010
+(Object.assign as any)(flags, {
+  APP_LAYOUT: import.meta.env.VITE_FEATURE_APP_LAYOUT === '1',
+});
+
 // appended by HOME-009
 (Object.assign as any)(flags, {
   GLOBAL_DOCK: import.meta.env.VITE_FEATURE_GLOBAL_DOCK === '1',

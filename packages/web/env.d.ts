@@ -17,5 +17,8 @@ interface ImportMetaEnv {
   readonly VITE_FEATURE_HOME_SHORTCUTS?: '0' | '1';
 }
 interface ImportMetaEnv {
+  readonly VITE_FEATURE_APP_LAYOUT?: '0' | '1';
+}
+interface ImportMetaEnv {
   readonly VITE_FEATURE_GLOBAL_DOCK?: '0' | '1';
 }
