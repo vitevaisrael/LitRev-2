@@ -22,3 +22,9 @@ export const flags = {
   HOME_BLOCK_RECENTS:  import.meta.env.VITE_FEATURE_HOME_BLOCK_RECENTS === '1',
   HOME_BLOCK_ACTIVITY: import.meta.env.VITE_FEATURE_HOME_BLOCK_ACTIVITY === '1',
 });
+// appended by HOME-005
+(Object.assign as any)(flags, {
+  HOME_BLOCK_PINNED:   import.meta.env.VITE_FEATURE_HOME_BLOCK_PINNED === '1',
+  HOME_PIN_ACTIONS:    import.meta.env.VITE_FEATURE_HOME_PIN_ACTIONS === '1',
+  HOME_SHORTCUTS:      import.meta.env.VITE_FEATURE_HOME_SHORTCUTS === '1',
+});

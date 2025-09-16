@@ -11,3 +11,8 @@ interface ImportMetaEnv {
   readonly VITE_FEATURE_HOME_BLOCK_RECENTS?: '0' | '1';
   readonly VITE_FEATURE_HOME_BLOCK_ACTIVITY?: '0' | '1';
 }
+interface ImportMetaEnv {
+  readonly VITE_FEATURE_HOME_BLOCK_PINNED?: '0' | '1';
+  readonly VITE_FEATURE_HOME_PIN_ACTIONS?: '0' | '1';
+  readonly VITE_FEATURE_HOME_SHORTCUTS?: '0' | '1';
+}

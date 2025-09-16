@@ -1710,3 +1710,13 @@ Implemented Create Project, Project Explorer (with data-home-search), Recent Pro
 Composed blocks via HomeBlocks; safely injected into Home.tsx (or printed manual steps)
 Added API adapters with graceful fallbacks (projects & activity)
 Non-breaking by default; no backend/schema changes
+
+Task: Homepage pinned projects + pin actions + keyboard shortcuts (flag-gated) ✅
+Timestamp (UTC): 2025-09-16 09:49:36Z
+Added flags: HOME_BLOCK_PINNED / HOME_PIN_ACTIONS / HOME_SHORTCUTS (all default OFF)
+Implemented usePinned hook with localStorage persistence and cross-tab sync
+Created HomePinnedCard showing pinned projects with unpin actions
+Enhanced HomeExplorerCard and HomeRecentsCard with pin/unpin buttons (when flag enabled)
+Added HomeShortcuts with g→h (Home), g→p (Projects), / (focus search) keyboard shortcuts
+Safely updated Home.tsx to render new components behind feature flags
+Non-breaking by default; no backend/schema changes
