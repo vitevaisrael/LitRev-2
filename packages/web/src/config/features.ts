@@ -8,3 +8,10 @@ export const flags = {
 (Object.assign as any)(flags, {
   HOME_AS_DEFAULT: import.meta.env.VITE_FEATURE_HOME_AS_DEFAULT === '1',
 });
+
+// appended by HOME-003
+// (runtime merge keeps the existing export; consumers should read via (flags as any).COMMAND_MENU)
+(Object.assign as any)(flags, {
+  COMMAND_MENU: import.meta.env.VITE_FEATURE_COMMAND_MENU === '1',
+  QUICK_SWITCHER: import.meta.env.VITE_FEATURE_QUICK_SWITCHER === '1',
+});

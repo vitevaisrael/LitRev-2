@@ -1693,3 +1693,12 @@ Updated root render to <AppWithShell /> if pattern detected; printed manual step
 Added HomeIndexGate.tsx (redirects '/' → '/home' when HOME=1 & HOME_AS_DEFAULT=1)
 Attempted safe '/' route insertion; printed manual steps if existing '/' route or unsafe
 Non-breaking by default; no flags enabled automatically
+
+Task: Global Command Menu + Quick-Switcher (feature-flagged) ✅
+Timestamp (UTC): 2025-09-16 09:29:47Z
+
+Flags added: VITE_FEATURE_COMMAND_MENU=0, VITE_FEATURE_QUICK_SWITCHER=0
+Implemented accessible Cmd/Ctrl+K CommandPalette with base navigation commands
+Optional projects quick-switcher (API-backed with safe fallback) → links to /project/:id
+Safely injected <CommandPalette /> into AppShell (or printed manual steps)
+Non-breaking by default; no server/schema changes
