@@ -1728,3 +1728,11 @@ Created endpoints: GET /api/v1/projects/recent, GET /api/v1/activity (auth + sof
 Registered routes in app.ts behind env flag
 Updated web adapters to prefer those endpoints (idempotent insertion) with graceful fallbacks
 No schema changes; non-breaking by default
+
+Task: Homepage AI chat (client-only, flag-gated) ✅
+Timestamp (UTC): 2025-09-16 10:04:06Z
+- Added client-only AI chat components (types, demo provider, chat card)
+- Uses existing flags: HOME_AI (enables UI), PUBLIC_DEMO (labels demo)
+- Accessibility: aria-live on messages; aria-busy on form
+- Safely updated Home.tsx when skeleton matched; printed manual steps otherwise
+- No server changes; non-breaking by default
