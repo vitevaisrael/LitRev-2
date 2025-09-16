@@ -1720,3 +1720,11 @@ Enhanced HomeExplorerCard and HomeRecentsCard with pin/unpin buttons (when flag 
 Added HomeShortcuts with g→h (Home), g→p (Projects), / (focus search) keyboard shortcuts
 Safely updated Home.tsx to render new components behind feature flags
 Non-breaking by default; no backend/schema changes
+
+Task: Home server endpoints (flag-gated) ✅
+Timestamp (UTC): 2025-09-16 09:55:40Z
+Added FEATURE_HOME_ENDPOINTS (default OFF) in server env example
+Created endpoints: GET /api/v1/projects/recent, GET /api/v1/activity (auth + soft-fail)
+Registered routes in app.ts behind env flag
+Updated web adapters to prefer those endpoints (idempotent insertion) with graceful fallbacks
+No schema changes; non-breaking by default
