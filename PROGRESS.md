@@ -1684,3 +1684,12 @@ Safe /home route insertion attempted; printed manual steps if unsafe
 Left AppShell wrapping as manual to avoid fragile edits
 Optional flag test added if test tooling exists
 No behavior change by default; existing routes/deep links untouched
+
+Task: Wire AppShell wrapper + optional "/" redirect (feature-flagged) ✅
+Timestamp (UTC): 2025-09-16 09:09:25Z
+Added VITE_FEATURE_HOME_AS_DEFAULT=0 with typing and flags util extension
+Created AppWithShell.tsx (wraps <App /> when GLOBAL_MENU=1)
+Updated root render to <AppWithShell /> if pattern detected; printed manual steps otherwise
+Added HomeIndexGate.tsx (redirects '/' → '/home' when HOME=1 & HOME_AS_DEFAULT=1)
+Attempted safe '/' route insertion; printed manual steps if existing '/' route or unsafe
+Non-breaking by default; no flags enabled automatically
