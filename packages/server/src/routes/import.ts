@@ -15,7 +15,7 @@ export async function importRoutes(fastify: FastifyInstance) {
 
   // POST /api/v1/projects/:id/import
   fastify.post('/projects/:id/import', {
-    preHandler: [authenticate]
+    preHandler: [requireAuth, requireProjectAccess]
   }, async (request, reply) => {
     try {
       const { id: projectId } = request.params as { id: string };

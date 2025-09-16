@@ -3,7 +3,7 @@ import { z } from "zod";
 import { FEATURE_PUBMED_SEARCH, FEATURE_PUBMED_IMPORT, FEATURE_PUBMED_EFETCH } from "../../config/pubmed";
 import { pubmedSearchQueue } from "./search.queue";
 import { cacheGetSummary } from "./cache";
-import { authenticate, validateProjectOwnership } from "../../middleware/auth";
+import { requireAuth, requireProjectAccess } from "../../auth/middleware";
 import { sendSuccess, sendError } from "../../utils/response";
 import { prisma } from "../../lib/prisma";
 import { 
@@ -17,8 +17,8 @@ export default async function pubmedRoutes(app: FastifyInstance) {
   if (!FEATURE_PUBMED_SEARCH) return;
 
   // Add authentication and project ownership validation
-  app.addHook("preHandler", authenticate);
-  app.addHook("preHandler", validateProjectOwnership);
+  app.addHook("preHandler", requireAuth);
+  app.addHook("preHandler", requireProjectAccess);
 
   // Start search job
   app.post("/api/v1/projects/:id/pubmed/search", async (req, reply) => {

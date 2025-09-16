@@ -6,7 +6,7 @@ export type JwtUser = { id: string; email: string; name?: string };
 
 export async function registerJwt(app: FastifyInstance) {
   await app.register(fastifyJwt, {
-    secret: { private: ENV.JWT_ACCESS_SECRET, public: ENV.JWT_ACCESS_SECRET } as any,
+    secret: ENV.JWT_ACCESS_SECRET,
     cookie: { cookieName: ENV.AUTH_COOKIE_NAME, signed: false },
     sign: { expiresIn: ENV.JWT_ACCESS_TTL }
   });
@@ -16,7 +16,7 @@ export async function registerJwt(app: FastifyInstance) {
   );
 
   app.decorate("signRefresh", (payload: JwtUser) =>
-    app.jwt.sign(payload, { expiresIn: ENV.JWT_REFRESH_TTL, secret: ENV.JWT_REFRESH_SECRET as any })
+    app.jwt.sign(payload, { expiresIn: ENV.JWT_REFRESH_TTL })
   );
 
   app.decorate("setAuthCookies", (reply: FastifyReply, access: string, refresh: string) => {
@@ -46,8 +46,11 @@ declare module "fastify" {
     setAuthCookies(reply: FastifyReply, access: string, refresh: string): void;
     clearAuthCookies(reply: FastifyReply): void;
   }
-  interface FastifyRequest {
-    user?: JwtUser;
+}
+
+declare module "@fastify/jwt" {
+  interface FastifyJWT {
+    user: JwtUser;
   }
 }
 

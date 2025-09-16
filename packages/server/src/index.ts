@@ -44,11 +44,10 @@ fastify.addHook('onSend', async (request, reply, payload) => {
   return payload;
 });
 
-// Register all plugins and routes using the new auth v2 system
-await registerApp(fastify);
-
 // Start server
 const start = async () => {
+  // Register all plugins and routes using the new auth v2 system
+  await registerApp(fastify);
   try {
     // Start background workers (Explorer, Search)
     try {

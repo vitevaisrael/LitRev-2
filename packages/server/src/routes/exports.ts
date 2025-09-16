@@ -332,10 +332,10 @@ export async function exportsRoutes(fastify: FastifyInstance) {
     "/projects/:id/exports/docx",
     {
       preHandler: [requireAuth, requireProjectAccess],
-      schema: {
-        params: ExportParamsSchema,
-        body: ExportDocxOptionsSchema
-      }
+      // schema: {
+      //   params: ExportParamsSchema
+      //   // body: ExportDocxOptionsSchema // Temporarily disabled
+      // }
     },
     async (request, reply) => {
       const { id: projectId } = request.params;

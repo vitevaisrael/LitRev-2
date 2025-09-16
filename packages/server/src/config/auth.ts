@@ -1,13 +1,27 @@
 import { randomUUID } from "node:crypto";
 import { env } from "./env";
 
+// Validate JWT secrets are properly configured
+if (!env.JWT_ACCESS_SECRET && !env.JWT_SECRET) {
+  throw new Error('JWT_ACCESS_SECRET or JWT_SECRET must be provided');
+}
+
+if (!env.JWT_REFRESH_SECRET) {
+  throw new Error('JWT_REFRESH_SECRET must be provided');
+}
+
+// Ensure secrets are different
+if (env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET) {
+  throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be different');
+}
+
 export const ENV = {
   NODE_ENV: env.NODE_ENV,
   APP_URL: env.APP_URL,
 
   AUTH_MODE: env.AUTH_MODE,
   JWT_ACCESS_SECRET: env.JWT_ACCESS_SECRET || env.JWT_SECRET,
-  JWT_REFRESH_SECRET: env.JWT_REFRESH_SECRET || randomUUID(),
+  JWT_REFRESH_SECRET: env.JWT_REFRESH_SECRET,
   JWT_ACCESS_TTL: env.JWT_ACCESS_TTL,
   JWT_REFRESH_TTL: env.JWT_REFRESH_TTL,
 

@@ -36,7 +36,7 @@ const EnvSchema = z.object({
   APP_URL: z.string().url().default("http://localhost:5173"),
   AUTH_MODE: z.enum(["normal", "dev_bypass"]).default("normal"),
   JWT_ACCESS_SECRET: z.string().min(32).optional(),
-  JWT_REFRESH_SECRET: z.string().min(32).optional(),
+  JWT_REFRESH_SECRET: z.string().min(32),
   JWT_ACCESS_TTL: z.coerce.number().default(900), // 15m
   JWT_REFRESH_TTL: z.coerce.number().default(1209600), // 14d
   AUTH_COOKIE_NAME: z.string().default("the_scientist_access"),

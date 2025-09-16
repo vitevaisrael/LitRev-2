@@ -27,9 +27,12 @@ export function Login() {
 
   const handleDevBypass = async () => {
     try {
+      console.log('Dev bypass started...');
       await devBypass();
+      console.log('Dev bypass completed, navigating...');
       navigate('/projects');
     } catch (error) {
+      console.error('Dev bypass error:', error);
       // Error is handled by the auth hook
     }
   };

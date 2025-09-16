@@ -30,7 +30,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading, error: authError } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
+      console.log('Auth query started...');
       const response = await api.get('/auth-v2/me');
+      console.log('Auth query response:', response);
       return (response.data as any).user;
     },
     retry: false,
@@ -84,14 +86,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Dev bypass mutation
   const devBypassMutation = useMutation({
     mutationFn: async () => {
-      const response = await api.post('/auth-v2/login', { devBypass: true });
+      console.log('DevBypass mutation started...');
+      const response = await api.post('/auth-v2/login', { 
+        email: 'dev@localhost.com', 
+        password: 'anypassword' 
+      });
+      console.log('DevBypass response:', response);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('DevBypass success:', data);
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
       setError(null);
     },
     onError: (error: any) => {
+      console.error('DevBypass error:', error);
       setError(error?.response?.data?.error || 'Dev bypass failed');
     }
   });
@@ -126,6 +135,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     devBypass,
     error: error || (authError as any)?.response?.data?.error || null
   };
+
+  // Debug logging
+  console.log('Auth state:', {
+    user,
+    isLoading: value.isLoading,
+    isAuthenticated: value.isAuthenticated,
+    error: value.error
+  });
 
   return (
     <AuthContext.Provider value={value}>

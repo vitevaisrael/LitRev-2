@@ -185,20 +185,68 @@ export const handleError = (error: unknown, fallbackMessage: string = 'An unexpe
   }
 };
 
-// API error handler
+// API error handler with improved error parsing
 export const handleApiError = (error: any, context?: string) => {
   let message = 'An error occurred';
+  let shouldLog = true;
   
+  // Handle different error types
   if (error?.response?.data?.error?.message) {
     message = error.response.data.error.message;
   } else if (error?.response?.data?.message) {
     message = error.response.data.message;
+  } else if (error?.response?.data?.error) {
+    message = error.response.data.error;
   } else if (error?.message) {
     message = error.message;
   }
 
+  // Handle specific error codes
+  if (error?.response?.status) {
+    switch (error.response.status) {
+      case 401:
+        message = 'Authentication required. Please log in again.';
+        shouldLog = false; // Don't log auth errors
+        break;
+      case 403:
+        message = 'Access denied. You do not have permission to perform this action.';
+        break;
+      case 404:
+        message = 'Resource not found.';
+        break;
+      case 409:
+        message = 'Conflict. The resource already exists or has been modified.';
+        break;
+      case 422:
+        message = 'Validation error. Please check your input.';
+        break;
+      case 429:
+        message = 'Too many requests. Please wait a moment and try again.';
+        break;
+      case 500:
+        message = 'Server error. Please try again later.';
+        break;
+      case 502:
+      case 503:
+      case 504:
+        message = 'Service temporarily unavailable. Please try again later.';
+        break;
+    }
+  }
+
   if (context) {
     message = `${context}: ${message}`;
+  }
+
+  // Log error for debugging (except auth errors)
+  if (shouldLog) {
+    console.error('API Error:', {
+      context,
+      error,
+      message,
+      status: error?.response?.status,
+      url: error?.config?.url
+    });
   }
 
   notifyError(message);

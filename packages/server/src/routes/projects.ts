@@ -42,12 +42,31 @@ export async function projectsRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const { title } = request.body as { title: string };
+      const userId = (request as any).user.id;
+      
+      // For dev bypass users, create a real user in the database first
+      if (userId === '00000000-0000-0000-0000-000000000001') {
+        const existingUser = await prisma.user.findUnique({
+          where: { id: userId }
+        });
+        
+        if (!existingUser) {
+          await prisma.user.create({
+            data: {
+              id: userId,
+              email: 'dev@localhost.com',
+              name: 'Dev User',
+              passwordHash: 'dev-bypass-user' // Not used for authentication
+            }
+          });
+        }
+      }
       
       const project = await prisma.$transaction(async (tx: any) => {
         const newProject = await tx.project.create({
           data: {
             title,
-            ownerId: (request as any).user.id,
+            ownerId: userId,
             settings: { preferOA: true }
           },
           include: {
@@ -55,15 +74,17 @@ export async function projectsRoutes(fastify: FastifyInstance) {
           }
         });
 
-        // Create audit log entry
-        await tx.auditLog.create({
-          data: {
-            projectId: newProject.id,
-            userId: (request as any).user.id,
-            action: 'project_created',
-            details: { title }
-          }
-        });
+        // Create audit log entry (skip for dev users to avoid foreign key issues)
+        if (userId !== '00000000-0000-0000-0000-000000000001') {
+          await tx.auditLog.create({
+            data: {
+              projectId: newProject.id,
+              userId: userId,
+              action: 'project_created',
+              details: { title }
+            }
+          });
+        }
 
         return newProject;
       });
@@ -71,6 +92,19 @@ export async function projectsRoutes(fastify: FastifyInstance) {
       return sendSuccess(reply, { project }, 201);
     } catch (error) {
       return sendError(reply, 'DATABASE_ERROR', 'Failed to create project', 500);
+    }
+  });
+
+  // GET /api/v1/projects/:id
+  fastify.get('/projects/:id', {
+    preHandler: [requireAuth, requireProjectAccess]
+  }, async (request, reply) => {
+    try {
+      const project = (request as any).project; // Set by requireProjectAccess middleware
+      
+      return sendSuccess(reply, { project });
+    } catch (error) {
+      return sendError(reply, 'DATABASE_ERROR', 'Failed to fetch project', 500);
     }
   });
 

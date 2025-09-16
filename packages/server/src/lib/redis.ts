@@ -10,8 +10,16 @@ export function getRedis(): Redis {
   if (!redisClient) {
     const url = env.REDIS_URL || 'redis://localhost:6379';
     redisClient = new Redis(url, {
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: null, // Required for BullMQ compatibility
       lazyConnect: true,
+      connectTimeout: 10000,
+      commandTimeout: 10000,
+      retryDelayOnFailover: 100,
+      retryDelayOnClusterDown: 300,
+      enableOfflineQueue: false,
+      keepAlive: 30000,
+      family: 4, // Use IPv4
+      db: 0,
     });
 
     redisClient.on('error', (error) => {
@@ -25,6 +33,14 @@ export function getRedis(): Redis {
     redisClient.on('ready', () => {
       console.log('Redis client ready');
     });
+
+    redisClient.on('close', () => {
+      console.log('Redis connection closed');
+    });
+
+    redisClient.on('reconnecting', () => {
+      console.log('Redis reconnecting...');
+    });
   }
 
   return redisClient;
@@ -35,10 +51,31 @@ export function getRedis(): Redis {
  */
 export async function closeRedis(): Promise<void> {
   if (redisClient) {
-    await redisClient.quit();
-    redisClient = null;
+    try {
+      await redisClient.quit();
+    } catch (error) {
+      console.error('Error closing Redis connection:', error);
+    } finally {
+      redisClient = null;
+    }
   }
 }
+
+// Graceful shutdown
+process.on('beforeExit', async () => {
+  console.log('Closing Redis connection...');
+  await closeRedis();
+});
+
+process.on('SIGINT', async () => {
+  console.log('Received SIGINT, closing Redis connection...');
+  await closeRedis();
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Received SIGTERM, closing Redis connection...');
+  await closeRedis();
+});
 
 /**
  * Check if Redis is available

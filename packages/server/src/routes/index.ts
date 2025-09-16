@@ -1,6 +1,5 @@
 import { FastifyInstance } from 'fastify';
 import { healthRoutes } from './health';
-import { authRoutes } from './auth';
 import { projectsRoutes } from './projects';
 import { intakeRoutes } from './intake';
 import { screenRoutes } from './screen';
@@ -22,7 +21,6 @@ import { env } from '../config/env';
 
 export async function routes(fastify: FastifyInstance) {
   await fastify.register(healthRoutes);
-  await fastify.register(authRoutes);
   await fastify.register(projectsRoutes);
   await fastify.register(intakeRoutes);
   await fastify.register(screenRoutes);

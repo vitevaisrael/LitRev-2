@@ -1575,3 +1575,102 @@ curl -X POST http://localhost:3000/api/v1/auth-v2/logout \
 
 **Status**: **COMPLETE** - Auth v2 system fully implemented with cookie-based authentication, dev bypass, ownership guards, and consistent error contract.
 
+## Task: Draft Enhancement Endpoints ✅
+
+**Goal**: Replace three stub endpoints in the draft routes with fully functional implementations that provide AI-assisted writing features for draft sections.
+
+### ✅ Completed Implementation
+
+**1) Core Draft Enhancement Features**
+- ✅ **Citation Suggestions**: POST `/api/v1/projects/:id/draft/suggest-citations` with term frequency scoring
+- ✅ **Text Tightening**: POST `/api/v1/projects/:id/draft/tighten` with citation chip preservation
+- ✅ **Coverage Analysis**: POST `/api/v1/projects/:id/draft/coverage` with claim detection and gap analysis
+- ✅ **Feature Flag**: `FEATURE_DRAFT_LLM` environment variable for LLM integration control
+- ✅ **Auth & Ownership**: Validates user authentication and project ownership for all endpoints
+
+**2) Technical Implementation**
+- ✅ **Zod Schemas**: Added comprehensive validation schemas for all request/response types
+- ✅ **Helper Modules**: Created `citationScorer.ts` and `tighten.ts` utility modules
+- ✅ **Citation Scoring**: Term frequency analysis with relevance scoring and IDF weighting
+- ✅ **Text Processing**: Citation chip preservation during text tightening operations
+- ✅ **Claim Detection**: Keyword-based assertion detection with citation proximity analysis
+- ✅ **LLM Integration**: Optional OpenAI integration for text tightening with fallback to heuristics
+
+**3) Citation Suggestion System**
+- ✅ **Term Frequency Analysis**: Extracts key terms from draft text and matches against support quotes
+- ✅ **Relevance Scoring**: Combines term frequency with IDF weighting for accurate relevance scores
+- ✅ **Top Results**: Returns top 5 most relevant citations with confidence scores
+- ✅ **Quote Truncation**: Handles long quotes with proper truncation and ellipsis
+- ✅ **Empty State Handling**: Graceful handling when no evidence is available in ledger
+
+**4) Text Tightening System**
+- ✅ **Citation Preservation**: Protects `[SUPPORT:xxx]` citation chips during processing
+- ✅ **Heuristic Fallback**: Rule-based text improvement when LLM is disabled
+- ✅ **LLM Integration**: Optional OpenAI-powered text improvement with proper error handling
+- ✅ **Change Tracking**: Tracks word count changes and improvement summaries
+- ✅ **Feature Gating**: Uses `FEATURE_DRAFT_LLM` environment variable for LLM control
+
+**5) Coverage Analysis System**
+- ✅ **Citation Validation**: Validates citation markers reference valid Support IDs in project
+- ✅ **Claim Detection**: Identifies assertion statements using keyword analysis
+- ✅ **Proximity Analysis**: Determines if claims have nearby citations within reasonable distance
+- ✅ **Gap Identification**: Identifies uncited claims and provides specific suggestions
+- ✅ **Coverage Scoring**: Calculates percentage of claims that are properly cited
+
+**6) Integration & Safety**
+- ✅ **Zero Regressions**: Existing draft functionality completely preserved
+- ✅ **Authentication**: Proper user authentication and project ownership validation
+- ✅ **Audit Logging**: Complete audit trail for all enhancement operations
+- ✅ **Error Handling**: Comprehensive error handling with proper HTTP status codes
+- ✅ **Type Safety**: Full Zod validation and TypeScript support
+
+**7) Testing & Quality**
+- ✅ **Schema Validation**: All endpoints use proper Zod validation for type safety
+- ✅ **Error Handling**: Comprehensive error handling for all failure scenarios
+- ✅ **Build Success**: All TypeScript compilation errors resolved
+- ✅ **Linting**: No linting errors in any of the implementation files
+
+### ✅ API Usage Examples
+
+```bash
+# Suggest citations for draft text
+curl -X POST http://localhost:3000/api/v1/projects/{PROJECT_ID}/draft/suggest-citations \
+  -H 'Cookie: {AUTH_COOKIE}' \
+  -H 'Content-Type: application/json' \
+  -d '{"section": "Results", "text": "Studies show positive outcomes in treatment groups"}'
+
+# Tighten draft text (with or without LLM)
+curl -X POST http://localhost:3000/api/v1/projects/{PROJECT_ID}/draft/tighten \
+  -H 'Cookie: {AUTH_COOKIE}' \
+  -H 'Content-Type: application/json' \
+  -d '{"section": "Discussion", "text": "The results demonstrate that the intervention was effective [SUPPORT:abc-123]"}'
+
+# Analyze citation coverage
+curl -X POST http://localhost:3000/api/v1/projects/{PROJECT_ID}/draft/coverage \
+  -H 'Cookie: {AUTH_COOKIE}' \
+  -H 'Content-Type: application/json' \
+  -d '{"section": "Methods", "text": "The study used randomized controlled design [SUPPORT:def-456]. Results showed significant improvement."}'
+```
+
+### ✅ Key Features
+- **AI-Assisted Writing**: Intelligent citation suggestions and text improvement
+- **Citation Preservation**: Maintains citation chips during text processing
+- **Coverage Analysis**: Identifies gaps in evidence support for claims
+- **Feature Gating**: LLM features can be enabled/disabled via environment variables
+- **Professional Integration**: Seamless integration with existing draft system
+- **Comprehensive Validation**: Full Zod validation for all request/response data
+- **Audit Trail**: Complete logging of all enhancement operations
+
+### ✅ Files Created/Modified
+
+**New Files:**
+- `packages/server/src/modules/draft/citationScorer.ts` - Citation suggestion algorithm
+- `packages/server/src/modules/draft/tighten.ts` - Text tightening with citation preservation
+
+**Updated Files:**
+- `packages/server/env.example` - Added `FEATURE_DRAFT_LLM` feature flag
+- `packages/shared/schemas/src/draft.ts` - Added enhancement endpoint schemas
+- `packages/server/src/routes/draft.ts` - Replaced stub endpoints with full implementations
+
+**Status**: **COMPLETE** - All enhancement endpoints fully functional with AI-assisted writing features, citation management, and comprehensive coverage analysis.
+

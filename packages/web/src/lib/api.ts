@@ -20,6 +20,14 @@ class ApiClient {
       ...(options.headers as Record<string, string> | undefined),
     };
 
+    // Add CSRF token for non-GET requests
+    if (options.method && options.method !== 'GET') {
+      const csrfToken = this.getCSRFToken();
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers,
@@ -43,6 +51,23 @@ class ApiClient {
     }
 
     return data;
+  }
+
+  private getCSRFToken(): string | null {
+    // Get CSRF token from meta tag or cookie
+    const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (metaToken) return metaToken;
+    
+    // Fallback to cookie
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'csrf-token') {
+        return decodeURIComponent(value);
+      }
+    }
+    
+    return null;
   }
 
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
