@@ -15,3 +15,10 @@ export const flags = {
   COMMAND_MENU: import.meta.env.VITE_FEATURE_COMMAND_MENU === '1',
   QUICK_SWITCHER: import.meta.env.VITE_FEATURE_QUICK_SWITCHER === '1',
 });
+// appended by HOME-004
+(Object.assign as any)(flags, {
+  HOME_BLOCK_CREATE:   import.meta.env.VITE_FEATURE_HOME_BLOCK_CREATE === '1',
+  HOME_BLOCK_EXPLORER: import.meta.env.VITE_FEATURE_HOME_BLOCK_EXPLORER === '1',
+  HOME_BLOCK_RECENTS:  import.meta.env.VITE_FEATURE_HOME_BLOCK_RECENTS === '1',
+  HOME_BLOCK_ACTIVITY: import.meta.env.VITE_FEATURE_HOME_BLOCK_ACTIVITY === '1',
+});
