@@ -34,6 +34,21 @@ export async function fetchLiteProjects(limit = 50): Promise<LiteProject[]> {
 }
 
 export async function fetchRecentProjects(limit = 8) {
+  // Prefer direct endpoint first (graceful fallback if unavailable)
+  try {
+    const direct = await tryJson(`/api/v1/projects/recent?limit=${limit}`);
+    const arr = direct?.data?.projects ?? (Array.isArray(direct?.data) ? direct.data : undefined);
+    if (Array.isArray(arr)) {
+      return arr
+        .map((p: any) => ({
+          id: String(p.id ?? ""),
+          title: String(p.title ?? "Untitled"),
+          updatedAt: p.updatedAt ?? undefined,
+        }))
+        .filter((p: any) => p.id);
+    }
+  } catch {}
+
   const list = await fetchLiteProjects(Math.max(limit, 8));
   return list
     .map(p => ({ ...p, ts: p.updatedAt ? Date.parse(p.updatedAt) : 0 }))

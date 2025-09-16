@@ -15,8 +15,22 @@ async function tryJson(url: string): Promise<any | null> {
 }
 
 export async function fetchActivity(limit = 10): Promise<ActivityItem[]> {
+  // Prefer direct endpoint first (graceful fallback if unavailable)
+  try {
+    const direct = await tryJson(`/api/v1/activity?limit=${limit}`);
+    const arr = direct?.data?.items ?? (Array.isArray(direct?.data) ? direct.data : undefined);
+    if (Array.isArray(arr)) {
+      return arr.slice(0, limit).map((x: any, i: number) => ({
+        id: String(x.id ?? `a${i}`),
+        kind: String(x.kind ?? "other"),
+        title: String(x.title ?? "Activity"),
+        at: String(x.at ?? new Date().toISOString()),
+        meta: x.meta ?? undefined,
+      }));
+    }
+  } catch {}
+
   const candidates = [
-    `/api/v1/activity?limit=${limit}`,   // hypothetical
     `/api/v1/jobs?limit=${limit}`,       // hypothetical
     `/api/v1/audit-logs?limit=${limit}`, // hypothetical
   ];
