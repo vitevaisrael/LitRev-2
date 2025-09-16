@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchLiteProjects, type LiteProject } from "../api/projects";
+import { flags } from "../config/features";
+import { usePinnedProjects } from "../hooks/usePinned";
 
 export function HomeExplorerCard() {
   const [q, setQ] = useState("");
   const [items, setItems] = useState<LiteProject[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const { isPinned, togglePin } = usePinnedProjects();
 
   useEffect(() => {
     let alive = true;
@@ -42,7 +45,18 @@ export function HomeExplorerCard() {
               <a href={`/project/${encodeURIComponent(p.id)}`} className="text-sm hover:underline">
                 {p.title}
               </a>
-              {p.updatedAt && <span className="text-xs text-gray-500">{new Date(p.updatedAt).toLocaleDateString()}</span>}
+              <div className="flex items-center gap-2">
+                {p.updatedAt && <span className="text-xs text-gray-500">{new Date(p.updatedAt).toLocaleDateString()}</span>}
+                {(flags as any).HOME_PIN_ACTIONS && (
+                  <button
+                    className="text-xs px-2 py-1 border rounded hover:bg-gray-100"
+                    onClick={(e) => { e.preventDefault(); togglePin(String(p.id)); }}
+                    title={isPinned(String(p.id)) ? "Unpin" : "Pin"}
+                  >
+                    {isPinned(String(p.id)) ? "Unpin" : "Pin"}
+                  </button>
+                )}
+              </div>
             </li>
           ))}
           {visible.length === 0 && <li className="text-sm text-gray-500">No results</li>}

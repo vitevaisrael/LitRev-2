@@ -1,4 +1,7 @@
 import { HomeBlocks } from "../home/HomeBlocks";
+import { HomePinnedCard } from "../home/HomePinnedCard";
+import { HomeShortcuts } from "../home/HomeShortcuts";
+import { flags } from "../config/features";
 
 export default function HomePage() {
   return (
@@ -9,6 +12,14 @@ export default function HomePage() {
       </div>
 
       <HomeBlocks />
+      
+      {/* Pinned Projects */}
+      {(flags as any).HOME_BLOCK_PINNED && (
+        <section>
+          <HomePinnedCard />
+        </section>
+      )}
+      
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="border rounded-xl p-4"><div className="font-medium">Create Review</div><p className="text-sm text-gray-500">Start a new project</p></div>
         <div className="border rounded-xl p-4"><div className="font-medium">Search Literature</div><p className="text-sm text-gray-500">PubMed and more</p></div>
@@ -17,6 +28,9 @@ export default function HomePage() {
       </section>
       <section className="border rounded-xl p-4"><div className="font-medium mb-2">Projects snapshot</div><div className="text-sm text-gray-500">Coming soon…</div></section>
       <section className="border rounded-xl p-4"><div className="font-medium mb-2">Activity</div><div className="text-sm text-gray-500">Background jobs at a glance (soon)</div></section>
+      
+      {/* Keyboard Shortcuts */}
+      {(flags as any).HOME_SHORTCUTS && <HomeShortcuts />}
     </div>
   );
 }
