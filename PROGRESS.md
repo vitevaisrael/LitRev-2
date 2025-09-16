@@ -624,3 +624,13 @@
 - **Type Safety**: Full TypeScript support with proper type definitions
 
 **Next Steps**: Ready for UI-06 (Theme & Tokens) and subsequent UI tasks.
+
+Task: App Shell + Home Skeleton (feature-flagged) ✅
+Timestamp (UTC): 2025-09-16 08:52:54Z
+Added frontend feature flags (default OFF) and TS env typing
+Created AppShell (Header/Sidebar) and CommandPalette placeholder
+Added Home page skeleton and HomeGate (flag-gated)
+Safe /home route insertion attempted; printed manual steps if unsafe
+Left AppShell wrapping as manual to avoid fragile edits
+Optional flag test added if test tooling exists
+No behavior change by default; existing routes/deep links untouched
