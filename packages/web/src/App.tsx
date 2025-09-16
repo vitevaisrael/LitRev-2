@@ -10,6 +10,7 @@ import { Projects } from './pages/Projects';
 import { Project } from './pages/Project';
 import { ChatReview } from './pages/ChatReview';
 import HomeGate from './routes/HomeGate';
+import { GlobalDock } from './global/GlobalDock';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
                 </ProtectedRoute>
               } />
             </Routes>
+            <GlobalDock />
           </Router>
           {/* React Hot Toast Toaster */}
           <Toaster

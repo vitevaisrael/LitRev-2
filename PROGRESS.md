@@ -1744,3 +1744,10 @@ Timestamp (UTC): 2025-09-16 10:17:20Z
 - Registered in app.ts behind env flag (after authRoutes, before grouped routes)
 - Web ai/client.ts now posts via shared api (CSRF+cookies) and falls back to demo
 - Non-breaking by default; no schema changes
+
+Task: Global quick-action Dock (feature-gated) ✅
+Timestamp (UTC): 2025-01-15 20:30:00Z
+- Added VITE_FEATURE_GLOBAL_DOCK (default OFF) with typing + runtime merge
+- Created GlobalDock (floating launcher + panel, accessible, scroll-lock, high z-index)
+- Injected <GlobalDock /> after </Routes> in App.tsx
+- Web-only flow; no server changes
