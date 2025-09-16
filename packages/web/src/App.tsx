@@ -9,6 +9,7 @@ import { Login } from './pages/Login';
 import { Projects } from './pages/Projects';
 import { Project } from './pages/Project';
 import { ChatReview } from './pages/ChatReview';
+import HomeGate from './routes/HomeGate';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
                   <ChatReview />
                 </ProtectedRoute>
               } />
+              <Route path="/home" element={<HomeGate />} />
               <Route path="/" element={
                 <ProtectedRoute>
                   <Projects />

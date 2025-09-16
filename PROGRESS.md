@@ -625,6 +625,7 @@
 
 **Next Steps**: Ready for UI-06 (Theme & Tokens) and subsequent UI tasks.
 
+<<<<<<< HEAD
 ## Task 3 — Evidence Integrity Checks (Retractions & Predatory Flags) ✅
 
 **Goal**: Implement comprehensive evidence integrity checking system to detect retracted publications and predatory journals, with admin management capabilities.
@@ -1672,5 +1673,14 @@ curl -X POST http://localhost:3000/api/v1/projects/{PROJECT_ID}/draft/coverage \
 - `packages/shared/schemas/src/draft.ts` - Added enhancement endpoint schemas
 - `packages/server/src/routes/draft.ts` - Replaced stub endpoints with full implementations
 
-**Status**: **COMPLETE** - All enhancement endpoints fully functional with AI-assisted writing features, citation management, and comprehensive coverage analysis.
+**Status**: **COMPLETE** - All enhancement endpoints fully functional with AI-assisted writing features, citation management, and comprehensive coverage analysis.                                                                              
 
+Task: App Shell + Home Skeleton (feature-flagged) ✅
+Timestamp (UTC): 2025-09-16 08:52:54Z
+Added frontend feature flags (default OFF) and TS env typing
+Created AppShell (Header/Sidebar) and CommandPalette placeholder
+Added Home page skeleton and HomeGate (flag-gated)
+Safe /home route insertion attempted; printed manual steps if unsafe
+Left AppShell wrapping as manual to avoid fragile edits
+Optional flag test added if test tooling exists
+No behavior change by default; existing routes/deep links untouched
