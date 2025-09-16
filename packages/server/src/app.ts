@@ -6,9 +6,11 @@ import { registerLogging } from "./plugins/logging";
 import authRoutes from "./routes/auth-v2";
 import { routes } from "./routes";
 import homeRoutes from "./routes/home";
+import aiRoutes from "./routes/ai";
 
 export async function registerApp(app: FastifyInstance) {
   const FEATURE_HOME_ENDPOINTS = process.env.FEATURE_HOME_ENDPOINTS === '1';
+  const FEATURE_HOME_AI_ENDPOINTS = process.env.FEATURE_HOME_AI_ENDPOINTS === '1';
 
   // Register plugins in correct order
   await registerSecurity(app);
@@ -18,6 +20,11 @@ export async function registerApp(app: FastifyInstance) {
 
   // Public auth routes
   await app.register(authRoutes);
+
+  // AI endpoints (behind feature flag)
+  if (FEATURE_HOME_AI_ENDPOINTS) {
+    await app.register(aiRoutes);
+  }
 
   // Home endpoints (behind feature flag)
   if (FEATURE_HOME_ENDPOINTS) {

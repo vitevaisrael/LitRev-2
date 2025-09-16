@@ -1736,3 +1736,11 @@ Timestamp (UTC): 2025-09-16 10:04:06Z
 - Accessibility: aria-live on messages; aria-busy on form
 - Safely updated Home.tsx when skeleton matched; printed manual steps otherwise
 - No server changes; non-breaking by default
+
+Task: Server AI chat endpoint (flag-gated) + web prefers server ✅
+Timestamp (UTC): 2025-09-16 10:17:20Z
+- Added FEATURE_HOME_AI_ENDPOINTS (default OFF) in packages/server/env.example
+- New route: POST /api/v1/ai/chat (requireAuth; demo reply; audit via utils/audit)
+- Registered in app.ts behind env flag (after authRoutes, before grouped routes)
+- Web ai/client.ts now posts via shared api (CSRF+cookies) and falls back to demo
+- Non-breaking by default; no schema changes
