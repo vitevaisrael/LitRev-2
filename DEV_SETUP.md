@@ -36,3 +36,29 @@ If you need to clean cache without full reinstall:
 ```bash
 pnpm clean:cache
 ```
+
+## Install Profiles: Full vs Light Mode
+
+Some environments (CI, remote sandboxes, certain IDE agents) restrict network or filesystem writes. Use the appropriate mode:
+
+- Full mode (local dev):
+  - Requires Node 20 (see `.nvmrc`), pnpm 9 (corepack), and full network access.
+  - Standard steps:
+    - `pnpm install`
+    - `pnpm -C packages/server dev` and `pnpm -C packages/web dev`
+
+- Light mode (CI/sandboxes):
+  - Skips heavy install scripts (Prisma generate, native builds) and avoids workspace-wide installs.
+  - Recommended environment variables:
+    - `export CI=1`
+    - `export PRISMA_SKIP_POSTINSTALL_GENERATE=1`
+    - If the runner’s Node is not 20: `export npm_config_engine_strict=false`
+  - Scoped web-only flow:
+    - `pnpm install:web` (equivalent to `pnpm -r -F @the-scientist/web install`)
+    - `pnpm typecheck:web`
+    - `pnpm build:web` (optional if the environment supports builds)
+
+### Why this helps
+- CI-safe preinstall: the root `preinstall` skips `npx only-allow pnpm` when `CI=1`.
+- Prisma: use `PRISMA_SKIP_POSTINSTALL_GENERATE=1` during install; generate explicitly only when needed for server runs.
+- Smaller blast radius: filter installs to `@the-scientist/web` for frontend-only tasks.
