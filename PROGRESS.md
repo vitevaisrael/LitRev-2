@@ -1760,3 +1760,12 @@ Timestamp (UTC): 2025-09-16 13:30:00Z
 - Updated packages/web/src/AppWithShell.tsx to avoid global wrapping when APP_LAYOUT=1
 - Wrapped the <Routes> block with <AppLayout> in packages/web/src/App.tsx
 - Web-only; run: pnpm -s install:web && pnpm -s typecheck:web && pnpm -s build:web
+
+Task: Global search ("/" opens Command Palette) + Quick Create (n) — flag-gated ✅
+Timestamp (UTC): 2025-09-16 13:40:00Z
+- Added flags: VITE_FEATURE_GLOBAL_SEARCH and VITE_FEATURE_QUICK_CREATE (default OFF) in packages/web/.env.example and typed in packages/web/env.d.ts
+- Runtime-merged GLOBAL_SEARCH and QUICK_CREATE into packages/web/src/config/features.ts
+- Created packages/web/src/components/QuickCreateProjectModal.tsx (client-only modal that redirects to /projects/new?title=...)
+- Created packages/web/src/global/GlobalSearchHotkeys.tsx (listens for "/" and "n" with in-field safeguards; synthesizes Cmd/Ctrl+K)
+- Injected <GlobalSearchHotkeys /> after </Routes> in packages/web/src/App.tsx
+- Web-only; relies on existing CommandPalette hotkey handler

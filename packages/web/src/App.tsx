@@ -11,6 +11,7 @@ import { Project } from './pages/Project';
 import { ChatReview } from './pages/ChatReview';
 import HomeGate from './routes/HomeGate';
 import { GlobalDock } from './global/GlobalDock';
+import { GlobalSearchHotkeys } from './global/GlobalSearchHotkeys';
 import { AppLayout } from "./app-shell/AppLayout";
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
                 </ProtectedRoute>
               } />
             </Routes>
+            <GlobalSearchHotkeys />
             </AppLayout>
             <GlobalDock />
           </Router>
