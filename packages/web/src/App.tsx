@@ -10,6 +10,8 @@ import { Projects } from './pages/Projects';
 import { Project } from './pages/Project';
 import { ChatReview } from './pages/ChatReview';
 import HomeGate from './routes/HomeGate';
+import { GlobalDock } from './global/GlobalDock';
+import { AppLayout } from "./app-shell/AppLayout";
 
 function App() {
   return (
@@ -17,6 +19,7 @@ function App() {
       <AuthProvider>
         <ToastProvider>
           <Router>
+            <AppLayout>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/projects" element={
@@ -41,6 +44,8 @@ function App() {
                 </ProtectedRoute>
               } />
             </Routes>
+            </AppLayout>
+            <GlobalDock />
           </Router>
           {/* React Hot Toast Toaster */}
           <Toaster
