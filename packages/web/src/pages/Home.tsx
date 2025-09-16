@@ -1,6 +1,7 @@
 import { HomeBlocks } from "../home/HomeBlocks";
 import { HomePinnedCard } from "../home/HomePinnedCard";
 import { HomeShortcuts } from "../home/HomeShortcuts";
+import { HomeAIChatCard } from "../home/HomeAIChatCard";
 import { flags } from "../config/features";
 
 export default function HomePage() {
@@ -26,6 +27,13 @@ export default function HomePage() {
         <div className="border rounded-xl p-4"><div className="font-medium">Continue Screening</div><p className="text-sm text-gray-500">Jump back in</p></div>
         <div className="border rounded-xl p-4"><div className="font-medium">Export Manuscript</div><p className="text-sm text-gray-500">DOCX / BibTeX / PRISMA</p></div>
       </section>
+
+      {/* AI Chat */}
+      {flags.HOME_AI && (
+        <section>
+          <HomeAIChatCard />
+        </section>
+      )}
       <section className="border rounded-xl p-4"><div className="font-medium mb-2">Projects snapshot</div><div className="text-sm text-gray-500">Coming soon…</div></section>
       <section className="border rounded-xl p-4"><div className="font-medium mb-2">Activity</div><div className="text-sm text-gray-500">Background jobs at a glance (soon)</div></section>
       

@@ -22,7 +22,7 @@ export async function fetchActivity(limit = 10): Promise<ActivityItem[]> {
     if (Array.isArray(arr)) {
       return arr.slice(0, limit).map((x: any, i: number) => ({
         id: String(x.id ?? `a${i}`),
-        kind: String(x.kind ?? "other"),
+        kind: (x.kind === "export" || x.kind === "import" || x.kind === "job" || x.kind === "audit") ? x.kind : "other" as const,
         title: String(x.title ?? "Activity"),
         at: String(x.at ?? new Date().toISOString()),
         meta: x.meta ?? undefined,
